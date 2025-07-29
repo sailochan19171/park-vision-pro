@@ -1,6 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { 
   Car, 
   Shield, 
@@ -11,7 +11,7 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react";
-import parkingGates from "@/assets/parking-gates.jpg";
+import parkingGates from "../assets/parking-gates.jpg";
 
 const Solutions = () => {
   const solutions = [

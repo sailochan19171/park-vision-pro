@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import Header from "@/components/Header";
-import Hero from "@/components/Hero";
-import Solutions from "@/components/Solutions";
-import Products from "@/components/Products";
-import About from "@/components/About";
-import Contact from "@/components/Contact";
-import Footer from "@/components/Footer";
+import Header from "../components/Header";
+import Hero from "../components/Hero";
+import Solutions from "../components/Solutions";
+import Products from "../components/Products";
+import About from "../components/About";
+import Contact from "../components/Contact";
+import Footer from "../components/Footer";
 
 const Index = () => {
   useEffect(() => {
