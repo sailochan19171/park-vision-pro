@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Menu, X, Phone, Mail } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -7,8 +7,6 @@ import { cn } from "../lib/utils";
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const isHomePage = location.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,11 +17,11 @@ const Header = () => {
   }, []);
 
   const navItems = [
-    { href: "/", label: "Home", anchor: "#home" },
-    { href: "/solutions", label: "Solutions", anchor: "#solutions" },
-    { href: "/products", label: "Products", anchor: "#products" },
-    { href: "/about", label: "About", anchor: "#about" },
-    { href: "/contact", label: "Contact", anchor: "#contact" },
+    { href: "/", label: "Home" },
+    { href: "/solutions", label: "Solutions" },
+    { href: "/products", label: "Products" },
+    { href: "/about", label: "About" },
+    { href: "/contact", label: "Contact" },
   ];
 
   return (
@@ -48,23 +46,13 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
-              isHomePage && item.anchor ? (
-                <a
-                  key={item.href}
-                  href={item.anchor}
-                  className="text-foreground hover:text-tech-blue transition-colors duration-300 font-medium"
-                >
-                  {item.label}
-                </a>
-              ) : (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="text-foreground hover:text-tech-blue transition-colors duration-300 font-medium"
-                >
-                  {item.label}
-                </Link>
-              )
+              <Link
+                key={item.href}
+                to={item.href}
+                className="text-foreground hover:text-tech-blue transition-colors duration-300 font-medium"
+              >
+                {item.label}
+              </Link>
             ))}
           </nav>
 
@@ -93,25 +81,14 @@ const Header = () => {
           <div className="md:hidden py-4 border-t bg-background">
             <nav className="flex flex-col space-y-4">
               {navItems.map((item) => (
-                isHomePage && item.anchor ? (
-                  <a
-                    key={item.href}
-                    href={item.anchor}
-                    className="text-foreground hover:text-tech-blue transition-colors px-4 py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {item.label}
-                  </a>
-                ) : (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className="text-foreground hover:text-tech-blue transition-colors px-4 py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                )
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="text-foreground hover:text-tech-blue transition-colors px-4 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
               ))}
               <div className="px-4 pt-4 border-t">
                 <Button variant="default" className="w-full bg-gradient-to-r from-tech-blue to-tech-blue-light">
