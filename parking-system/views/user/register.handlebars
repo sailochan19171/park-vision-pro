@@ -1,0 +1,157 @@
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card auth-card">
+                <div class="logo-section text-center py-4">
+                    <i class="bi bi-car-front display-4"></i>
+                    <h3 class="mt-2">Create Account</h3>
+                    <p class="mb-0">VayAccess Smart Parking</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    {{#if error}}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> {{error}}
+                    </div>
+                    {{/if}}
+                    
+                    {{#if success}}
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-check-circle"></i> {{success}}
+                    </div>
+                    {{/if}}
+                    
+                    <form action="/user/register" method="POST" id="registerForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">
+                                <i class="bi bi-person"></i> Full Name
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="Enter your full name" value="{{name}}" autocomplete="name">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope"></i> Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required 
+                                   placeholder="Enter your email" value="{{email}}" autocomplete="email">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">
+                                <i class="bi bi-phone"></i> Phone Number
+                            </label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required 
+                                   placeholder="Enter your phone number" value="{{phone}}" autocomplete="tel">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> Password
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" required 
+                                       placeholder="Enter your password" autocomplete="new-password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                Password must be at least 6 characters with uppercase, lowercase, and number.
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">
+                                <i class="bi bi-lock-fill"></i> Confirm Password
+                            </label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required 
+                                   placeholder="Confirm your password" autocomplete="new-password">
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" name="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to the <a href="/terms" target="_blank">Terms of Service</a> and 
+                                <a href="/privacy" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="registerBtn">
+                            <i class="bi bi-person-plus"></i> Create Account
+                        </button>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-2">Already have an account?</p>
+                        <a href="/user/login" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-box-arrow-in-right"></i> Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.className = 'bi bi-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.className = 'bi bi-eye';
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const registerBtn = document.getElementById('registerBtn');
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const agreeTerms = document.getElementById('agreeTerms').checked;
+        
+        // Validation
+        if (!name || !email || !phone || !password || !confirmPassword) {
+            e.preventDefault();
+            alert('Please fill in all fields');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('Passwords do not match');
+            return;
+        }
+        
+        if (password.length < 6) {
+            e.preventDefault();
+            alert('Password must be at least 6 characters long');
+            return;
+        }
+        
+        if (!agreeTerms) {
+            e.preventDefault();
+            alert('Please agree to the Terms of Service and Privacy Policy');
+            return;
+        }
+        
+        // Show loading state
+        registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Creating Account...';
+        registerBtn.disabled = true;
+    });
+    
+    // Clear any existing tokens on load
+    localStorage.removeItem('userToken');
+</script>

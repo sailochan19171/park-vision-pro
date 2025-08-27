@@ -1,0 +1,1236 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard Overview</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshDashboard()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Users</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalUsers">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Bookings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeBookings">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Revenue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRevenue">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-rupee fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Occupancy Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="occupancyRate">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-pie-chart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Today's Activity</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow">
+                            <a class="dropdown-item" href="#">Action</a>
+                            <a class="dropdown-item" href="#">Another action</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">Something else here</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                </div>
+                <div class="card-body" id="recentActivity">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Statistics -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Stats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="quickStats">
+                        <div class="col-6 border-end text-center">
+                            <div class="h5 mb-0" id="todayBookings">Loading...</div>
+                            <small class="text-muted">Today's Bookings</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="h5 mb-0" id="pendingPayments">Loading...</div>
+                            <small class="text-muted">Pending Payments</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6 border-end text-center">
+                            <div class="h5 mb-0" id="totalVehicles">Loading...</div>
+                            <small class="text-muted">Registered Vehicles</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="h5 mb-0" id="systemAlerts">Loading...</div>
+                            <small class="text-muted">System Alerts</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">System Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-check-circle text-white"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="fw-bold">System Online</div>
+                            <div class="text-muted small">All services operational</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <div class="bg-info rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-database text-white"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Database Connected</div>
+                            <div class="text-muted small">Response time: 23ms</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-cloud text-white"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="fw-bold">Last Backup</div>
+                            <div class="text-muted small">2 hours ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Call Recordings Section -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">🤖 AI Call Agent Recordings</h6>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-info me-2" id="aiCallCount">0 Calls</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshAICallRecordings()">
+                            <i class="bi bi-arrow-clockwise"></i> Sync
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- AI Call Analytics Cards -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card border-left-info h-100">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-telephone text-info fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-weight-bold text-info text-uppercase">Total AI Calls</div>
+                                            <div class="h6 mb-0 font-weight-bold" id="totalAICalls">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-left-success h-100">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-calendar-day text-success fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-weight-bold text-success text-uppercase">Today's Calls</div>
+                                            <div class="h6 mb-0 font-weight-bold" id="todayAICalls">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-left-warning h-100">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-clock text-warning fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase">Avg Duration</div>
+                                            <div class="h6 mb-0 font-weight-bold" id="avgAIDuration">0m</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-left-primary h-100">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="bi bi-check-circle text-primary fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase">Completed</div>
+                                            <div class="h6 mb-0 font-weight-bold" id="completedAICalls">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Call Recordings Table -->
+                    <div class="table-responsive" id="aiCallRecordingsContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading AI call recordings...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading AI call recordings...</p>
+                        </div>
+                    </div>
+
+                    <!-- Last Sync Info -->
+                    <div class="mt-3 text-end">
+                        <small class="text-muted">Last synced: <span id="lastSyncTime">Never</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+    .text-xs {
+        font-size: 0.7rem;
+    }
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    setupRealTimeUpdates();
+});
+
+async function loadDashboardData() {
+    try {
+        const response = await fetch('/api/admin/dashboard', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+            window.location.href = '/admin/login';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update stats cards - check if elements exist
+            const totalUsers = document.getElementById('totalUsers');
+            const activeBookings = document.getElementById('activeBookings');
+            const totalRevenue = document.getElementById('totalRevenue');
+            const occupancyRate = document.getElementById('occupancyRate');
+            
+            if (totalUsers) totalUsers.textContent = data.stats.totalUsers.toLocaleString();
+            if (activeBookings) activeBookings.textContent = data.stats.activeBookings.toLocaleString();
+            if (totalRevenue) totalRevenue.textContent = '₹' + data.stats.totalRevenue.toLocaleString();
+            if (occupancyRate) occupancyRate.textContent = data.stats.occupancyRate + '%';
+            
+            // Update quick stats - check if elements exist
+            const todayBookings = document.getElementById('todayBookings');
+            const pendingPayments = document.getElementById('pendingPayments');
+            const totalVehicles = document.getElementById('totalVehicles');
+            const systemAlerts = document.getElementById('systemAlerts');
+            
+            if (todayBookings) todayBookings.textContent = data.stats.todayBookings;
+            if (pendingPayments) pendingPayments.textContent = data.stats.pendingPayments;
+            if (totalVehicles) totalVehicles.textContent = data.stats.totalVehicles.toLocaleString();
+            if (systemAlerts) systemAlerts.textContent = data.stats.systemAlerts;
+            
+            // Update recent activity - check if element exists
+            const recentActivity = document.getElementById('recentActivity');
+            if (recentActivity && data.recentActivity) {
+                const activityHtml = data.recentActivity.map(activity => `
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <div class="bg-${getActivityColor(activity.type)} rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                <i class="bi bi-${getActivityIcon(activity.type)} text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small fw-bold">${activity.user}</div>
+                            <div class="small text-muted">${activity.action}</div>
+                        </div>
+                        <div class="small text-muted">${activity.time}</div>
+                    </div>
+                `).join('');
+                
+                recentActivity.innerHTML = activityHtml;
+            }
+            
+            // Create activity chart - check if element exists and data available
+            const chartElement = document.getElementById('activityChart');
+            if (chartElement && data.todayChart) {
+                const ctx = chartElement.getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (window.dashboardChart) {
+                    window.dashboardChart.destroy();
+                }
+                
+                window.dashboardChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.todayChart.map(item => item.hour),
+                    datasets: [{
+                        label: 'Bookings',
+                        data: data.todayChart.map(item => item.bookings),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.1
+                    }, {
+                        label: 'Revenue (₹)',
+                        data: data.todayChart.map(item => item.revenue),
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Bookings'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Revenue (₹)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            }
+                        }
+                    }
+                }
+            });
+            
+        } else {
+            console.error('Failed to load dashboard data');
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        
+        // Show error message to user for all loading elements
+        const loadingElements = [
+            'totalUsers', 'activeBookings', 'totalRevenue', 'occupancyRate',
+            'todayBookings', 'pendingPayments', 'totalVehicles', 'systemAlerts'
+        ];
+        
+        loadingElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element && element.textContent === 'Loading...') {
+                element.textContent = 'Error';
+            }
+        });
+        
+        // Show error notification
+        showNotification('Failed to load dashboard data. Please refresh the page.', 'danger');
+        
+        // Update recent activity with error message
+        const recentActivity = document.getElementById('recentActivity');
+        if (recentActivity) {
+            recentActivity.innerHTML = '<div class="text-center text-danger">Error loading activity data</div>';
+        }
+    }
+}
+
+function getActivityColor(type) {
+    const colors = {
+        'booking': 'primary',
+        'payment': 'success',
+        'user': 'info',
+        'vehicle': 'warning'
+    };
+    return colors[type] || 'secondary';
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'booking': 'calendar-check',
+        'payment': 'currency-rupee',
+        'user': 'person-plus',
+        'vehicle': 'car-front'
+    };
+    return icons[type] || 'info-circle';
+}
+
+function refreshDashboard() {
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Refreshing...';
+    btn.disabled = true;
+    
+    loadDashboardData().then(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        showNotification('Dashboard refreshed successfully!', 'success');
+    });
+}
+
+function setupRealTimeUpdates() {
+    // Update dashboard every 30 seconds
+    setInterval(() => {
+        loadDashboardData();
+    }, 30000);
+}
+
+function showNotification(message, type) {
+    // Create a simple notification
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 3000);
+}
+</script>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Occupied Spots</h5>
+                                    <h2 class="mb-0" id="occupiedSpots">186 / 250</h2>
+                                    <small>74% occupancy rate</small>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-p-square-fill" style="font-size: 2.5rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Today's Bookings</h5>
+                                    <h2 class="mb-0" id="todayBookings">89</h2>
+                                    <small>+15% from yesterday</small>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-calendar-check-fill" style="font-size: 2.5rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <!-- Revenue Chart -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Revenue Analytics</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Quick Stats</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Available Spots</span>
+                                    <strong>64</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 26%" aria-valuenow="26" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>New Users Today</span>
+                                    <strong>23</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>System Health</span>
+                                    <strong>98%</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 98%" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Support Tickets</span>
+                                    <strong>5 Open</strong>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <!-- Recent Activity -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Recent Activity</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-person-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1"><strong>New user registered</strong></p>
+                                    <small class="text-muted">John Smith joined the platform</small>
+                                </div>
+                                <small class="text-muted">2 min ago</small>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-calendar-check"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1"><strong>Booking completed</strong></p>
+                                    <small class="text-muted">Payment received for #BK001</small>
+                                </div>
+                                <small class="text-muted">5 min ago</small>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1"><strong>System alert</strong></p>
+                                    <small class="text-muted">High server load detected</small>
+                                </div>
+                                <small class="text-muted">15 min ago</small>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                        <i class="bi bi-gear"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1"><strong>Settings updated</strong></p>
+                                    <small class="text-muted">Parking rates modified</small>
+                                </div>
+                                <small class="text-muted">1 hour ago</small>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="btn btn-outline-primary btn-sm">View All Activity</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Locations -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Top Performing Locations</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">City Mall Parking</h6>
+                                    <small class="text-muted">Downtown • 50 spots</small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-success">₹12,450</h6>
+                                    <small class="text-success">+8%</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">Tech Park Complex</h6>
+                                    <small class="text-muted">Business District • 75 spots</small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-success">₹10,230</h6>
+                                    <small class="text-success">+12%</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">Shopping Center</h6>
+                                    <small class="text-muted">Retail Area • 100 spots</small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-success">₹8,890</h6>
+                                    <small class="text-success">+5%</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">Airport Terminal</h6>
+                                    <small class="text-muted">Transportation • 200 spots</small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-success">₹15,670</h6>
+                                    <small class="text-success">+18%</small>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button class="btn btn-outline-primary btn-sm" onclick="window.location.href='/admin/analytics'">
+                                    View Detailed Analytics
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts & Notifications -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">System Alerts & Notifications</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Server Load Warning:</strong> Current server load is at 85%. Consider scaling resources if this persists.
+                            </div>
+                            
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                <strong>Scheduled Maintenance:</strong> System maintenance is scheduled for tomorrow at 2:00 AM. Duration: 30 minutes.
+                            </div>
+                            
+                            <div class="alert alert-success" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                <strong>Backup Completed:</strong> Daily database backup was completed successfully at 3:00 AM.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dashboard functions
+async function refreshDashboard() {
+    console.log('Refreshing dashboard data...');
+    showAlert('Refreshing dashboard...', 'info');
+    
+    try {
+        const response = await fetch('/api/admin/dashboard', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            updateDashboardStats(data.data);
+            showAlert('Dashboard updated successfully!', 'success');
+        } else {
+            throw new Error(data.message || 'Failed to fetch dashboard stats');
+        }
+    } catch (error) {
+        console.error('Error refreshing dashboard:', error);
+        showAlert('Error refreshing dashboard: ' + error.message, 'danger');
+    }
+}
+
+function updateDashboardStats(data) {
+    document.getElementById('totalRevenue').textContent = `₹${data.totalRevenue.toLocaleString()}`;
+    document.getElementById('activeUsers').textContent = data.activeUsers.toLocaleString();
+    document.getElementById('occupiedSpots').textContent = `${data.occupiedSpots} / ${data.totalSpots}`;
+    document.getElementById('todayBookings').textContent = data.todayBookings.toString();
+    
+    // Update occupancy rate display
+    const occupancyPercentage = Math.round((data.occupiedSpots / data.totalSpots) * 100);
+    const occupancyText = document.querySelector('.card-body small');
+    if (occupancyText && occupancyText.textContent.includes('occupancy')) {
+        occupancyText.textContent = `${occupancyPercentage}% occupancy rate`;
+    }
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1055; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize revenue chart
+function initializeRevenueChart() {
+    const canvas = document.getElementById('revenueChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Simple line chart representation (in production, use Chart.js)
+    ctx.strokeStyle = '#007bff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(50, 200);
+    ctx.lineTo(100, 180);
+    ctx.lineTo(150, 160);
+    ctx.lineTo(200, 140);
+    ctx.lineTo(250, 120);
+    ctx.lineTo(300, 100);
+    ctx.lineTo(350, 90);
+    ctx.stroke();
+    
+    // Add data points
+    ctx.fillStyle = '#007bff';
+    [50, 100, 150, 200, 250, 300, 350].forEach(x => {
+        ctx.beginPath();
+        ctx.arc(x, 200 - (x - 50) * 0.4, 4, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+    
+    // Add labels
+    ctx.fillStyle = '#333';
+    ctx.font = '12px Arial';
+    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'].forEach((month, i) => {
+        ctx.fillText(month, 40 + i * 50, 220);
+    });
+    
+    // Add title
+    ctx.fillStyle = '#666';
+    ctx.font = '14px Arial';
+    ctx.fillText('Monthly Revenue Trend', 150, 30);
+}
+
+// Real-time updates simulation
+function updateRealTimeData() {
+    // Simulate real-time data updates
+    const occupiedSpots = document.getElementById('occupiedSpots');
+    const todayBookings = document.getElementById('todayBookings');
+    
+    // This would be replaced with actual WebSocket or API calls
+    setInterval(() => {
+        const currentOccupied = Math.floor(Math.random() * 20) + 170; // Random between 170-190
+        occupiedSpots.textContent = `${currentOccupied} / 250`;
+        
+        const currentBookings = Math.floor(Math.random() * 10) + 85; // Random between 85-95
+        todayBookings.textContent = currentBookings.toString();
+    }, 10000); // Update every 10 seconds
+}
+
+// AI Call Recording Functions
+async function loadAICallRecordings() {
+    try {
+        const response = await fetch('/api/admin/ai-call-recordings', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            updateAICallAnalytics(result.analytics);
+            renderAICallRecordings(result.recordings);
+            updateLastSyncTime(result.lastSyncTime);
+            
+            // Store recordings globally for transcript viewing
+            window.aiCallRecordings = result.recordings;
+        }
+    } catch (error) {
+        console.error('Failed to load AI call recordings:', error);
+        
+        // Show empty state
+        const container = document.getElementById('aiCallRecordingsContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-robot fs-1 text-muted mb-3"></i>
+                    <p class="text-muted">No AI call recordings available</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshAICallRecordings()">
+                        <i class="bi bi-arrow-clockwise"></i> Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+function updateAICallAnalytics(analytics) {
+    const totalCalls = document.getElementById('totalAICalls');
+    const todayCalls = document.getElementById('todayAICalls');
+    const avgDuration = document.getElementById('avgAIDuration');
+    const completedCalls = document.getElementById('completedAICalls');
+    const callCount = document.getElementById('aiCallCount');
+
+    if (totalCalls) totalCalls.textContent = analytics.totalCalls || 0;
+    if (todayCalls) todayCalls.textContent = analytics.todayCalls || 0;
+    if (avgDuration) avgDuration.textContent = Math.round(analytics.averageDuration || 0) + 's';
+    if (completedCalls) completedCalls.textContent = analytics.completedCalls || 0;
+    if (callCount) callCount.textContent = (analytics.totalCalls || 0) + ' Calls';
+}
+
+function renderAICallRecordings(recordings) {
+    const container = document.getElementById('aiCallRecordingsContainer');
+    
+    if (!container) return;
+    
+    if (!recordings || recordings.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-robot fs-1 text-muted mb-3"></i>
+                <p class="text-muted">No AI call recordings yet</p>
+                <small class="text-muted">Recordings will appear here after customers use the AI Call Agent</small>
+            </div>
+        `;
+        return;
+    }
+
+    const recordingsHtml = `
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Session</th>
+                    <th>Customer</th>
+                    <th>Date & Time</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Messages</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${recordings.map(recording => `
+                    <tr>
+                        <td>
+                            <code class="text-primary">${recording.sessionId.substring(0, 8)}...</code>
+                        </td>
+                        <td>
+                            <div>
+                                <strong>${recording.customerName || 'Anonymous'}</strong>
+                                ${recording.customerPhone ? `<br><small class="text-muted">${recording.customerPhone}</small>` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <small>${new Date(recording.startTime).toLocaleString()}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">${Math.round(recording.duration || 0)}s</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-${getCallStatusColor(recording.status)}">
+                                ${recording.status}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">${(recording.conversationHistory || []).length} msgs</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewCallTranscript('${recording.sessionId}')">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+
+    container.innerHTML = recordingsHtml;
+}
+
+function getCallStatusColor(status) {
+    const colors = {
+        'completed': 'success',
+        'active': 'warning', 
+        'failed': 'danger',
+        'initiated': 'info'
+    };
+    return colors[status] || 'secondary';
+}
+
+function updateLastSyncTime(syncTime) {
+    const element = document.getElementById('lastSyncTime');
+    if (element && syncTime) {
+        element.textContent = new Date(syncTime).toLocaleString();
+    }
+}
+
+async function refreshAICallRecordings() {
+    const btn = event?.target?.closest('button');
+    if (btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Syncing...';
+        btn.disabled = true;
+    }
+
+    try {
+        // First sync from AI backend
+        await fetch('http://localhost:3001/api/admin/sync-call-recordings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Then load the recordings
+        await loadAICallRecordings();
+        
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+        
+        // Show success notification using existing function
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alert.innerHTML = `
+            ✅ AI call recordings synced successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+        setTimeout(() => alert.remove(), 3000);
+        
+    } catch (error) {
+        console.error('Failed to sync AI call recordings:', error);
+        
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+}
+
+function viewCallTranscript(sessionId) {
+    // Find the recording
+    const recordings = window.aiCallRecordings || [];
+    const recording = recordings.find(r => r.sessionId === sessionId);
+    
+    if (!recording || !recording.conversationHistory) {
+        alert('Conversation transcript not available');
+        return;
+    }
+
+    // Create modal with conversation transcript
+    const modalHtml = `
+        <div class="modal fade" id="transcriptModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            🤖 AI Call Transcript - ${recording.customerName || 'Anonymous'}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3 p-3 bg-light rounded">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Customer:</strong> ${recording.customerName || 'Anonymous'}<br>
+                                    <strong>Phone:</strong> ${recording.customerPhone || 'Not provided'}<br>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Duration:</strong> ${Math.round(recording.duration || 0)} seconds<br>
+                                    <strong>Status:</strong> ${recording.status}
+                                </div>
+                            </div>
+                            ${recording.summary ? `<div class="mt-2"><strong>Summary:</strong> ${recording.summary}</div>` : ''}
+                        </div>
+                        <div class="conversation-transcript" style="max-height: 400px; overflow-y: auto;">
+                            ${recording.conversationHistory.map(msg => `
+                                <div class="d-flex mb-3 ${msg.speaker === 'customer' ? 'justify-content-end' : ''}">
+                                    <div class="card ${msg.speaker === 'customer' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 75%;">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <i class="bi bi-${msg.speaker === 'customer' ? 'person' : 'robot'} me-1"></i>
+                                                <small><strong>${msg.speaker === 'customer' ? 'Customer' : 'AI Agent'}</strong></small>
+                                                <small class="ms-auto opacity-75">
+                                                    ${new Date(msg.timestamp).toLocaleTimeString()}
+                                                </small>
+                                            </div>
+                                            <div>${msg.message}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="exportTranscript('${sessionId}')">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal
+    const existingModal = document.getElementById('transcriptModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('transcriptModal'));
+    modal.show();
+}
+
+function exportTranscript(sessionId) {
+    const recordings = window.aiCallRecordings || [];
+    const recording = recordings.find(r => r.sessionId === sessionId);
+    
+    if (!recording) {
+        alert('Recording not found');
+        return;
+    }
+
+    const transcript = `AI CALL TRANSCRIPT
+==================
+
+Session ID: ${recording.sessionId}
+Customer: ${recording.customerName || 'Anonymous'}
+Phone: ${recording.customerPhone || 'Not provided'}  
+Start Time: ${new Date(recording.startTime).toLocaleString()}
+Duration: ${Math.round(recording.duration || 0)} seconds
+Status: ${recording.status}
+
+SUMMARY:
+${recording.summary || 'No summary available'}
+
+CONVERSATION:
+${recording.conversationHistory.map(msg => 
+    `[${new Date(msg.timestamp).toLocaleTimeString()}] ${msg.speaker.toUpperCase()}: ${msg.message}`
+).join('\n')}
+
+---
+Generated by VayAccess AI Call Agent System`;
+
+    const blob = new Blob([transcript], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai-call-transcript-${sessionId.substring(0, 8)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeRevenueChart();
+    updateRealTimeData();
+    refreshDashboard(); // Load initial data
+    
+    // Auto-refresh dashboard every 5 minutes
+    setInterval(refreshDashboard, 300000);
+    
+    // Load AI call recordings
+    loadAICallRecordings();
+    
+    // Set up auto-refresh for AI calls every 2 minutes  
+    setInterval(loadAICallRecordings, 120000);
+});
+</script>

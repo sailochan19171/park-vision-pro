@@ -1,0 +1,1207 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Payment History</h2>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="downloadStatement()">
+                        <i class="bi bi-download"></i> Download Statement
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="refreshPayments()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Spent</h5>
+                                    <h2 class="mb-0" id="totalSpent">₹12,450</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-currency-rupee" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">This Month</h5>
+                                    <h2 class="mb-0" id="monthlySpent">₹1,890</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-calendar3" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Last Payment</h5>
+                                    <h2 class="mb-0" id="lastPayment">₹150</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-credit-card-fill" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Pending</h5>
+                                    <h2 class="mb-0" id="pendingAmount">₹0</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-clock-fill" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-credit-card"></i> Saved Payment Methods
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <i class="bi bi-credit-card-fill text-primary" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <strong>•••• •••• •••• 1234</strong><br>
+                                    <small class="text-muted">Visa ending in 1234 • Expires 12/26</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success">Default</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <i class="bi bi-paypal text-info" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <strong>PayPal</strong><br>
+                                    <small class="text-muted">john.doe@example.com</small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm w-100" onclick="showAddPaymentMethodModal()">
+                                <i class="bi bi-plus-circle"></i> Add Payment Method
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-graph-up"></i> Monthly Spending
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="monthlySpendingChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="transactionSearch" placeholder="Search transactions">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                                <option value="failed">Failed</option>
+                                <option value="refunded">Refunded</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="typeFilter">
+                                <option value="">All Types</option>
+                                <option value="booking">Booking Payment</option>
+                                <option value="extension">Extension Fee</option>
+                                <option value="penalty">Penalty</option>
+                                <option value="refund">Refund</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" class="form-control" id="dateFromFilter">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" class="form-control" id="dateToFilter">
+                        </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-primary w-100" onclick="filterPayments()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Transactions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Transaction History</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Completed Payment -->
+                    <div class="d-flex align-items-center py-3 border-bottom">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Parking Payment</h6>
+                                    <p class="mb-1 text-muted">Booking #BK001 - City Mall Spot A-12</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3"></i> Dec 16, 2024, 10:30 AM
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-credit-card"></i> Visa ••1234
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-success">₹150.00</h6>
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="downloadReceipt('TXN001')">
+                                        <i class="bi bi-download"></i> Download Receipt
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="viewTransaction('TXN001')">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completed Payment -->
+                    <div class="d-flex align-items-center py-3 border-bottom">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Parking Payment</h6>
+                                    <p class="mb-1 text-muted">Booking #BK002 - Tech Park Spot B-05</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3"></i> Dec 15, 2024, 9:00 AM
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-paypal text-info"></i> PayPal
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-success">₹480.00</h6>
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="downloadReceipt('TXN002')">
+                                        <i class="bi bi-download"></i> Download Receipt
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="viewTransaction('TXN002')">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Refunded Payment -->
+                    <div class="d-flex align-items-center py-3 border-bottom">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-arrow-return-left"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Refund Processed</h6>
+                                    <p class="mb-1 text-muted">Cancelled Booking #BK003 - Shopping Center</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3"></i> Dec 14, 2024, 2:45 PM
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-credit-card"></i> Visa ••1234
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-warning">+₹200.00</h6>
+                                    <span class="badge bg-warning">Refunded</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="downloadReceipt('TXN003')">
+                                        <i class="bi bi-download"></i> Download Receipt
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="viewTransaction('TXN003')">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Failed Payment -->
+                    <div class="d-flex align-items-center py-3 border-bottom">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Payment Failed</h6>
+                                    <p class="mb-1 text-muted">Booking #BK004 - Downtown Parking</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3"></i> Dec 13, 2024, 3:15 PM
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-credit-card"></i> Visa ••1234
+                                        <span class="text-danger ms-2">Insufficient funds</span>
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-danger">₹120.00</h6>
+                                    <span class="badge bg-danger">Failed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <button class="btn btn-sm btn-outline-primary" onclick="retryPayment('TXN004')">
+                                <i class="bi bi-arrow-clockwise"></i> Retry
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Extension Fee -->
+                    <div class="d-flex align-items-center py-3">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-info text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Extension Fee</h6>
+                                    <p class="mb-1 text-muted">Extended Booking #BK005 - City Mall</p>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3"></i> Dec 12, 2024, 1:30 PM
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-credit-card"></i> Visa ••1234
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="mb-1 text-success">₹75.00</h6>
+                                    <span class="badge bg-success">Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="downloadReceipt('TXN005')">
+                                        <i class="bi bi-download"></i> Download Receipt
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="viewTransaction('TXN005')">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More Button -->
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-primary" onclick="loadMoreTransactions()">
+                    <i class="bi bi-arrow-down-circle"></i> Load More Transactions
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Payment Method Modal -->
+<div class="modal fade" id="addPaymentMethodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Payment Method</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPaymentMethodForm">
+                    <div class="mb-3">
+                        <label class="form-label">Payment Type</label>
+                        <select class="form-select" id="paymentType" required>
+                            <option value="">Select payment type</option>
+                            <option value="card">Credit/Debit Card</option>
+                            <option value="upi">UPI</option>
+                            <option value="wallet">Digital Wallet</option>
+                        </select>
+                    </div>
+                    
+                    <div id="cardDetails" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Card Number</label>
+                            <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CVV</label>
+                                <input type="text" class="form-control" id="cvv" placeholder="123" maxlength="4">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cardholder Name</label>
+                            <input type="text" class="form-control" id="holderName" placeholder="John Doe">
+                        </div>
+                    </div>
+                    
+                    <div id="upiDetails" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">UPI ID</label>
+                            <input type="text" class="form-control" id="upiId" placeholder="user@paytm">
+                        </div>
+                    </div>
+                    
+                    <div id="walletDetails" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Wallet Provider</label>
+                            <select class="form-select" id="walletProvider">
+                                <option value="">Select wallet</option>
+                                <option value="paytm">Paytm</option>
+                                <option value="phonepe">PhonePe</option>
+                                <option value="googlepay">Google Pay</option>
+                                <option value="amazonpay">Amazon Pay</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Wallet ID/Phone</label>
+                            <input type="text" class="form-control" id="walletId" placeholder="9876543210">
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="setAsDefault">
+                        <label class="form-check-label" for="setAsDefault">
+                            Set as default payment method
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addPaymentMethod()">Add Payment Method</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Process Payment Modal -->
+<div class="modal fade" id="processPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Process Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="processPaymentForm">
+                    <div class="mb-3">
+                        <label class="form-label">Booking ID</label>
+                        <input type="text" class="form-control" id="bookingId" placeholder="BK001" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount (₹)</label>
+                        <input type="number" class="form-control" id="paymentAmount" placeholder="150" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" id="selectedPaymentMethod" required>
+                            <option value="">Select payment method</option>
+                            <option value="upi">UPI</option>
+                            <option value="card">Credit/Debit Card</option>
+                            <option value="wallet">Digital Wallet</option>
+                            <option value="cash">Cash</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="paymentDescription" rows="2" placeholder="Parking fee payment"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="processPayment()">
+                    <i class="bi bi-credit-card"></i> Process Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Payment management functions
+async function refreshPayments() {
+    console.log('Refreshing payment history...');
+    showAlert('Refreshing payment data...', 'info');
+    
+    try {
+        // Reset pagination
+        currentPage = 1;
+        
+        // Fetch payment history and initial transactions
+        const [historyResponse, transactionsResponse] = await Promise.all([
+            fetch('http://localhost:3000/api/user/payments/history'),
+            fetch('http://localhost:3000/api/user/payments/transactions?page=1&limit=10')
+        ]);
+        
+        const historyData = await historyResponse.json();
+        const transactionsData = await transactionsResponse.json();
+        
+        if (historyData.success && transactionsData.success) {
+            updatePaymentStats(historyData.data);
+            updatePaymentTransactions(transactionsData.data.transactions);
+            
+            // Show/hide load more button based on pagination
+            const loadMoreBtn = document.querySelector('button[onclick="loadMoreTransactions()"]');
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = transactionsData.data.pagination.hasMore ? 'block' : 'none';
+            }
+            
+            showAlert('Payments refreshed successfully!', 'success');
+        } else {
+            throw new Error(historyData.message || transactionsData.message || 'Failed to fetch payment data');
+        }
+    } catch (error) {
+        console.error('Error refreshing payments:', error);
+        showAlert('Error refreshing payments: ' + error.message, 'danger');
+    }
+}
+
+function updatePaymentStats(data) {
+    document.getElementById('totalSpent').textContent = `₹${data.totalSpent.toLocaleString()}`;
+    document.getElementById('monthlySpent').textContent = `₹${data.monthlySpent.toLocaleString()}`;
+    document.getElementById('lastPayment').textContent = `₹${data.lastPayment}`;
+    document.getElementById('pendingAmount').textContent = `₹${data.pending}`;
+}
+
+function updatePaymentTransactions(transactions) {
+    console.log('Updating transactions table with:', transactions);
+    
+    const tableBody = document.querySelector('#transactionHistory tbody');
+    if (!tableBody) {
+        console.error('Transaction table body not found');
+        return;
+    }
+    
+    // Clear existing rows
+    tableBody.innerHTML = '';
+    
+    // Add new transactions
+    transactions.forEach(transaction => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${transaction.id}</strong></td>
+            <td>${transaction.type}</td>
+            <td><strong>₹${transaction.amount}</strong></td>
+            <td>
+                <span class="badge bg-${transaction.status === 'completed' ? 'success' : transaction.status === 'pending' ? 'warning' : transaction.status === 'refunded' ? 'info' : 'danger'}">
+                    ${transaction.status}
+                </span>
+            </td>
+            <td>${new Date(transaction.date).toLocaleDateString()}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewTransaction('${transaction.id}')" title="View Details">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadReceipt('${transaction.id}')" title="Download Receipt">
+                        <i class="bi bi-download"></i>
+                    </button>
+                    ${transaction.status === 'failed' ? `
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="retryPayment('${transaction.id}')" title="Retry Payment">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+    
+    // If no transactions, show a message
+    if (transactions.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="6" class="text-center text-muted py-4">
+                <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                No transactions found
+            </td>
+        `;
+        tableBody.appendChild(row);
+    }
+}
+
+async function filterPayments() {
+    const search = document.getElementById('transactionSearch').value;
+    const status = document.getElementById('statusFilter').value;
+    const type = document.getElementById('typeFilter').value;
+    const dateFrom = document.getElementById('dateFromFilter').value;
+    const dateTo = document.getElementById('dateToFilter').value;
+    
+    console.log('Filtering payments:', { search, status, type, dateFrom, dateTo });
+    showAlert('Filtering transactions...', 'info');
+    
+    try {
+        // Reset pagination
+        currentPage = 1;
+        
+        const params = new URLSearchParams({
+            page: 1,
+            limit: 10,
+            ...(search && { search }),
+            ...(status && status !== 'all' && { status }),
+            ...(type && type !== 'all' && { type })
+        });
+        
+        const response = await fetch(`http://localhost:3000/api/user/payments/transactions?${params}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            updatePaymentTransactions(result.data.transactions);
+            
+            // Show/hide load more button based on pagination
+            const loadMoreBtn = document.querySelector('button[onclick="loadMoreTransactions()"]');
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = result.data.pagination.hasMore ? 'block' : 'none';
+            }
+            
+            showAlert(`Found ${result.data.pagination.totalRecords} transactions`, 'success');
+        } else {
+            showAlert('Failed to filter transactions: ' + result.message, 'danger');
+        }
+    } catch (error) {
+        console.error('Error filtering payments:', error);
+        showAlert('Error filtering transactions: ' + error.message, 'danger');
+    }
+}
+
+async function downloadStatement() {
+    try {
+        showAlert('Generating payment statement...', 'info');
+        
+        const dateFrom = document.getElementById('dateFromFilter').value;
+        const dateTo = document.getElementById('dateToFilter').value;
+        
+        const params = new URLSearchParams({
+            startDate: dateFrom || '2024-01-01',
+            endDate: dateTo || new Date().toISOString().split('T')[0],
+            format: 'pdf'
+        });
+        
+        const response = await fetch(`http://localhost:3000/api/user/payments/statement?${params}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert(`Statement generated successfully! ${result.data.recordCount} transactions included.`, 'success');
+            
+            // Simulate download
+            const link = document.createElement('a');
+            link.href = '#';
+            link.download = `payment-statement-${Date.now()}.pdf`;
+            link.click();
+            
+            console.log('Statement details:', result.data);
+        } else {
+            showAlert('Failed to generate statement: ' + result.message, 'danger');
+        }
+    } catch (error) {
+        console.error('Error downloading statement:', error);
+        showAlert('Error downloading statement: ' + error.message, 'danger');
+    }
+}
+
+async function downloadReceipt(transactionId) {
+    try {
+        showAlert('Generating receipt...', 'info');
+        
+        const response = await fetch(`http://localhost:3000/api/payments/receipt/${transactionId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('Receipt downloaded successfully!', 'success');
+            
+            // Simulate download
+            const link = document.createElement('a');
+            link.href = '#';
+            link.download = `receipt-${transactionId}.pdf`;
+            link.click();
+            
+            console.log('Receipt details:', result.data);
+        } else {
+            showAlert('Failed to generate receipt: ' + result.message, 'danger');
+        }
+    } catch (error) {
+        console.error('Error downloading receipt:', error);
+        showAlert('Error downloading receipt: ' + error.message, 'danger');
+    }
+}
+
+async function viewTransaction(transactionId) {
+    try {
+        showAlert('Loading transaction details...', 'info');
+        
+        const response = await fetch(`http://localhost:3000/api/user/payments/transaction/${transactionId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const transaction = result.data;
+            
+            // Create and show transaction details modal
+            const modalHtml = `
+                <div class="modal fade" id="transactionDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Transaction Details - ${transaction.id}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Transaction Information</h6>
+                                        <p><strong>ID:</strong> ${transaction.id}</p>
+                                        <p><strong>Amount:</strong> ₹${transaction.amount}</p>
+                                        <p><strong>Status:</strong> <span class="badge bg-${transaction.status === 'completed' ? 'success' : transaction.status === 'pending' ? 'warning' : 'danger'}">${transaction.status}</span></p>
+                                        <p><strong>Method:</strong> ${transaction.method}</p>
+                                        <p><strong>Date:</strong> ${new Date(transaction.date).toLocaleString()}</p>
+                                        <p><strong>Type:</strong> ${transaction.type}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Booking Details</h6>
+                                        <p><strong>Booking ID:</strong> ${transaction.bookingId}</p>
+                                        <p><strong>Location:</strong> ${transaction.details.location}</p>
+                                        <p><strong>Vehicle:</strong> ${transaction.details.vehicleNumber}</p>
+                                        <p><strong>Spot:</strong> ${transaction.details.spotNumber}</p>
+                                        <p><strong>Duration:</strong> ${transaction.details.duration}</p>
+                                        <p><strong>Entry:</strong> ${new Date(transaction.details.entryTime).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <h6>Description</h6>
+                                    <p>${transaction.description}</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="downloadReceipt('${transaction.id}')">
+                                    <i class="bi bi-download"></i> Download Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('transactionDetailsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add new modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('transactionDetailsModal'));
+            modal.show();
+            
+            showAlert('Transaction details loaded successfully!', 'success');
+        } else {
+            showAlert('Failed to load transaction details: ' + result.message, 'danger');
+        }
+    } catch (error) {
+        console.error('Error viewing transaction:', error);
+        showAlert('Error loading transaction details: ' + error.message, 'danger');
+    }
+}
+
+async function retryPayment(transactionId) {
+    if (confirm('Are you sure you want to retry this payment?')) {
+        try {
+            showAlert('Retrying payment...', 'info');
+            
+            const response = await fetch(`http://localhost:3000/api/user/payments/${transactionId}/retry`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    method: 'upi',
+                    amount: 150
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showAlert(`Payment retry successful! New Transaction ID: ${result.data.newTransactionId}`, 'success');
+                
+                // Refresh payments to show updated status
+                setTimeout(() => {
+                    refreshPayments();
+                }, 1000);
+            } else {
+                showAlert('Payment retry failed: ' + result.message, 'danger');
+            }
+        } catch (error) {
+            console.error('Error retrying payment:', error);
+            showAlert('Error retrying payment: ' + error.message, 'danger');
+        }
+    }
+}
+
+let currentPage = 1;
+let isLoading = false;
+
+async function loadMoreTransactions() {
+    if (isLoading) return;
+    
+    try {
+        isLoading = true;
+        showAlert('Loading more transactions...', 'info');
+        
+        const search = document.getElementById('transactionSearch').value;
+        const status = document.getElementById('statusFilter').value;
+        const type = document.getElementById('typeFilter').value;
+        
+        const params = new URLSearchParams({
+            page: currentPage + 1,
+            limit: 10,
+            ...(search && { search }),
+            ...(status && status !== 'all' && { status }),
+            ...(type && type !== 'all' && { type })
+        });
+        
+        const response = await fetch(`http://localhost:3000/api/user/payments/transactions?${params}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const transactions = result.data.transactions;
+            const pagination = result.data.pagination;
+            
+            if (transactions.length > 0) {
+                // Add new transactions to the existing table
+                const tableBody = document.querySelector('#transactionHistory tbody');
+                
+                transactions.forEach(transaction => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${transaction.id}</strong></td>
+                        <td>${transaction.type}</td>
+                        <td><strong>₹${transaction.amount}</strong></td>
+                        <td>
+                            <span class="badge bg-${transaction.status === 'completed' ? 'success' : transaction.status === 'pending' ? 'warning' : 'danger'}">
+                                ${transaction.status}
+                            </span>
+                        </td>
+                        <td>${new Date(transaction.date).toLocaleDateString()}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewTransaction('${transaction.id}')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadReceipt('${transaction.id}')">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                                ${transaction.status === 'failed' ? `
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="retryPayment('${transaction.id}')">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                currentPage = pagination.currentPage;
+                
+                // Hide load more button if no more pages
+                if (!pagination.hasMore) {
+                    const loadMoreBtn = document.querySelector('button[onclick="loadMoreTransactions()"]');
+                    if (loadMoreBtn) {
+                        loadMoreBtn.style.display = 'none';
+                    }
+                }
+                
+                showAlert(`Loaded ${transactions.length} more transactions`, 'success');
+            } else {
+                showAlert('No more transactions to load', 'info');
+            }
+        } else {
+            showAlert('Failed to load more transactions: ' + result.message, 'danger');
+        }
+    } catch (error) {
+        console.error('Error loading more transactions:', error);
+        showAlert('Error loading more transactions: ' + error.message, 'danger');
+    } finally {
+        isLoading = false;
+    }
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1055; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Search functionality
+document.getElementById('transactionSearch').addEventListener('input', function() {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+        filterPayments();
+    }, 500);
+});
+
+// Set default date range (last 3 months)
+const today = new Date();
+const threeMonthsAgo = new Date(today.getTime() - (90 * 24 * 60 * 60 * 1000));
+
+document.getElementById('dateFromFilter').valueAsDate = threeMonthsAgo;
+document.getElementById('dateToFilter').valueAsDate = today;
+
+// Simple chart for monthly spending (placeholder)
+// In a real application, you would use Chart.js or similar library
+function initializeChart() {
+    const canvas = document.getElementById('monthlySpendingChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Simple bar chart representation
+    ctx.fillStyle = '#28a745';
+    ctx.fillRect(20, 180, 30, 20);
+    ctx.fillRect(60, 160, 30, 40);
+    ctx.fillRect(100, 140, 30, 60);
+    ctx.fillRect(140, 120, 30, 80);
+    ctx.fillRect(180, 100, 30, 100);
+    ctx.fillRect(220, 80, 30, 120);
+    
+    ctx.fillStyle = '#333';
+    ctx.font = '12px Arial';
+    ctx.fillText('Jul', 25, 210);
+    ctx.fillText('Aug', 65, 210);
+    ctx.fillText('Sep', 105, 210);
+    ctx.fillText('Oct', 145, 210);
+    ctx.fillText('Nov', 185, 210);
+    ctx.fillText('Dec', 225, 210);
+}
+
+// Payment method modal functions
+function showAddPaymentMethodModal() {
+    const modal = new bootstrap.Modal(document.getElementById('addPaymentMethodModal'));
+    modal.show();
+}
+
+function showProcessPaymentModal() {
+    const modal = new bootstrap.Modal(document.getElementById('processPaymentModal'));
+    modal.show();
+}
+
+// Payment type change handler
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentTypeSelect = document.getElementById('paymentType');
+    if (paymentTypeSelect) {
+        paymentTypeSelect.addEventListener('change', function() {
+            const cardDetails = document.getElementById('cardDetails');
+            const upiDetails = document.getElementById('upiDetails');
+            const walletDetails = document.getElementById('walletDetails');
+            
+            // Hide all details
+            cardDetails.style.display = 'none';
+            upiDetails.style.display = 'none';
+            walletDetails.style.display = 'none';
+            
+            // Show relevant details
+            switch(this.value) {
+                case 'card':
+                    cardDetails.style.display = 'block';
+                    break;
+                case 'upi':
+                    upiDetails.style.display = 'block';
+                    break;
+                case 'wallet':
+                    walletDetails.style.display = 'block';
+                    break;
+            }
+        });
+    }
+    
+    // Format card number input
+    const cardNumberInput = document.getElementById('cardNumber');
+    if (cardNumberInput) {
+        cardNumberInput.addEventListener('input', function() {
+            let value = this.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            this.value = formattedValue;
+        });
+    }
+    
+    // Format expiry date input
+    const expiryDateInput = document.getElementById('expiryDate');
+    if (expiryDateInput) {
+        expiryDateInput.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            this.value = value;
+        });
+    }
+    
+    initializeChart();
+    refreshPayments(); // Load initial data
+});
+
+async function addPaymentMethod() {
+    const paymentType = document.getElementById('paymentType').value;
+    const setAsDefault = document.getElementById('setAsDefault').checked;
+    
+    if (!paymentType) {
+        showAlert('Please select a payment type', 'warning');
+        return;
+    }
+    
+    let paymentData = {
+        type: paymentType,
+        isDefault: setAsDefault
+    };
+    
+    // Collect type-specific data
+    switch(paymentType) {
+        case 'card':
+            const cardNumber = document.getElementById('cardNumber').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            const cvv = document.getElementById('cvv').value;
+            const holderName = document.getElementById('holderName').value;
+            
+            if (!cardNumber || !expiryDate || !cvv || !holderName) {
+                showAlert('Please fill all card details', 'warning');
+                return;
+            }
+            
+            paymentData = {
+                ...paymentData,
+                cardNumber,
+                expiryDate,
+                cvv,
+                holderName
+            };
+            break;
+            
+        case 'upi':
+            const upiId = document.getElementById('upiId').value;
+            if (!upiId) {
+                showAlert('Please enter UPI ID', 'warning');
+                return;
+            }
+            paymentData.upiId = upiId;
+            break;
+            
+        case 'wallet':
+            const walletProvider = document.getElementById('walletProvider').value;
+            const walletId = document.getElementById('walletId').value;
+            if (!walletProvider || !walletId) {
+                showAlert('Please fill wallet details', 'warning');
+                return;
+            }
+            paymentData.walletProvider = walletProvider;
+            paymentData.walletId = walletId;
+            break;
+    }
+    
+    try {
+        const response = await fetch('http://localhost:3000/api/user/payments/add-method', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(paymentData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('Payment method added successfully!', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addPaymentMethodModal'));
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('addPaymentMethodForm').reset();
+            document.getElementById('cardDetails').style.display = 'none';
+            document.getElementById('upiDetails').style.display = 'none';
+            document.getElementById('walletDetails').style.display = 'none';
+            
+            // Refresh payment methods display
+            refreshPayments();
+        } else {
+            showAlert('Failed to add payment method: ' + result.message, 'danger');
+        }
+    } catch (error) {
+        console.error('Error adding payment method:', error);
+        showAlert('Error adding payment method: ' + error.message, 'danger');
+    }
+}
+
+async function processPayment() {
+    const bookingId = document.getElementById('bookingId').value;
+    const amount = document.getElementById('paymentAmount').value;
+    const method = document.getElementById('selectedPaymentMethod').value;
+    const description = document.getElementById('paymentDescription').value;
+    
+    if (!bookingId || !amount || !method) {
+        showAlert('Please fill all required fields', 'warning');
+        return;
+    }
+    
+    try {
+        showAlert('Processing payment...', 'info');
+        
+        const response = await fetch('http://localhost:3000/api/user/payments/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                bookingId,
+                amount: parseFloat(amount),
+                method,
+                description
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('Payment processed successfully! Transaction ID: ' + result.data.transactionId, 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('processPaymentModal'));
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('processPaymentForm').reset();
+            
+            // Refresh payments to show new transaction
+            setTimeout(() => {
+                refreshPayments();
+            }, 1000);
+        } else {
+            showAlert('Payment failed: ' + result.message, 'danger');
+        }
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        showAlert('Error processing payment: ' + error.message, 'danger');
+    }
+}
+
+// Add process payment button to the header
+document.addEventListener('DOMContentLoaded', function() {
+    const headerButtons = document.querySelector('.d-flex.justify-content-between .btn-toolbar');
+    if (headerButtons) {
+        const processPaymentBtn = document.createElement('button');
+        processPaymentBtn.className = 'btn btn-success btn-sm me-2';
+        processPaymentBtn.innerHTML = '<i class="bi bi-credit-card"></i> Process Payment';
+        processPaymentBtn.onclick = showProcessPaymentModal;
+        headerButtons.insertBefore(processPaymentBtn, headerButtons.firstChild);
+    }
+});
+
+// Initialize chart and load data when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChart();
+    refreshPayments(); // Load initial data
+});
+</script>

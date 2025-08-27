@@ -1,156 +1,244 @@
-import { Card, CardContent } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { 
-  Car, 
-  Shield, 
-  Smartphone, 
-  BarChart3, 
-  Camera, 
-  Wifi,
-  ArrowRight,
-  CheckCircle
-} from "lucide-react";
-import parkingGates from "../assets/parking-gates.jpg";
+import { ArrowRight, Car, CreditCard, Receipt, Camera, Navigation, Info, Users, Scan } from "lucide-react";
+
+// Mobile app mockup image - you may need to add this asset
+const mobileAppMockup = "/api/placeholder/300/600"; // Placeholder - replace with actual mobile app image
 
 const Solutions = () => {
+  const navigate = useNavigate();
+
+  const handleViewAllSolutions = () => {
+    navigate('/solutions');
+  };
+
   const solutions = [
     {
-      icon: <Car className="h-8 w-8" />,
-      title: "Smart Turnstiles",
-      description: "Advanced access control with RFID, QR codes, and mobile integration",
-      features: ["Contactless entry", "Real-time monitoring", "Integration ready"],
-      color: "tech-blue"
+      icon: Car,
+      title: "Hybrid ANPR/FASTAG System",
+      description: "Combined automatic number plate recognition with FASTAG integration for seamless vehicle access"
     },
     {
-      icon: <Shield className="h-8 w-8" />,
-      title: "Security Systems", 
-      description: "Comprehensive surveillance and access management solutions",
-      features: ["24/7 monitoring", "Facial recognition", "Alert systems"],
-      color: "success-green"
+      icon: Navigation,
+      title: "Ticketless Parking Management System", 
+      description: "Modern ticketless parking solution with mobile app integration and digital payments"
     },
     {
-      icon: <Smartphone className="h-8 w-8" />,
-      title: "Mobile Solutions",
-      description: "User-friendly mobile apps for seamless parking experience",
-      features: ["Digital payments", "Booking system", "Navigation"],
-      color: "warning-orange"
+      icon: Receipt,
+      title: "Ticket Based Parking Management System",
+      description: "Traditional ticket-based parking system with automated dispensing and validation"
     },
     {
-      icon: <BarChart3 className="h-8 w-8" />,
-      title: "Analytics Dashboard",
-      description: "Real-time insights and comprehensive reporting tools",
-      features: ["Usage analytics", "Revenue tracking", "Predictive insights"],
-      color: "tech-blue"
+      icon: Camera,
+      title: "ANPR Based Vehicle Access Control",
+      description: "Advanced camera-based vehicle recognition system for automated access control"
     },
     {
-      icon: <Camera className="h-8 w-8" />,
-      title: "ANPR Systems",
-      description: "Automatic Number Plate Recognition for efficient vehicle tracking",
-      features: ["License plate scanning", "Vehicle identification", "Traffic flow"],
-      color: "success-green"
+      icon: Navigation,
+      title: "Parking Guidance System",
+      description: "Smart guidance system with real-time space availability and directional indicators"
     },
     {
-      icon: <Wifi className="h-8 w-8" />,
-      title: "IoT Integration",
-      description: "Connected devices for smart parking ecosystem management",
-      features: ["Sensor networks", "Cloud connectivity", "Remote control"],
-      color: "warning-orange"
+      icon: Info,
+      title: "Parking Information System", 
+      description: "Digital information displays showing parking availability, pricing, and facility information"
+    },
+    {
+      icon: Users,
+      title: "Pedestrian Access Control System",
+      description: "Comprehensive pedestrian access management with turnstiles and biometric authentication"
+    },
+    {
+      icon: Scan,
+      title: "ANPR Camera System For Toll Applications",
+      description: "High-accuracy camera systems designed specifically for toll plaza applications"
     }
   ];
 
   return (
-    <section id="solutions" className="py-20 bg-tech-gray-light">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-tech-blue/10 text-tech-blue border-tech-blue/20">
-            Solutions
-          </Badge>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Complete Parking Solutions
+    <section id="solutions" className="py-16 bg-gradient-to-b from-white to-gray-50 overflow-x-hidden">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
+        
+        {/* Section Header */}
+        <div className="text-center mb-10" data-aos="fade-up">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 font-poppins">
+            Building Tomorrow's Solutions
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            From smart turnstiles to comprehensive analytics, we provide end-to-end 
-            parking management solutions that enhance security, efficiency, and user experience.
+          <p className="text-sm text-gray-600 max-w-4xl mx-auto leading-relaxed font-poppins font-normal" data-aos="fade-up" data-aos-delay="100">
+            Comprehensive parking management and access control solutions designed to build tomorrow's infrastructure and smart cities.
           </p>
         </div>
 
-        {/* Main Solutions Grid */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
-          {/* Image */}
-          <div className="relative">
-            <img
-              src={parkingGates}
-              alt="Smart Parking Gates"
-              className="w-full rounded-2xl shadow-2xl"
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-tech-blue/20 to-transparent rounded-2xl"></div>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-                Advanced Access Control Systems
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Our state-of-the-art turnstiles and gates provide secure, efficient vehicle 
-                access management with multiple authentication methods and real-time monitoring capabilities.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                "RFID & NFC card authentication",
-                "QR code and mobile app integration", 
-                "Biometric access control",
-                "Real-time traffic monitoring",
-                "Emergency override systems"
-              ].map((feature, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-success-green" />
-                  <span className="text-foreground">{feature}</span>
-                </div>
-              ))}
-            </div>
-
-            <Button className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
-              Learn More
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Solutions Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {solutions.map((solution, index) => (
-            <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 bg-background">
-              <CardContent className="p-6">
-                <div className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center bg-${solution.color}/10 text-${solution.color} group-hover:scale-110 transition-transform duration-300`}>
-                  {solution.icon}
-                </div>
-                
-                <h3 className="text-xl font-bold text-foreground mb-3">
-                  {solution.title}
-                </h3>
-                
-                <p className="text-muted-foreground mb-4">
-                  {solution.description}
-                </p>
-                
-                <div className="space-y-2">
-                  {solution.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-center space-x-2 text-sm">
-                      <div className={`w-2 h-2 rounded-full bg-${solution.color}`}></div>
-                      <span className="text-muted-foreground">{feature}</span>
+        {/* Solutions Grid with Mobile Mockup */}
+        <div className="grid lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Solutions Grid */}
+          <div className="lg:col-span-8" data-aos="fade-right" data-aos-delay="200">
+            <div className="grid md:grid-cols-2 gap-8">
+              {solutions.map((solution, index) => {
+                const IconComponent = solution.icon;
+                return (
+                  <div
+                    key={index}
+                    className={`p-6 rounded-xl border transition-all duration-300 hover:shadow-lg image-container ${
+                      solution.featured 
+                        ? 'bg-blue-600 text-white border-blue-600' 
+                        : 'bg-white border-gray-200 hover:border-blue-300'
+                    }`}
+                    data-aos="zoom-in"
+                    data-aos-delay={300 + index * 100}
+                  >
+                    <div className="mb-4">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
+                        solution.featured ? 'bg-white/20' : 'bg-blue-50'
+                      }`}>
+                        <IconComponent className={`h-6 w-6 ${
+                          solution.featured ? 'text-white' : 'text-blue-600'
+                        }`} />
+                      </div>
+                      <h3 className={`text-lg font-bold mb-2 font-poppins ${
+                        solution.featured ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {solution.title}
+                      </h3>
+                      <p className={`text-sm leading-relaxed font-poppins font-normal ${
+                        solution.featured ? 'text-blue-100' : 'text-gray-600'
+                      }`}>
+                        {solution.description}
+                      </p>
                     </div>
-                  ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile App Mockup */}
+          <div className="lg:col-span-4" data-aos="fade-left" data-aos-delay="400">
+            <div className="lg:sticky lg:top-96">
+              <div className="relative mx-auto w-fit">
+                {/* Mobile Phone Frame - Front-facing design */}
+                <div className="relative">
+                  <div className="w-72 h-[580px] bg-black rounded-[2.5rem] shadow-xl p-2 mx-auto">
+                    <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative">
+                      {/* Home Indicator */}
+                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-black rounded-full"></div>
+                      
+                      {/* Mock Mobile App Interface */}
+                      <div className="h-full bg-gradient-to-b from-blue-50 to-blue-100 p-4 relative">
+                        {/* Status Bar */}
+                        <div className="flex justify-between items-center text-xs text-gray-800 mb-4 px-2">
+                          <span className="font-semibold">9:41</span>
+                          <div className="flex items-center space-x-1">
+                            <div className="flex space-x-1">
+                              <div className="w-1 h-1 bg-gray-800 rounded-full"></div>
+                              <div className="w-1 h-1 bg-gray-800 rounded-full"></div>
+                              <div className="w-1 h-1 bg-gray-800 rounded-full"></div>
+                            </div>
+                            <div className="w-6 h-3 border border-gray-800 rounded-sm">
+                              <div className="w-4 h-2 bg-green-500 rounded-sm m-0.5"></div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* App Header */}
+                        <div className="text-center mb-6">
+                          <h4 className="text-lg font-bold text-blue-600 mb-1 font-poppins">VayAccess</h4>
+                          <p className="text-xs text-gray-600 font-poppins">Smart Parking Solutions</p>
+                        </div>
+
+                        {/* Mock App Content */}
+                        <div className="space-y-3">
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-gray-800">Available Spaces</span>
+                              <span className="text-sm font-bold text-green-600">247</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div className="bg-green-500 h-1.5 rounded-full w-3/4"></div>
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <h5 className="text-xs font-medium text-gray-800 mb-2">Quick Actions</h5>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button className="bg-blue-100 text-blue-600 p-2 rounded-lg text-xs font-medium">
+                                Find Parking
+                              </button>
+                              <button className="bg-green-100 text-green-600 p-2 rounded-lg text-xs font-medium">
+                                Pay Online
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 shadow-sm">
+                            <h5 className="text-xs font-medium text-gray-800 mb-2">Recent Activity</h5>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Mall Parking - A2</span>
+                                <span className="text-gray-800">₹50</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Office Complex - B1</span>
+                                <span className="text-gray-800">₹120</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Navigation Icons */}
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <div className="bg-white rounded-full p-2 shadow-lg">
+                            <div className="flex justify-around">
+                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                              </div>
+                              <div className="w-6 h-6 bg-gray-100 rounded-full"></div>
+                              <div className="w-6 h-6 bg-gray-100 rounded-full"></div>
+                              <div className="w-6 h-6 bg-gray-100 rounded-full"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Call to Action */}
+        <div className="mt-12 text-center" data-aos="fade-up" data-aos-delay="600">
+          <Button 
+            onClick={handleViewAllSolutions}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 font-medium rounded-lg transition-all duration-300 hover:shadow-lg flex items-center gap-2 mx-auto font-poppins"
+          >
+            View All Solutions
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Quick Stats */}
+        {/* <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16"> */}
+          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
+            {/* <div className="text-3xl font-bold text-blue-600 mb-2">500+</div> */}
+            {/* <div className="text-gray-600">Projects</div> */}
+          {/* </div> */}
+          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
+            {/* <div className="text-3xl font-bold text-blue-600 mb-2">50+</div> */}
+            {/* <div className="text-gray-600">Cities</div> */}
+          {/* </div> */}
+          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
+            {/* <div className="text-3xl font-bold text-blue-600 mb-2">99.9%</div> */}
+            {/* <div className="text-gray-600">Uptime</div> */}
+          {/* </div> */}
+          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
+            {/* <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div> */}
+            {/* <div className="text-gray-600">Support</div> */}
+          {/* </div> */}
+        {/* </div> */}
       </div>
     </section>
   );

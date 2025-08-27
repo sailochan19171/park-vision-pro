@@ -1,0 +1,245 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Add New Vehicle</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="/vehicles" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Vehicles
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Vehicle Information</h6>
+            </div>
+            <div class="card-body">
+                <form id="addVehicleForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="licensePlate" class="form-label">License Plate Number *</label>
+                            <input type="text" class="form-control" id="licensePlate" required 
+                                   placeholder="e.g. KA-01-AB-1234" style="text-transform: uppercase;">
+                            <div class="form-text">Enter your vehicle's registration number</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">Vehicle Type *</label>
+                            <select class="form-select" id="type" required>
+                                <option value="">Select Vehicle Type</option>
+                                <option value="Car">Car</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Bike">Motorcycle/Bike</option>
+                                <option value="Truck">Truck</option>
+                                <option value="Van">Van</option>
+                                <option value="Bus">Bus</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="make" class="form-label">Make/Brand *</label>
+                            <input type="text" class="form-control" id="make" required 
+                                   placeholder="e.g. Honda, Toyota, Maruti">
+                            <div class="form-text">Vehicle manufacturer</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="model" class="form-label">Model *</label>
+                            <input type="text" class="form-control" id="model" required 
+                                   placeholder="e.g. Civic, Fortuner, Swift">
+                            <div class="form-text">Vehicle model name</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="color" class="form-label">Color *</label>
+                            <select class="form-select" id="color" required>
+                                <option value="">Select Color</option>
+                                <option value="White">White</option>
+                                <option value="Black">Black</option>
+                                <option value="Silver">Silver</option>
+                                <option value="Gray">Gray</option>
+                                <option value="Red">Red</option>
+                                <option value="Blue">Blue</option>
+                                <option value="Green">Green</option>
+                                <option value="Yellow">Yellow</option>
+                                <option value="Brown">Brown</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="year" class="form-label">Year</label>
+                            <input type="number" class="form-control" id="year" 
+                                   placeholder="e.g. 2020" min="1990" max="2024">
+                            <div class="form-text">Manufacturing year (optional)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Additional Notes</label>
+                        <textarea class="form-control" id="description" rows="3" 
+                                  placeholder="Any additional information about your vehicle (optional)"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isPrimary">
+                            <label class="form-check-label" for="isPrimary">
+                                Set as primary vehicle
+                            </label>
+                            <div class="form-text">Primary vehicle will be selected by default for bookings</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/vehicles" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Vehicle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Help Section -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="bi bi-info-circle"></i> Help & Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>License Plate Format</h6>
+                        <ul class="small text-muted">
+                            <li>Use the format: XX-00-XX-0000</li>
+                            <li>Example: KA-01-AB-1234</li>
+                            <li>Include hyphens for clarity</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Vehicle Types</h6>
+                        <ul class="small text-muted">
+                            <li><strong>Car:</strong> Regular passenger cars</li>
+                            <li><strong>SUV:</strong> Sport Utility Vehicles</li>
+                            <li><strong>Bike:</strong> Motorcycles and scooters</li>
+                            <li><strong>Truck:</strong> Commercial vehicles</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addVehicleForm');
+    const licensePlateInput = document.getElementById('licensePlate');
+    
+    // Auto-uppercase license plate
+    licensePlateInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Form submission
+    form.addEventListener('submit', addVehicle);
+});
+
+async function addVehicle(e) {
+    e.preventDefault();
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+    
+    const vehicleData = {
+        licensePlate: document.getElementById('licensePlate').value.trim(),
+        type: document.getElementById('type').value,
+        make: document.getElementById('make').value.trim(),
+        model: document.getElementById('model').value.trim(),
+        color: document.getElementById('color').value,
+        year: document.getElementById('year').value || null,
+        description: document.getElementById('description').value.trim(),
+        isPrimary: document.getElementById('isPrimary').checked
+    };
+    
+    // Client-side validation
+    if (!vehicleData.licensePlate || !vehicleData.type || !vehicleData.make || 
+        !vehicleData.model || !vehicleData.color) {
+        showError('Please fill in all required fields');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
+    // Validate license plate format (basic)
+    const plateRegex = /^[A-Z]{2}-\d{2}-[A-Z]{2}-\d{4}$/;
+    if (!plateRegex.test(vehicleData.licensePlate)) {
+        showError('Please enter a valid license plate format (e.g., KA-01-AB-1234)');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/user/vehicles', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(vehicleData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccess('Vehicle added successfully!');
+            
+            // Redirect to vehicles page after a short delay
+            setTimeout(() => {
+                window.location.href = '/vehicles';
+            }, 1500);
+        } else {
+            showError(result.message || 'Failed to add vehicle');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Error adding vehicle:', error);
+        showError('Error adding vehicle. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+function showSuccess(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 350px;';
+    alert.innerHTML = `
+        <i class="bi bi-check-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 350px;';
+    alert.innerHTML = `
+        <i class="bi bi-exclamation-triangle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+</script>

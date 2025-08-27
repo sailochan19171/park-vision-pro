@@ -1,0 +1,331 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">System Logs</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-primary" onclick="refreshLogs()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i> Clear Old Logs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Logs</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalLogs">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-file-text fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">INFO Logs</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="infoLogs">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-info-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Warnings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="warnLogs">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Errors</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="errorLogs">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-x-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filter Logs</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="logLevel" class="form-label">Log Level</label>
+                    <select class="form-select" id="logLevel" onchange="filterLogs()">
+                        <option value="">All Levels</option>
+                        <option value="INFO">INFO</option>
+                        <option value="WARN">WARN</option>
+                        <option value="ERROR">ERROR</option>
+                        <option value="DEBUG">DEBUG</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="logModule" class="form-label">Module</label>
+                    <select class="form-select" id="logModule" onchange="filterLogs()">
+                        <option value="">All Modules</option>
+                        <option value="Auth">Authentication</option>
+                        <option value="Payment">Payment</option>
+                        <option value="Booking">Booking</option>
+                        <option value="System">System</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="logSearch" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="logSearch" placeholder="Search in logs..." onkeyup="filterLogs()">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="autoRefresh" class="form-label">Auto Refresh</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                        <label class="form-check-label" for="autoRefresh">
+                            Enable (30s)
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Recent System Logs</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm" id="logsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th width="5%">ID</th>
+                            <th width="15%">Timestamp</th>
+                            <th width="10%">Level</th>
+                            <th width="10%">Module</th>
+                            <th width="45%">Message</th>
+                            <th width="15%">IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading logs...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav aria-label="Logs pagination">
+                <ul class="pagination justify-content-center" id="logsPagination">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+let logsData = [];
+let filteredLogs = [];
+let autoRefreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadLogsData();
+    setupAutoRefresh();
+});
+
+async function loadLogsData() {
+    try {
+        const response = await fetch('/api/admin/logs');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            logsData = data.logs;
+            filteredLogs = [...logsData];
+            
+            // Update stats cards
+            document.getElementById('totalLogs').textContent = data.total.toLocaleString();
+            document.getElementById('infoLogs').textContent = data.levels.info.toLocaleString();
+            document.getElementById('warnLogs').textContent = data.levels.warn.toLocaleString();
+            document.getElementById('errorLogs').textContent = data.levels.error.toLocaleString();
+            
+            // Update logs table
+            updateLogsTable();
+            
+        } else {
+            console.error('Failed to load logs data');
+        }
+    } catch (error) {
+        console.error('Error loading logs data:', error);
+    }
+}
+
+function updateLogsTable() {
+    const tableBody = document.getElementById('logsTableBody');
+    
+    if (filteredLogs.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No logs found</td></tr>';
+        return;
+    }
+    
+    const logsHtml = filteredLogs.map(log => {
+        const levelColor = {
+            'INFO': 'success',
+            'WARN': 'warning', 
+            'ERROR': 'danger',
+            'DEBUG': 'secondary'
+        }[log.level] || 'primary';
+        
+        return `
+            <tr>
+                <td>${log.id}</td>
+                <td>
+                    <small>${new Date(log.timestamp).toLocaleString()}</small>
+                </td>
+                <td>
+                    <span class="badge bg-${levelColor}">${log.level}</span>
+                </td>
+                <td>
+                    <span class="badge bg-info">${log.module}</span>
+                </td>
+                <td>
+                    <small>${log.message}</small>
+                </td>
+                <td>
+                    <small class="text-muted">${log.ip}</small>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tableBody.innerHTML = logsHtml;
+}
+
+function filterLogs() {
+    const levelFilter = document.getElementById('logLevel').value;
+    const moduleFilter = document.getElementById('logModule').value;
+    const searchFilter = document.getElementById('logSearch').value.toLowerCase();
+    
+    filteredLogs = logsData.filter(log => {
+        const levelMatch = !levelFilter || log.level === levelFilter;
+        const moduleMatch = !moduleFilter || log.module === moduleFilter;
+        const searchMatch = !searchFilter || 
+            log.message.toLowerCase().includes(searchFilter) ||
+            log.module.toLowerCase().includes(searchFilter) ||
+            log.ip.includes(searchFilter);
+            
+        return levelMatch && moduleMatch && searchMatch;
+    });
+    
+    updateLogsTable();
+}
+
+function refreshLogs() {
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Refreshing...';
+    btn.disabled = true;
+    
+    loadLogsData().then(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function setupAutoRefresh() {
+    const autoRefreshCheckbox = document.getElementById('autoRefresh');
+    
+    function startAutoRefresh() {
+        if (autoRefreshCheckbox.checked) {
+            autoRefreshInterval = setInterval(() => {
+                loadLogsData();
+            }, 30000); // 30 seconds
+        } else {
+            clearInterval(autoRefreshInterval);
+        }
+    }
+    
+    autoRefreshCheckbox.addEventListener('change', startAutoRefresh);
+    startAutoRefresh(); // Start immediately if checked
+}
+
+// Simulate real-time log updates
+setInterval(() => {
+    const levels = ['INFO', 'WARN', 'ERROR'];
+    const modules = ['Auth', 'Payment', 'Booking', 'System'];
+    const messages = [
+        'User login successful',
+        'Payment processed',
+        'Booking created',
+        'System backup completed',
+        'Database connection established',
+        'Cache cleared successfully'
+    ];
+    
+    // Add a new log entry occasionally
+    if (Math.random() > 0.8) {
+        const newLog = {
+            id: logsData.length + 1,
+            timestamp: new Date().toISOString(),
+            level: levels[Math.floor(Math.random() * levels.length)],
+            module: modules[Math.floor(Math.random() * modules.length)],
+            message: messages[Math.floor(Math.random() * messages.length)],
+            ip: '192.168.1.' + Math.floor(Math.random() * 255)
+        };
+        
+        logsData.unshift(newLog);
+        if (logsData.length > 100) {
+            logsData.pop(); // Keep only last 100 logs
+        }
+        
+        filterLogs(); // Refresh display
+    }
+}, 10000); // Check every 10 seconds
+</script>

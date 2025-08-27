@@ -1,0 +1,376 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Business Insights</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-primary">Refresh Insights</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Insights Cards -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Key Performance Insights</h6>
+                </div>
+                <div class="card-body" id="keyInsights">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading insights...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictions and Recommendations -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">Predictions</h6>
+                </div>
+                <div class="card-body" id="predictions">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading predictions...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Recommendations</h6>
+                </div>
+                <div class="card-body" id="recommendations">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading recommendations...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights Dashboard -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Trend Analysis</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">AI Insights Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Optimization Score</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">78%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-speedometer2 fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Growth Potential</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">High</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-graph-up-arrow fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Risk Level</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Low</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-shield-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-sm">
+                            <i class="bi bi-lightning-fill"></i> Auto-Optimize Pricing
+                        </button>
+                        <button class="btn btn-success btn-sm">
+                            <i class="bi bi-graph-up"></i> Boost Zone C
+                        </button>
+                        <button class="btn btn-info btn-sm">
+                            <i class="bi bi-clock"></i> Extend Hours
+                        </button>
+                        <button class="btn btn-warning btn-sm">
+                            <i class="bi bi-gear"></i> Configure Alerts
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadInsightsData();
+});
+
+async function loadInsightsData() {
+    try {
+        const response = await fetch('/api/admin/insights', {
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update key insights
+            const keyInsightsHtml = `
+                <div class="row">
+                    <div class="col-lg-6 mb-3">
+                        <div class="card border-left-success h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Revenue Growth
+                                        </div>
+                                        <div class="mb-0 font-weight-bold text-gray-800">
+                                            ${data.revenue?.growth || 0}% monthly growth with ₹${(data.revenue?.total || 0).toLocaleString()} total revenue
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-currency-rupee fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-3">
+                        <div class="card border-left-info h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Utilization Rate
+                                        </div>
+                                        <div class="mb-0 font-weight-bold text-gray-800">
+                                            ${data.usage?.utilizationRate || 0}% utilization with ${data.usage?.totalBookings || 0} total bookings
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-graph-up fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-3">
+                        <div class="card border-left-warning h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Peak Hours
+                                        </div>
+                                        <div class="mb-0 font-weight-bold text-gray-800">
+                                            ${(data.peakHours && data.peakHours.length > 0) ? `${data.peakHours[0]._id}:00 - ${data.peakHours[0].count} bookings` : 'No peak data'}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-clock fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-3">
+                        <div class="card border-left-primary h-100">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Top Users
+                                        </div>
+                                        <div class="mb-0 font-weight-bold text-gray-800">
+                                            ${data.topUsers?.length || 0} active users, top spender: ₹${data.topUsers?.[0]?.totalSpent || 0}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="bi bi-people fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('keyInsights').innerHTML = keyInsightsHtml;
+            
+            // Update predictions
+            const predictionsHtml = `
+                <div class="row text-center mb-4">
+                    <div class="col-4">
+                        <div class="h4 mb-0 text-success">${data.predictions?.expectedBookings || 0}</div>
+                        <small class="text-muted">Expected Bookings</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 mb-0 text-primary">₹${(data.predictions?.nextWeekRevenue || 0).toLocaleString()}</div>
+                        <small class="text-muted">Next Week Revenue</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 mb-0 text-info">₹${data.predictions?.recommendedPricing?.peak || 50}</div>
+                        <small class="text-muted">Peak Hour Price</small>
+                    </div>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-2">Recommended Pricing:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-danger">Peak: ₹${data.predictions?.recommendedPricing?.peak || 50}</span>
+                        <span class="badge bg-primary">Normal: ₹${data.predictions?.recommendedPricing?.normal || 30}</span>
+                        <span class="badge bg-success">Off-Peak: ₹${data.predictions?.recommendedPricing?.off || 20}</span>
+                    </div>
+                </div>
+            `;
+            document.getElementById('predictions').innerHTML = predictionsHtml;
+            
+            // Update recommendations
+            const recommendations = data.recommendations || [];
+            const recommendationsHtml = `
+                <div class="list-group list-group-flush">
+                    ${recommendations.map((rec, index) => `
+                        <div class="list-group-item d-flex align-items-start">
+                            <div class="me-3">
+                                <span class="badge bg-${rec.impact === 'high' ? 'danger' : rec.impact === 'medium' ? 'warning' : 'info'} rounded-pill">${rec.priority || index + 1}</span>
+                            </div>
+                            <div>
+                                <div class="mb-1"><strong>${rec.title || 'Recommendation'}</strong></div>
+                                <div class="mb-1">${rec.description || 'No description available'}</div>
+                                <small class="text-muted">Impact: ${rec.impact || 'medium'} | Type: ${rec.type || 'general'}</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${recommendations.length === 0 ? '<div class="text-center text-muted p-3">No recommendations available</div>' : ''}
+                </div>
+            `;
+            document.getElementById('recommendations').innerHTML = recommendationsHtml;
+            
+            // Create trends chart (using sample data for visualization)
+            const ctx = document.getElementById('trendsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Current', 'Predicted'],
+                    datasets: [{
+                        label: 'Bookings Trend',
+                        data: [380, 420, 395, 450, 430, data.predictions?.expectedBookings || 400],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Revenue Trend',
+                        data: [45000, 52000, 48000, 58000, 55000, data.predictions?.nextWeekRevenue || 50000],
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Bookings'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Revenue (₹)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    }
+                }
+            });
+            
+        } else {
+            console.error('Failed to load insights data');
+            // Show default content
+            document.getElementById('keyInsights').innerHTML = '<div class="text-center text-muted">No insights data available</div>';
+            document.getElementById('predictions').innerHTML = '<div class="text-center text-muted">No predictions available</div>';
+            document.getElementById('recommendations').innerHTML = '<div class="text-center text-muted">No recommendations available</div>';
+        }
+    } catch (error) {
+        console.error('Error loading insights data:', error);
+        // Show error state
+        document.getElementById('keyInsights').innerHTML = '<div class="text-center text-danger">Error loading insights data</div>';
+        document.getElementById('predictions').innerHTML = '<div class="text-center text-danger">Error loading predictions</div>';
+        document.getElementById('recommendations').innerHTML = '<div class="text-center text-danger">Error loading recommendations</div>';
+    }
+}
+
+// Add click handlers for quick actions
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.btn')) {
+        const btn = e.target.closest('.btn');
+        if (btn.textContent.includes('Auto-Optimize')) {
+            alert('Auto-optimization initiated! Prices will be adjusted based on demand patterns.');
+        } else if (btn.textContent.includes('Boost Zone C')) {
+            alert('Zone C promotion campaign activated! Special offers will be available.');
+        } else if (btn.textContent.includes('Extend Hours')) {
+            alert('Extended hours configuration opened. You can now set new operating times.');
+        } else if (btn.textContent.includes('Configure Alerts')) {
+            alert('Alert configuration panel opened. Set up custom business alerts.');
+        }
+    }
+});
+</script>

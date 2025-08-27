@@ -1,0 +1,671 @@
+<div class="container-fluid py-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>User Management</h2>
+                <div>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="bi bi-person-plus"></i> Add User
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="refreshUsers()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Users</h5>
+                                    <h2 class="mb-0" id="totalUsers">Loading...</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-people-fill" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Active Users</h5>
+                                    <h2 class="mb-0" id="activeUsers">Loading...</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-person-check-fill" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">New Today</h5>
+                                    <h2 class="mb-0" id="newUsers">Loading...</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-person-plus-fill" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Premium Users</h5>
+                                    <h2 class="mb-0" id="premiumUsers">Loading...</h2>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-star-fill" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="userSearch" placeholder="Search users by name, email, or phone">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="roleFilter">
+                                <option value="">All Roles</option>
+                                <option value="user">Regular User</option>
+                                <option value="premium">Premium User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" class="form-control" id="dateFilter" placeholder="Registration date">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="filterUsers()">
+                                <i class="bi bi-search"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">User List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Role</th>
+                                    <th>Registered</th>
+                                    <th>Last Active</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#U001</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary text-white me-2">
+                                                JD
+                                            </div>
+                                            <div>
+                                                <strong>John Doe</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>john.doe@example.com</td>
+                                    <td>+1 234-567-8900</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td><span class="badge bg-primary">Premium</span></td>
+                                    <td>Dec 15, 2024</td>
+                                    <td>2 hours ago</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" onclick="viewUser('U001')" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary" onclick="editUser('U001')" title="Edit User">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning" onclick="suspendUser('U001')" title="Suspend User">
+                                                <i class="bi bi-pause-circle"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteUser('U001')" title="Delete User">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#U002</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-success text-white me-2">
+                                                AS
+                                            </div>
+                                            <div>
+                                                <strong>Alice Smith</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>alice.smith@example.com</td>
+                                    <td>+1 234-567-8901</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td><span class="badge bg-secondary">Regular</span></td>
+                                    <td>Dec 14, 2024</td>
+                                    <td>1 day ago</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" onclick="viewUser('U002')" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary" onclick="editUser('U002')" title="Edit User">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-warning" onclick="suspendUser('U002')" title="Suspend User">
+                                                <i class="bi bi-pause-circle"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteUser('U002')" title="Delete User">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#U003</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-warning text-white me-2">
+                                                BJ
+                                            </div>
+                                            <div>
+                                                <strong>Bob Johnson</strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>bob.johnson@example.com</td>
+                                    <td>+1 234-567-8902</td>
+                                    <td><span class="badge bg-warning">Suspended</span></td>
+                                    <td><span class="badge bg-secondary">Regular</span></td>
+                                    <td>Dec 13, 2024</td>
+                                    <td>3 days ago</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-primary" onclick="viewUser('U003')" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="activateUser('U003')" title="Activate User">
+                                                <i class="bi bi-play-circle"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary" onclick="editUser('U003')" title="Edit User">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteUser('U003')" title="Delete User">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Users pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">
+                    <i class="bi bi-person-plus"></i> Add New User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="userName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userEmail" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="userEmail" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userPhone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="userPhone" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userRole" class="form-label">Role</label>
+                                <select class="form-select" id="userRole" required>
+                                    <option value="">Select Role</option>
+                                    <option value="user">Regular User</option>
+                                    <option value="premium">Premium User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="userPassword" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="userStatus" class="form-label">Status</label>
+                                <select class="form-select" id="userStatus" required>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="createUser()">
+                    <i class="bi bi-check-circle"></i> Create User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+</style>
+
+<script>
+// User management functions
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/admin/users', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            // Handle the actual API response format
+            const users = data.users || [];
+            const stats = {
+                total: data.total || users.length,
+                active: users.filter(u => u.status === 'active').length,
+                newToday: users.filter(u => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return new Date(u.createdAt) >= today;
+                }).length,
+                premium: users.filter(u => u.role === 'premium').length
+            };
+            
+            updateUserStats(stats);
+            updateUserTable(users);
+            showAlert('Users refreshed successfully!', 'success');
+        } else {
+            throw new Error(data.message || 'Failed to fetch users');
+        }
+    } catch (error) {
+        console.error('Error refreshing users:', error);
+        showAlert('Error refreshing users: ' + error.message, 'danger');
+    }
+}
+
+function updateUserStats(data) {
+    document.getElementById('totalUsers').textContent = data.total.toLocaleString();
+    document.getElementById('activeUsers').textContent = data.active.toLocaleString();
+    document.getElementById('newUsers').textContent = data.newToday.toString();
+    document.getElementById('premiumUsers').textContent = data.premium.toString();
+}
+
+function updateUserTable(users) {
+    const tbody = document.querySelector('#usersTable tbody');
+    tbody.innerHTML = '';
+    
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>#${user.id}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle bg-primary text-white me-2">
+                        ${user.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                        <strong>${user.name}</strong>
+                    </div>
+                </div>
+            </td>
+            <td>${user.email}</td>
+            <td>${user.phone || 'N/A'}</td>
+            <td><span class="badge bg-${user.status === 'active' ? 'success' : user.status === 'suspended' ? 'warning' : 'secondary'}">${user.status}</span></td>
+            <td><span class="badge bg-${user.role === 'premium' ? 'primary' : 'secondary'}">${user.role}</span></td>
+            <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+            <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
+            <td>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-primary" onclick="viewUser('${user.id}')" title="View Details">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="editUser('${user.id}')" title="Edit User">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="suspendUser('${user.id}')" title="Suspend User">
+                        <i class="bi bi-pause-circle"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="deleteUser('${user.id}')" title="Delete User">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function filterUsers() {
+    const search = document.getElementById('userSearch').value;
+    const status = document.getElementById('statusFilter').value;
+    const role = document.getElementById('roleFilter').value;
+    const date = document.getElementById('dateFilter').value;
+    
+    console.log('Filtering users:', { search, status, role, date });
+    showAlert('Filtering users...', 'info');
+}
+
+function viewUser(userId) {
+    console.log('Viewing user:', userId);
+    showAlert('Loading user details...', 'info');
+}
+
+function editUser(userId) {
+    console.log('Editing user:', userId);
+    showAlert('Opening user editor...', 'info');
+}
+
+async function suspendUser(userId) {
+    if (confirm('Are you sure you want to suspend this user?')) {
+        try {
+            const response = await fetch(`/api/admin/users/${userId}/status`, {
+                credentials: 'same-origin',
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'suspended' })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showAlert('User suspended successfully', 'warning');
+                refreshUsers();
+            } else {
+                throw new Error(data.message || 'Failed to suspend user');
+            }
+        } catch (error) {
+            console.error('Error suspending user:', error);
+            showAlert('Error suspending user: ' + error.message, 'danger');
+        }
+    }
+}
+
+async function activateUser(userId) {
+    if (confirm('Are you sure you want to activate this user?')) {
+        try {
+            const response = await fetch(`/api/admin/users/${userId}/status`, {
+                credentials: 'same-origin',
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'active' })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showAlert('User activated successfully', 'success');
+                refreshUsers();
+            } else {
+                throw new Error(data.message || 'Failed to activate user');
+            }
+        } catch (error) {
+            console.error('Error activating user:', error);
+            showAlert('Error activating user: ' + error.message, 'danger');
+        }
+    }
+}
+
+async function deleteUser(userId) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        try {
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                credentials: 'same-origin',
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showAlert('User deleted successfully', 'success');
+                refreshUsers();
+            } else {
+                throw new Error(data.message || 'Failed to delete user');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            showAlert('Error deleting user: ' + error.message, 'danger');
+        }
+    }
+}
+
+async function createUser() {
+    const form = document.getElementById('addUserForm');
+    const submitButton = document.querySelector('#addUserModal .btn-success');
+    
+    // Prevent double submissions
+    if (submitButton.disabled) return;
+    
+    if (form.checkValidity()) {
+        try {
+            // Disable submit button
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating...';
+            
+            const formData = {
+                name: document.getElementById('userName').value.trim(),
+                email: document.getElementById('userEmail').value.trim().toLowerCase(),
+                phone: document.getElementById('userPhone').value.trim(),
+                role: document.getElementById('userRole').value,
+                password: document.getElementById('userPassword').value,
+                status: document.getElementById('userStatus').value
+            };
+            
+            console.log('Form data being sent:', formData);
+            
+            // Validation
+            if (!formData.name) {
+                throw new Error('Name is required');
+            }
+            if (!formData.email.includes('@') || !formData.email.includes('.')) {
+                throw new Error('Please enter a valid email address');
+            }
+            if (!formData.phone) {
+                throw new Error('Phone number is required');
+            }
+            if (!formData.role) {
+                throw new Error('Please select a role');
+            }
+            if (!formData.password || formData.password.length < 6) {
+                throw new Error('Password must be at least 6 characters long');
+            }
+            if (!formData.status) {
+                throw new Error('Please select a status');
+            }
+            
+            console.log('Sending request to create user...');
+            
+            const response = await fetch('/api/admin/users', {
+                credentials: 'same-origin',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server error response:', errorText);
+                throw new Error(`Server error (${response.status}): ${errorText}`);
+            }
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                showAlert('✅ User created successfully!', 'success');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+                if (modal) modal.hide();
+                form.reset();
+                
+                // Refresh the user list without showing alert
+                await loadUsers();
+            } else {
+                // Handle specific error messages
+                if (data.message && data.message.includes('already exists')) {
+                    showAlert('❌ A user with this email already exists. Please use a different email.', 'warning');
+                } else {
+                    throw new Error(data.message || 'Failed to create user');
+                }
+            }
+        } catch (error) {
+            console.error('Error creating user:', error);
+            showAlert('❌ Error creating user: ' + error.message, 'danger');
+        } finally {
+            // Re-enable submit button
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="bi bi-person-plus"></i> Create User';
+        }
+    } else {
+        form.reportValidity();
+    }
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1055; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Search functionality
+document.getElementById('userSearch').addEventListener('input', function() {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+        filterUsers();
+    }, 500);
+});
+
+// Refresh function with user feedback
+async function refreshUsers() {
+    console.log('Refreshing users list...');
+    showAlert('Refreshing user data...', 'info');
+    await loadUsers();
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers(); // Use loadUsers instead of refreshUsers to avoid initial alert
+});
+
+// Auto-refresh every 30 seconds
+setInterval(loadUsers, 30000); // Use loadUsers to avoid alerts every 30 seconds
+</script>
+</div>

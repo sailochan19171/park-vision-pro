@@ -1,0 +1,210 @@
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card auth-card">
+                <div class="logo-section text-center py-4">
+                    <i class="bi bi-shield-lock display-4"></i>
+                    <h3 class="mt-2">Admin Portal</h3>
+                    <p class="mb-0">VayAccess Management</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    {{#if error}}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> {{error}}
+                    </div>
+                    {{/if}}
+                    
+                    {{#if success}}
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-check-circle"></i> {{success}}
+                    </div>
+                    {{/if}}
+                    
+                    <form action="/admin/login" method="POST" id="adminLoginForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-person"></i> Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required 
+                                   placeholder="Enter admin email" value="{{email}}" autocomplete="username">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> Password
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" name="password" required 
+                                       placeholder="Enter admin password" autocomplete="current-password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
+                            <label class="form-check-label" for="rememberMe">
+                                Keep me signed in
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="loginBtn">
+                            <i class="bi bi-box-arrow-in-right"></i> Admin Sign In
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <div class="mb-2">
+                            <a href="/admin/forgot-password" class="text-decoration-none">
+                                <small>Forgot your password?</small>
+                            </a>
+                        </div>
+                        <div>
+                            <span class="text-muted">
+                                <small>Don't have an admin account?</small>
+                            </span>
+                            <a href="/admin/register" class="text-decoration-none">
+                                <small><strong>Register here</strong></small>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Demo Credentials -->
+                    <div class="mt-4 p-3 demo-section">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-info-circle text-primary me-2"></i>
+                            <h6 class="text-muted mb-0">Demo Credentials</h6>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <small class="d-block text-muted">
+                                    <strong>Super Admin:</strong> admin@vayaccess.com<br>
+                                    <strong>Password:</strong> Admin@123
+                                </small>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <small class="d-block text-muted">
+                                    <strong>Manager:</strong> john.manager@vayaccess.com<br>
+                                    <strong>Password:</strong> User@123
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-sm btn-outline-primary flex-fill" onclick="fillDemoAdmin()">
+                                <i class="bi bi-shield-check"></i> Super Admin
+                            </button>
+                            <button class="btn btn-sm btn-outline-info flex-fill" onclick="fillDemoManager()">
+                                <i class="bi bi-person-badge"></i> Manager
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.className = 'bi bi-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.className = 'bi bi-eye';
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+        const loginBtn = document.getElementById('loginBtn');
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        
+        // Remove any existing alerts
+        const existingAlert = document.querySelector('.alert-danger');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        // Validation
+        if (!email || !password) {
+            e.preventDefault();
+            showAlert('Please fill in all fields', 'danger');
+            return;
+        }
+        
+        if (!isValidEmail(email)) {
+            e.preventDefault();
+            showAlert('Please enter a valid email address', 'danger');
+            return;
+        }
+        
+        // Show loading state
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Signing in...';
+        loginBtn.disabled = true;
+        showLoading();
+        
+        // Reset button after 10 seconds if no response
+        setTimeout(() => {
+            loginBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Admin Sign In';
+            loginBtn.disabled = false;
+            hideLoading();
+        }, 10000);
+    });
+    
+    // Demo credentials functions
+    function fillDemoAdmin() {
+        document.getElementById('email').value = 'admin@vayaccess.com';
+        document.getElementById('password').value = 'Admin@123';
+    }
+    
+    function fillDemoManager() {
+        document.getElementById('email').value = 'john.manager@vayaccess.com';
+        document.getElementById('password').value = 'User@123';
+    }
+    
+    // Helper functions
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+    
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            <i class="bi bi-${type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const form = document.getElementById('adminLoginForm');
+        form.parentNode.insertBefore(alertDiv, form);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Enter to submit form
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            document.getElementById('adminLoginForm').dispatchEvent(new Event('submit'));
+        }
+    });
+    
+    // Add focus management
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('email').focus();
+    });
+</script>

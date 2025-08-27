@@ -1,0 +1,265 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">My Profile</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Profile Information -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Profile Information</h6>
+            </div>
+            <div class="card-body">
+                <form id="profileForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" value="{{user.name}}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" value="{{user.email}}" readonly>
+                            <small class="form-text text-muted">Email cannot be changed</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" value="{{user.phone}}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="memberSince" class="form-label">Member Since</label>
+                            <input type="text" class="form-control" value="{{user.loginTime}}" readonly>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Change Password</h6>
+            </div>
+            <div class="card-body">
+                <form id="passwordForm">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Profile Stats -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Account Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <i class="bi bi-person-circle display-1 text-primary"></i>
+                    <h5 class="mt-2">{{user.name}}</h5>
+                    <p class="text-muted">{{user.email}}</p>
+                </div>
+                <hr>
+                <div id="profileStats">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/vehicles" class="btn btn-outline-primary">
+                        <i class="bi bi-car-front"></i> Manage Vehicles
+                    </a>
+                    <a href="/bookings" class="btn btn-outline-success">
+                        <i class="bi bi-calendar-check"></i> View Bookings
+                    </a>
+                    <a href="/payments" class="btn btn-outline-info">
+                        <i class="bi bi-credit-card"></i> Payment History
+                    </a>
+                    <a href="/settings" class="btn btn-outline-secondary">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfileStats();
+    
+    // Profile form submission
+    document.getElementById('profileForm').addEventListener('submit', updateProfile);
+    
+    // Password form submission
+    document.getElementById('passwordForm').addEventListener('submit', changePassword);
+});
+
+async function loadProfileStats() {
+    try {
+        const response = await fetch('/api/user/dashboard', {
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                renderProfileStats(result.data.stats);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading profile stats:', error);
+    }
+}
+
+function renderProfileStats(stats) {
+    const container = document.getElementById('profileStats');
+    container.innerHTML = `
+        <div class="row text-center">
+            <div class="col-6">
+                <h4 class="text-primary">${stats.totalVehicles}</h4>
+                <small class="text-muted">Vehicles</small>
+            </div>
+            <div class="col-6">
+                <h4 class="text-success">${stats.totalBookings}</h4>
+                <small class="text-muted">Bookings</small>
+            </div>
+        </div>
+        <hr>
+        <div class="row text-center">
+            <div class="col-6">
+                <h4 class="text-info">${stats.activeBookings}</h4>
+                <small class="text-muted">Active</small>
+            </div>
+            <div class="col-6">
+                <h4 class="text-warning">₹${stats.totalSpent}</h4>
+                <small class="text-muted">Spent</small>
+            </div>
+        </div>
+    `;
+}
+
+async function updateProfile(e) {
+    e.preventDefault();
+    
+    const profileData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value
+    };
+    
+    try {
+        const response = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(profileData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccess('Profile updated successfully!');
+        } else {
+            showError(result.message || 'Failed to update profile');
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        showError('Error updating profile');
+    }
+}
+
+async function changePassword(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (newPassword !== confirmPassword) {
+        showError('New passwords do not match');
+        return;
+    }
+    
+    const passwordData = {
+        currentPassword,
+        newPassword
+    };
+    
+    try {
+        const response = await fetch('/api/user/change-password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(passwordData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            document.getElementById('passwordForm').reset();
+            showSuccess('Password changed successfully!');
+        } else {
+            showError(result.message || 'Failed to change password');
+        }
+    } catch (error) {
+        console.error('Error changing password:', error);
+        showError('Error changing password');
+    }
+}
+
+function showSuccess(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+</script>

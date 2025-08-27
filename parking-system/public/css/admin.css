@@ -1,0 +1,344 @@
+/* Admin Dashboard Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.9rem;
+}
+
+.sidebar {
+    position: fixed;
+    top: 48px;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        top: 5rem;
+    }
+}
+
+.sidebar-sticky {
+    position: relative;
+    top: 0;
+    height: calc(100vh - 48px);
+    padding-top: .5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: 8px 16px;
+    margin: 2px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+    color: #2563eb;
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.sidebar .nav-link.active {
+    color: #fff;
+    background-color: #2563eb;
+}
+
+.sidebar .nav-link .bi {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.form-control-dark {
+    background-color: rgba(255, 255, 255, .1);
+    border: none;
+    color: #fff;
+}
+
+.form-control-dark:focus {
+    background-color: rgba(255, 255, 255, .2);
+    border: none;
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+}
+
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    background-color: rgba(33, 40, 50, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.border-left-primary {
+    border-left: 4px solid #2563eb !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #10b981 !important;
+}
+
+.border-left-info {
+    border-left: 4px solid #0ea5e9 !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #f59e0b !important;
+}
+
+.text-xs {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.font-weight-bold {
+    font-weight: 700;
+}
+
+.text-gray-800 {
+    color: #343a40 !important;
+}
+
+.text-gray-300 {
+    color: #ced4da !important;
+}
+
+.text-gray-400 {
+    color: #adb5bd !important;
+}
+
+.fa-2x {
+    font-size: 2em;
+}
+
+/* Parking Grid Styles */
+.parking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.parking-spot {
+    aspect-ratio: 1;
+    border: 2px solid;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    text-align: center;
+}
+
+.parking-spot:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.parking-spot.available {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-color: #28a745;
+    color: #155724;
+}
+
+.parking-spot.occupied {
+    background: linear-gradient(135deg, #f8d7da, #f1c6c9);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.parking-spot.reserved {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.parking-spot.maintenance {
+    background: linear-gradient(135deg, #e2e3e5, #d1d3d4);
+    border-color: #6c757d;
+    color: #495057;
+}
+
+/* Button Styles */
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    transform: translateY(-1px);
+}
+
+/* Alert Styles */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+
+/* Activity Timeline */
+.activity-item {
+    border-left: 3px solid #e5e7eb;
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 0.5rem;
+    width: 10px;
+    height: 10px;
+    background-color: #2563eb;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+
+/* Loading States */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Status Badges */
+.badge {
+    font-size: 0.75em;
+    font-weight: 500;
+    padding: 0.375em 0.75em;
+}
+
+.bg-success {
+    background-color: #10b981 !important;
+}
+
+.bg-warning {
+    background-color: #f59e0b !important;
+}
+
+.bg-danger {
+    background-color: #ef4444 !important;
+}
+
+.bg-info {
+    background-color: #0ea5e9 !important;
+}
+
+/* Tables */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Dropdown */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .parking-grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 8px;
+        padding: 10px;
+    }
+    
+    .parking-spot {
+        font-size: 8px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Dark mode toggle (if needed) */
+[data-bs-theme="dark"] .sidebar {
+    background-color: #212529;
+}
+
+[data-bs-theme="dark"] .sidebar .nav-link {
+    color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .sidebar .nav-link:hover {
+    color: #fff;
+}
+
+/* Animation for real-time updates */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Success/Error states */
+.text-success { color: #10b981 !important; }
+.text-warning { color: #f59e0b !important; }
+.text-danger { color: #ef4444 !important; }
+.text-info { color: #0ea5e9 !important; }

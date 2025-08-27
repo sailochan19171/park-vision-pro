@@ -5,6 +5,244 @@
 /* Professional Parking Solutions Design System */
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+    /* Do not reserve space for scrollbar to avoid visible gutter */
+    scrollbar-gutter: auto;
+    /* Disable scroll chaining/rubber banding */
+    overscroll-behavior: none;
+  }
+  
+  body {
+    overflow-x: hidden !important;
+    /* Disable scroll chaining/rubber banding */
+    overscroll-behavior: none;
+    font-smoothing: antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+    max-width: 100vw;
+    width: 100%;
+  }
+
+  /* Hide scrollbar UI globally while keeping scroll functionality */
+  * {
+    scrollbar-width: none; /* Firefox */
+  }
+  *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  /* Utility class to force-hide scrollbars for specific containers */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;            /* Chrome/Safari */
+  }
+  
+  html {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+    width: 100%;
+    /* Hide scrollbar UI but keep scrolling */
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE/Edge legacy */
+  }
+  
+  html::-webkit-scrollbar,      /* Chrome/Safari */
+  body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  /* Ensure no scrollbar appears during loading */
+  body.loading {
+    overflow: hidden !important;
+    height: 100vh !important;
+    position: fixed !important;
+    width: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+  
+  html.loading {
+    overflow: hidden !important;
+    height: 100vh !important;
+  }
+
+  /* Prevent horizontal scrollbar only */
+  body {
+    overflow-x: hidden !important;
+  }
+  
+  html {
+    overflow-x: hidden !important;
+  }
+
+  /* Prevent horizontal scroll due to large containers */
+  .container,
+  section,
+  main,
+  header,
+  footer,
+  div[class*="px-"],
+  div[class*="mx-"],
+  .w-screen,
+  .max-w-screen,
+  .max-w-full {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Additional overflow prevention */
+  #root,
+  .min-h-screen {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+  }
+
+  /* Ensure root container is properly constrained */
+  #root {
+    position: relative;
+    min-height: 100vh;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  /* Mobile-specific product image enhancements - No white spaces */
+  @media (max-width: 640px) {
+    .image-container {
+      min-height: 250px;
+      background: transparent !important;
+    }
+    
+    .perfect-image {
+      min-height: 250px;
+      object-fit: contain;
+      background: transparent !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  }
+  
+  @media (min-width: 641px) and (max-width: 768px) {
+    .image-container {
+      min-height: 300px;
+      background: transparent !important;
+    }
+    
+    .perfect-image {
+      min-height: 280px;
+      object-fit: contain;
+      background: transparent !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  }
+  
+  @media (min-width: 769px) {
+    .image-container {
+      background: transparent !important;
+    }
+    
+    .perfect-image {
+      background: transparent !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  }
+  
+  /* Remove any white backgrounds from product images */
+  .perfect-image,
+  .image-container,
+  .image-container > *,
+  .perfect-image > * {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+  
+  /* Ensure no white spaces in product section */
+  #products .image-container,
+  #products .perfect-image,
+  #products img {
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Remove any default image backgrounds */
+  #products img[src*=".png"],
+  #products img[src*=".jpg"],
+  #products img[src*=".jpeg"] {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+  
+  /* Force all elements to respect viewport boundaries */
+  * {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  /* Prevent any element from causing horizontal scroll */
+  body, html, #root {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Ensure main container never overflows */
+  main, section, div {
+    max-width: 100% !important;
+  }
+  
+  /* Prevent wide elements from causing horizontal scroll */
+  .w-screen,
+  .max-w-screen-xl,
+  .max-w-screen-lg,
+  .max-w-screen-md,
+  .max-w-screen-sm {
+    max-width: 100vw !important;
+  }
+
+  /* Ensure no element causes overflow */
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* Prevent any absolute positioned elements from causing overflow */
+  .absolute {
+    max-width: 100vw !important;
+  }
+  
+  /* Ensure all containers respect viewport width */
+  [class*="container"],
+  [class*="mx-auto"] {
+    max-width: 100% !important;
+  }
+  
+  /* Smooth section transitions and polished effects */
+  section {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  /* Improved button interactions */
+  button {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Card hover effects - adjusted for stability */
+  .hover\\:shadow-lg:hover {
+    transform: translateY(-1px);
+  }
+  
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -119,7 +357,509 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    scroll-behavior: smooth;
   }
+
+  body {
+    @apply bg-white text-gray-900;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-weight: 400;
+    font-feature-settings: 'kern';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Enterprise-level typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+
+  p {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    line-height: 1.7;
+    color: rgb(107 114 128);
+  }
+
+  /* Professional button styling */
+  button {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+  }
+
+  /* Remove all default list styles and bullet points */
+  ul, ol, li {
+    list-style: none !important;
+    list-style-type: none !important;
+  }
+
+  /* Ensure no pseudo-elements create dots in content areas */
+  .space-y-2 *::before, 
+  .space-y-3 *::before, 
+  .space-y-4 *::before,
+  .grid *::before,
+  [class*="grid-cols"] *::before {
+    content: none !important;
+  }
+
+  /* Remove default margins from paragraphs in cards */
+  .bg-background p:first-child {
+    margin-top: 0;
+  }
+  
+  .bg-background p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  /* Hero Animation Utilities */
+  .animate-marquee {
+    animation: marquee 8s linear infinite;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+
+  .animation-delay-1000 {
+    animation-delay: 1000ms;
+  }
+
+  .perspective-500 {
+    perspective: 500px;
+  }
+
+  .border-3 {
+    border-width: 3px;
+  }
+
+  /* Premium gradient utilities */
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-hero {
+    box-shadow: var(--shadow-hero);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Perfect Image Display - Static with polished curved corners */
+  .perfect-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    border-radius: 16px;
+    /* Remove any transition/transform effects - keep images static */
+  }
+
+  /* Polished Image Styling - All images get curved corners */
+  img {
+    border-radius: 12px;
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Remove any hover effects on images - completely static */
+  img:hover {
+    transform: none !important;
+    scale: none !important;
+    zoom: none !important;
+  }
+
+  /* Remove any zoom effects globally */
+  *:hover img {
+    transform: none !important;
+    scale: none !important;
+    zoom: none !important;
+  }
+
+  /* Enhanced image containers with rounded corners */
+  .image-container {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Ensure all card images have rounded corners */
+  .bg-white img,
+  .border img,
+  .shadow img,
+  .rounded img {
+    border-radius: 12px !important;
+  }
+
+  /* Professional typography using Google Fonts */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+  }
+
+  p, span, div, input, textarea, label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+  }
+  header {
+  transition: transform 0.3s ease-in-out;
+}
+
+
+  .perfect-image-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Ensure all images in featured products, solutions, and about sections display perfectly */
+  .perfect-image-container img {
+    min-width: 100%;
+    min-height: 100%;
+    flex-shrink: 0;
+  }
+
+  /* Remove any default backgrounds from image containers */
+  .about-section img,
+  section img {
+    background: none !important;
+  }
+
+  /* Ensure image containers have no background */
+  [class*="image-container"],
+  .relative img {
+    background: transparent !important;
+  }
+
+  /* Specifically target About section images to remove white backgrounds */
+  #about img {
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  #about .relative {
+    background: transparent !important;
+  }
+  
+  /* Force all mission and vision images to display without white backgrounds */
+  #about .rounded-3xl {
+    background: transparent !important;
+  }
+
+  /* Hero section background images should cover properly */
+  .hero-bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Ensure no image compression in any section */
+  .featured-products img,
+  .solutions-section img,
+  .about-section img,
+  .products-section img {
+    object-fit: cover;
+    object-position: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Fix for any remaining image display issues */
+  img[src=""] {
+    display: none;
+  }
+
+  img:not([src]), img[src=""] {
+    opacity: 0;
+  }
+}
+
+/* Premium Animations */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6);
+  }
+}
+
+@keyframes scan {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Enhanced Parallax Animations */
+@keyframes parallaxFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.02);
+  }
+}
+
+@keyframes smoothSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes parallaxRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.4);
+  }
+}
+
+@keyframes subtleBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Smooth Performance Optimizations */
+.parallax-element {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.smooth-transition {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ultra-smooth {
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Enhanced Hover Effects */
+.product-card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-hover:hover {
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Solutions Page Specific Styles */
+.solutions-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.solutions-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.solutions-image-container {
+  transition: all 0.3s ease;
+}
+
+.solutions-image-container:hover {
+  transform: scale(1.02);
+}
+
+/* Improved spacing utilities */
+.section-spacing {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+  .section-spacing {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+/* Clean background patterns */
+.pattern-dots {
+  background-image: radial-gradient(circle, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.pattern-grid {
+  background-image: linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Floating Animation */
+.animate-float {
+  animation: parallaxFloat 6s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+.animate-subtle-bounce {
+  animation: subtleBounce 2s infinite;
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Staggered Animation Delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+
+@keyframes slideInLeft {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Additional utility animations */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.animate-scan {
+  animation: scan 2s ease-in-out infinite;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
 }

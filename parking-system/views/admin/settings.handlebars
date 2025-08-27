@@ -1,0 +1,553 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">System Settings</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-success" onclick="saveAllSettings()">
+                    <i class="bi bi-check-circle"></i> Save All Changes
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetToDefaults()">
+                    <i class="bi bi-arrow-clockwise"></i> Reset to Defaults
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Settings Categories</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#general" class="list-group-item list-group-item-action active" data-bs-toggle="pill">
+                        <i class="bi bi-gear"></i> General Settings
+                    </a>
+                    <a href="#parking" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-car-front"></i> Parking Configuration
+                    </a>
+                    <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-bell"></i> Notifications
+                    </a>
+                    <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-shield-lock"></i> Security
+                    </a>
+                    <a href="#backup" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-cloud-arrow-up"></i> Backup & Recovery
+                    </a>
+                    <a href="#integrations" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                        <i class="bi bi-link"></i> Integrations
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- General Settings -->
+                <div class="tab-pane fade show active" id="general">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">General Settings</h6>
+                        </div>
+                        <div class="card-body" id="generalSettings">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading settings...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parking Configuration -->
+                <div class="tab-pane fade" id="parking">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Parking Configuration</h6>
+                        </div>
+                        <div class="card-body" id="parkingSettings">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading settings...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="tab-pane fade" id="notifications">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Notification Settings</h6>
+                        </div>
+                        <div class="card-body" id="notificationSettings">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading settings...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security -->
+                <div class="tab-pane fade" id="security">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Security Settings</h6>
+                        </div>
+                        <div class="card-body" id="securitySettings">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading settings...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backup & Recovery -->
+                <div class="tab-pane fade" id="backup">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Backup & Recovery</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6>Database Backup</h6>
+                                    <p class="text-muted">Last backup: January 8, 2024 at 2:00 AM</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary">Create Backup Now</button>
+                                        <button class="btn btn-outline-secondary">Download Latest Backup</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Automated Backups</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="autoBackup" checked>
+                                        <label class="form-check-label" for="autoBackup">
+                                            Enable automatic daily backups
+                                        </label>
+                                    </div>
+                                    <div class="mt-2">
+                                        <label for="backupTime" class="form-label">Backup Time</label>
+                                        <input type="time" class="form-control" id="backupTime" value="02:00">
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h6>System Recovery</h6>
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <strong>Warning:</strong> Recovery operations will temporarily disable the system.
+                                    </div>
+                                    <button class="btn btn-warning">Restore from Backup</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integrations -->
+                <div class="tab-pane fade" id="integrations">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Third-Party Integrations</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-credit-card fa-3x text-primary mb-3"></i>
+                                            <h6>Payment Gateway</h6>
+                                            <p class="text-muted">Razorpay, Stripe, PayPal</p>
+                                            <span class="badge bg-success">Connected</span>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary">Configure</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-envelope fa-3x text-info mb-3"></i>
+                                            <h6>Email Service</h6>
+                                            <p class="text-muted">SendGrid, Mailgun</p>
+                                            <span class="badge bg-success">Connected</span>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-info">Configure</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-phone fa-3x text-warning mb-3"></i>
+                                            <h6>SMS Service</h6>
+                                            <p class="text-muted">Twilio, AWS SNS</p>
+                                            <span class="badge bg-secondary">Not Connected</span>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-warning">Connect</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-cloud fa-3x text-success mb-3"></i>
+                                            <h6>Cloud Storage</h6>
+                                            <p class="text-muted">AWS S3, Google Cloud</p>
+                                            <span class="badge bg-success">Connected</span>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-success">Configure</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let settingsData = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSettingsData();
+});
+
+async function loadSettingsData() {
+    try {
+        const response = await fetch('/api/admin/settings', {
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            settingsData = result.data;
+            renderSettings();
+        } else {
+            console.error('Failed to load settings data');
+            // Initialize with default settings if none exist
+            settingsData = {
+                general: [],
+                parking: [],
+                notification: [],
+                security: [],
+                system: [],
+                payment: []
+            };
+            renderSettings();
+        }
+    } catch (error) {
+        console.error('Error loading settings data:', error);
+        // Initialize with default settings on error
+        settingsData = {
+            general: [],
+            parking: [],
+            notification: [],
+            security: [],
+            system: [],
+            payment: []
+        };
+        renderSettings();
+    }
+}
+
+function renderSettings() {
+    // Helper function to get setting value
+    const getSetting = (category, key, defaultValue = '') => {
+        if (!settingsData || !settingsData[category]) return defaultValue;
+        const setting = settingsData[category].find(s => s.key === `${category}_${key}`);
+        return setting ? setting.value : defaultValue;
+    };
+
+    // General Settings
+    document.getElementById('generalSettings').innerHTML = `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="siteName" class="form-label">Site Name</label>
+                <input type="text" class="form-control" id="siteName" value="${getSetting('general', 'site_name', 'Parking Management System')}" data-key="site_name" data-category="general">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="timezone" class="form-label">Timezone</label>
+                <select class="form-select" id="timezone" data-key="timezone" data-category="general">
+                    <option value="Asia/Kolkata" ${getSetting('general', 'timezone', 'Asia/Kolkata') === 'Asia/Kolkata' ? 'selected' : ''}>Asia/Kolkata</option>
+                    <option value="UTC" ${getSetting('general', 'timezone') === 'UTC' ? 'selected' : ''}>UTC</option>
+                    <option value="America/New_York" ${getSetting('general', 'timezone') === 'America/New_York' ? 'selected' : ''}>America/New_York</option>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="language" class="form-label">Default Language</label>
+                <select class="form-select" id="language" data-key="language" data-category="general">
+                    <option value="en" ${getSetting('general', 'language', 'en') === 'en' ? 'selected' : ''}>English</option>
+                    <option value="hi" ${getSetting('general', 'language') === 'hi' ? 'selected' : ''}>Hindi</option>
+                    <option value="es" ${getSetting('general', 'language') === 'es' ? 'selected' : ''}>Spanish</option>
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="maintenanceMode" ${getSetting('general', 'maintenance_mode', false) ? 'checked' : ''} data-key="maintenance_mode" data-category="general">
+                    <label class="form-check-label" for="maintenanceMode">
+                        Maintenance Mode
+                    </label>
+                </div>
+                <small class="text-muted">Enable this to put the system in maintenance mode</small>
+            </div>
+        </div>
+    `;
+
+    // Parking Settings
+    document.getElementById('parkingSettings').innerHTML = `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="basePrice" class="form-label">Base Price (₹)</label>
+                <input type="number" class="form-control" id="basePrice" value="${getSetting('parking', 'base_price', '50')}" min="0" step="0.01" data-key="base_price" data-category="parking">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="pricePerHour" class="form-label">Price Per Hour (₹)</label>
+                <input type="number" class="form-control" id="pricePerHour" value="${getSetting('parking', 'price_per_hour', '25')}" min="0" step="0.01" data-key="price_per_hour" data-category="parking">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="maxBookingDuration" class="form-label">Max Booking Duration (hours)</label>
+                <input type="number" class="form-control" id="maxBookingDuration" value="${getSetting('parking', 'max_booking_duration', '12')}" min="1" max="24" data-key="max_booking_duration" data-category="parking">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="advanceBookingDays" class="form-label">Advance Booking (days)</label>
+                <input type="number" class="form-control" id="advanceBookingDays" value="${getSetting('parking', 'advance_booking_days', '7')}" min="1" max="90" data-key="advance_booking_days" data-category="parking">
+            </div>
+        </div>
+        <hr>
+        <h6>Pricing Rules</h6>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="dynamicPricing" ${getSetting('parking', 'dynamic_pricing', false) ? 'checked' : ''} data-key="dynamic_pricing" data-category="parking">
+                    <label class="form-check-label" for="dynamicPricing">
+                        Enable Dynamic Pricing
+                    </label>
+                </div>
+                <small class="text-muted">Automatically adjust prices based on demand</small>
+            </div>
+        </div>
+    `;
+
+    // Notification Settings
+    document.getElementById('notificationSettings').innerHTML = `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <h6>Notification Channels</h6>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="emailNotifications" ${getSetting('notification', 'email_notifications', true) ? 'checked' : ''} data-key="email_notifications" data-category="notification">
+                    <label class="form-check-label" for="emailNotifications">
+                        Email Notifications
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="smsNotifications" ${getSetting('notification', 'sms_notifications', false) ? 'checked' : ''} data-key="sms_notifications" data-category="notification">
+                    <label class="form-check-label" for="smsNotifications">
+                        SMS Notifications
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="pushNotifications" ${getSetting('notification', 'push_notifications', true) ? 'checked' : ''} data-key="push_notifications" data-category="notification">
+                    <label class="form-check-label" for="pushNotifications">
+                        Push Notifications
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="reminderTime" class="form-label">Reminder Time (minutes before)</label>
+                <input type="number" class="form-control" id="reminderTime" value="${getSetting('notification', 'reminder_time', '30')}" min="5" max="120" data-key="reminder_time" data-category="notification">
+                <small class="text-muted">Send booking reminders X minutes before the booking starts</small>
+            </div>
+        </div>
+        <hr>
+        <h6>Admin Notifications</h6>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="lowOccupancyAlert" ${getSetting('notification', 'low_occupancy_alert', true) ? 'checked' : ''} data-key="low_occupancy_alert" data-category="notification">
+            <label class="form-check-label" for="lowOccupancyAlert">
+                Low Occupancy Alerts
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="paymentFailureAlert" ${getSetting('notification', 'payment_failure_alert', true) ? 'checked' : ''} data-key="payment_failure_alert" data-category="notification">
+            <label class="form-check-label" for="paymentFailureAlert">
+                Payment Failure Alerts
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="systemErrorAlert" ${getSetting('notification', 'system_error_alert', true) ? 'checked' : ''} data-key="system_error_alert" data-category="notification">
+            <label class="form-check-label" for="systemErrorAlert">
+                System Error Alerts
+            </label>
+        </div>
+    `;
+
+    // Security Settings
+    document.getElementById('securitySettings').innerHTML = `
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
+                <input type="number" class="form-control" id="sessionTimeout" value="${getSetting('security', 'session_timeout', '120')}" min="15" max="480" data-key="session_timeout" data-category="security">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="maxLoginAttempts" class="form-label">Max Login Attempts</label>
+                <input type="number" class="form-control" id="maxLoginAttempts" value="${getSetting('security', 'max_login_attempts', '5')}" min="3" max="10" data-key="max_login_attempts" data-category="security">
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="twoFactorAuth" ${getSetting('security', 'two_factor_auth', false) ? 'checked' : ''} data-key="two_factor_auth" data-category="security">
+                    <label class="form-check-label" for="twoFactorAuth">
+                        Two-Factor Authentication
+                    </label>
+                </div>
+                <small class="text-muted">Require 2FA for admin accounts</small>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="ipWhitelist" ${getSetting('security', 'ip_whitelist', false) ? 'checked' : ''} data-key="ip_whitelist" data-category="security">
+                    <label class="form-check-label" for="ipWhitelist">
+                        IP Whitelist
+                    </label>
+                </div>
+                <small class="text-muted">Restrict admin access to specific IP addresses</small>
+            </div>
+        </div>
+        <hr>
+        <h6>Password Policy</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="passwordComplexity" ${getSetting('security', 'password_complexity', true) ? 'checked' : ''} data-key="password_complexity" data-category="security">
+                    <label class="form-check-label" for="passwordComplexity">
+                        Enforce Password Complexity
+                    </label>
+                </div>
+                <small class="text-muted">Require uppercase, lowercase, numbers, and symbols</small>
+            </div>
+            <div class="col-md-6">
+                <label for="passwordExpiry" class="form-label">Password Expiry (days)</label>
+                <input type="number" class="form-control" id="passwordExpiry" value="${getSetting('security', 'password_expiry', '90')}" min="30" max="365" data-key="password_expiry" data-category="security">
+            </div>
+        </div>
+    `;
+}
+
+async function saveAllSettings() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    btn.disabled = true;
+    
+    try {
+        // Collect all settings from form elements
+        const settingsToSave = [];
+        const formElements = document.querySelectorAll('[data-key][data-category]');
+        
+        formElements.forEach(element => {
+            const key = element.dataset.key;
+            const category = element.dataset.category;
+            let value = element.value;
+            let type = 'string';
+            
+            if (element.type === 'checkbox') {
+                value = element.checked;
+                type = 'boolean';
+            } else if (element.type === 'number') {
+                value = parseFloat(value);
+                type = 'number';
+            }
+            
+            settingsToSave.push({
+                key: `${category}_${key}`,
+                value: value,
+                type: type,
+                category: category,
+                description: element.closest('.mb-3')?.querySelector('label')?.textContent || ''
+            });
+        });
+        
+        // Save each setting
+        for (const setting of settingsToSave) {
+            const response = await fetch(`/api/admin/settings/${setting.key}`, {
+                method: 'PUT',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    value: setting.value,
+                    description: setting.description
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to save setting: ${setting.key}`);
+            }
+        }
+        
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Saved Successfully';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-success');
+        
+        showNotification('All settings saved successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        btn.innerHTML = '<i class="bi bi-x-circle"></i> Save Failed';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-danger');
+        
+        showNotification('Failed to save settings: ' + error.message, 'danger');
+    } finally {
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.classList.remove('btn-danger');
+            btn.classList.add('btn-success');
+        }, 2000);
+    }
+}
+
+function showNotification(message, type = 'info') {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+function resetToDefaults() {
+    if (confirm('Are you sure you want to reset all settings to their default values?')) {
+        // Simulate reset
+        setTimeout(() => {
+            alert('Settings have been reset to defaults. Please refresh the page.');
+            location.reload();
+        }, 500);
+    }
+}
+</script>

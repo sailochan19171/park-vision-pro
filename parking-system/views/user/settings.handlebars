@@ -1,0 +1,356 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Settings</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Notification Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Notification Preferences</h6>
+            </div>
+            <div class="card-body">
+                <form id="notificationForm">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        <label class="form-check-label" for="emailNotifications">
+                            <strong>Email Notifications</strong><br>
+                            <small class="text-muted">Receive booking confirmations and updates via email</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="smsNotifications" checked>
+                        <label class="form-check-label" for="smsNotifications">
+                            <strong>SMS Notifications</strong><br>
+                            <small class="text-muted">Receive important alerts via SMS</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="pushNotifications" checked>
+                        <label class="form-check-label" for="pushNotifications">
+                            <strong>Push Notifications</strong><br>
+                            <small class="text-muted">Receive real-time notifications in your browser</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="marketingEmails">
+                        <label class="form-check-label" for="marketingEmails">
+                            <strong>Marketing Emails</strong><br>
+                            <small class="text-muted">Receive promotional offers and updates</small>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Notification Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Privacy Settings</h6>
+            </div>
+            <div class="card-body">
+                <form id="privacyForm">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="shareLocation" checked>
+                        <label class="form-check-label" for="shareLocation">
+                            <strong>Share Location</strong><br>
+                            <small class="text-muted">Allow location sharing for better parking recommendations</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="dataAnalytics" checked>
+                        <label class="form-check-label" for="dataAnalytics">
+                            <strong>Usage Analytics</strong><br>
+                            <small class="text-muted">Help improve our service by sharing anonymous usage data</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="profileVisibility">
+                        <label class="form-check-label" for="profileVisibility">
+                            <strong>Public Profile</strong><br>
+                            <small class="text-muted">Make your profile visible to other users</small>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Privacy Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Account Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6>Export Data</h6>
+                        <p class="text-muted">Download all your account data</p>
+                        <button class="btn btn-outline-info" onclick="exportData()">
+                            <i class="bi bi-download"></i> Export Data
+                        </button>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6>Delete Account</h6>
+                        <p class="text-muted">Permanently delete your account</p>
+                        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                            <i class="bi bi-trash"></i> Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- App Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">App Preferences</h6>
+            </div>
+            <div class="card-body">
+                <form id="appSettingsForm">
+                    <div class="mb-3">
+                        <label for="theme" class="form-label">Theme</label>
+                        <select class="form-select" id="theme">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="auto">Auto</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="language" class="form-label">Language</label>
+                        <select class="form-select" id="language">
+                            <option value="en">English</option>
+                            <option value="hi">Hindi</option>
+                            <option value="kn">Kannada</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="currency" class="form-label">Currency</label>
+                        <select class="form-select" id="currency">
+                            <option value="INR">Indian Rupee (₹)</option>
+                            <option value="USD">US Dollar ($)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save App Settings</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Support -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Support</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-outline-primary">
+                        <i class="bi bi-question-circle"></i> Help Center
+                    </a>
+                    <a href="#" class="btn btn-outline-success">
+                        <i class="bi bi-chat-dots"></i> Contact Support
+                    </a>
+                    <a href="#" class="btn btn-outline-info">
+                        <i class="bi bi-bug"></i> Report Issue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">Delete Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Warning!</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete your account? This will:</p>
+                <ul>
+                    <li>Permanently delete all your data</li>
+                    <li>Cancel all active bookings</li>
+                    <li>Remove all registered vehicles</li>
+                    <li>Delete payment history</li>
+                </ul>
+                <div class="mb-3">
+                    <label for="confirmDelete" class="form-label">Type "DELETE" to confirm:</label>
+                    <input type="text" class="form-control" id="confirmDelete" placeholder="DELETE">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>Delete Account</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load current settings
+    loadSettings();
+    
+    // Form submissions
+    document.getElementById('notificationForm').addEventListener('submit', saveNotificationSettings);
+    document.getElementById('privacyForm').addEventListener('submit', savePrivacySettings);
+    document.getElementById('appSettingsForm').addEventListener('submit', saveAppSettings);
+    
+    // Delete confirmation
+    document.getElementById('confirmDelete').addEventListener('input', function() {
+        const btn = document.getElementById('confirmDeleteBtn');
+        btn.disabled = this.value !== 'DELETE';
+    });
+    
+    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteAccount);
+});
+
+function loadSettings() {
+    // Load settings from localStorage or API
+    const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+    
+    // Apply settings to form
+    Object.keys(settings).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+            if (element.type === 'checkbox') {
+                element.checked = settings[key];
+            } else {
+                element.value = settings[key];
+            }
+        }
+    });
+}
+
+async function saveNotificationSettings(e) {
+    e.preventDefault();
+    
+    const settings = {
+        emailNotifications: document.getElementById('emailNotifications').checked,
+        smsNotifications: document.getElementById('smsNotifications').checked,
+        pushNotifications: document.getElementById('pushNotifications').checked,
+        marketingEmails: document.getElementById('marketingEmails').checked
+    };
+    
+    try {
+        // Save to localStorage for now
+        const currentSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        localStorage.setItem('userSettings', JSON.stringify({...currentSettings, ...settings}));
+        
+        showSuccess('Notification settings saved successfully!');
+    } catch (error) {
+        showError('Error saving notification settings');
+    }
+}
+
+async function savePrivacySettings(e) {
+    e.preventDefault();
+    
+    const settings = {
+        shareLocation: document.getElementById('shareLocation').checked,
+        dataAnalytics: document.getElementById('dataAnalytics').checked,
+        profileVisibility: document.getElementById('profileVisibility').checked
+    };
+    
+    try {
+        const currentSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        localStorage.setItem('userSettings', JSON.stringify({...currentSettings, ...settings}));
+        
+        showSuccess('Privacy settings saved successfully!');
+    } catch (error) {
+        showError('Error saving privacy settings');
+    }
+}
+
+async function saveAppSettings(e) {
+    e.preventDefault();
+    
+    const settings = {
+        theme: document.getElementById('theme').value,
+        language: document.getElementById('language').value,
+        currency: document.getElementById('currency').value
+    };
+    
+    try {
+        const currentSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
+        localStorage.setItem('userSettings', JSON.stringify({...currentSettings, ...settings}));
+        
+        showSuccess('App settings saved successfully!');
+    } catch (error) {
+        showError('Error saving app settings');
+    }
+}
+
+function exportData() {
+    // Create a simple data export
+    const userData = {
+        profile: {
+            name: '{{user.name}}',
+            email: '{{user.email}}',
+            phone: '{{user.phone}}'
+        },
+        settings: JSON.parse(localStorage.getItem('userSettings') || '{}'),
+        exportDate: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(userData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `user-data-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    showSuccess('Data exported successfully!');
+}
+
+async function deleteAccount() {
+    try {
+        const response = await fetch('/api/user/delete-account', {
+            method: 'DELETE',
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            alert('Account deleted successfully. You will be redirected to the login page.');
+            window.location.href = '/user/login';
+        } else {
+            showError('Error deleting account');
+        }
+    } catch (error) {
+        showError('Error deleting account');
+    }
+}
+
+function showSuccess(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+</script>

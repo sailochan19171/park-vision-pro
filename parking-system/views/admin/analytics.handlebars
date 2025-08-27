@@ -1,0 +1,216 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Analytics Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Bookings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalBookings">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Revenue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRevenue">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-rupee fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Average Booking Value</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgBookingValue">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-graph-up fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Occupancy Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="occupancyRate">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-pie-chart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue Trends</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Popular Zones</h6>
+                </div>
+                <div class="card-body">
+                    <div id="popularSpots">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnalyticsData();
+});
+
+async function loadAnalyticsData() {
+    try {
+        const response = await fetch('/api/admin/analytics', {
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update overview cards with safe property access
+            document.getElementById('totalBookings').textContent = (data.summary?.totalBookings || 0).toLocaleString();
+            document.getElementById('totalRevenue').textContent = '₹' + (data.summary?.totalRevenue || 0).toLocaleString();
+            document.getElementById('avgBookingValue').textContent = '₹' + (data.summary?.avgDailyRevenue || 0).toFixed(2);
+            
+            // Calculate occupancy rate from occupancy data
+            const occupancyData = data.occupancy || [];
+            const totalSpots = occupancyData.reduce((sum, item) => sum + item.count, 0);
+            const occupiedSpots = occupancyData.find(item => item._id === 'occupied')?.count || 0;
+            const occupancyRate = totalSpots > 0 ? ((occupiedSpots / totalSpots) * 100).toFixed(1) : 0;
+            document.getElementById('occupancyRate').textContent = occupancyRate + '%';
+            
+            // Create revenue trend chart
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.revenue.map(item => item._id),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.revenue.map(item => item.revenue),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.1
+                    }, {
+                        label: 'Bookings',
+                        data: data.revenue.map(item => item.bookings * 10), // Scale for visibility
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Revenue (₹)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Bookings (×10)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Update popular spots - use vehicle types if no spots data
+            const spotsData = data.vehicles || [];
+            const spotsHtml = spotsData.map(item => `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>${item._id ? item._id.charAt(0).toUpperCase() + item._id.slice(1) : 'Unknown'}</strong>
+                        <br>
+                        <small class="text-muted">${item.count} vehicles</small>
+                    </div>
+                    <div class="text-end">
+                        <strong>${((item.count / spotsData.reduce((sum, v) => sum + v.count, 0)) * 100).toFixed(1)}%</strong>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('popularSpots').innerHTML = spotsHtml || '<div class="text-center text-muted">No data available</div>';
+            
+        } else {
+            console.error('Failed to load analytics data');
+            // Show default values
+            document.getElementById('totalBookings').textContent = '0';
+            document.getElementById('totalRevenue').textContent = '₹0';
+            document.getElementById('avgBookingValue').textContent = '₹0';
+            document.getElementById('occupancyRate').textContent = '0%';
+            document.getElementById('popularSpots').innerHTML = '<div class="text-center text-muted">No data available</div>';
+        }
+    } catch (error) {
+        console.error('Error loading analytics data:', error);
+        document.getElementById('totalBookings').textContent = 'Error';
+        document.getElementById('totalRevenue').textContent = 'Error';
+        document.getElementById('avgBookingValue').textContent = 'Error';
+        document.getElementById('occupancyRate').textContent = 'Error';
+    }
+}
+</script>

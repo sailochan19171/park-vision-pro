@@ -1,46 +1,135 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
+import { useToast } from "../hooks/use-toast";
+import { submitContactForm, ContactFormData } from "../services/contactService";
+import AICallModal from "./AICallModal";
 import { 
   MapPin, 
   Phone, 
   Mail, 
-  Clock,
-  MessageSquare,
-  Send,
-  CheckCircle
+  Clock, 
+  Building, 
+  Factory,
+  MessageCircle,
+  Loader2,
+  Bot
 } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
 
 const Contact = () => {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     email: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAICallModalOpen, setIsAICallModalOpen] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = (data: ContactFormData) => {
+    const errors: string[] = [];
+    
+    if (!data.name.trim()) {
+      errors.push('Name is required');
+    }
+    
+    if (!data.email.trim()) {
+      errors.push('Email is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      errors.push('Please enter a valid email address');
+    }
+    
+    if (!data.message.trim()) {
+      errors.push('Message is required');
+    } else if (data.message.trim().length < 10) {
+      errors.push('Message must be at least 10 characters long');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for your inquiry. We'll get back to you within 24 hours.",
-    });
-    setFormData({ name: '', email: '', message: '' });
+    
+    // Validate form
+    const validation = validateForm(formData);
+    if (!validation.isValid) {
+      toast({
+        title: "Validation Error",
+        description: validation.errors.join('. '),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      console.log('📝 Submitting contact form to live email backend...', formData);
+      
+      // Submit the form with automated real-time email processing
+      const result = await submitContactForm(formData);
+      
+      if (result.success) {
+        toast({
+          title: "Message Sent Successfully! ✅",
+          description: result.message,
+          duration: 10000,
+        });
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: result.message,
+          variant: "destructive",
+          duration: 8000,
+        });
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      toast({
+        title: "Error Sending Message",
+        description: "Sorry, there was an error sending your message. Please try again or contact us directly at info@vayaccess.com or +91 720 724 4344.",
+        variant: "destructive",
+        duration: 8000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handlePhoneCall = () => {
+    // Traditional phone call as fallback
+    window.location.href = 'tel:+917207244344';
+  };
+
+  const handleAICall = () => {
+    setIsAICallModalOpen(true);
+  };
+
+  const handleEmailContact = () => {
+    window.location.href = 'mailto:sales@vayaccess.com?subject=Sales%20Inquiry%20-%20Parking%20Solutions';
+  };
+
+  const handleWhatsAppContact = () => {
+    const message = encodeURIComponent('Hi, I am interested in your parking solutions. Please provide more information.');
+    window.open(`https://wa.me/+917013799462?text=${message}`, '_blank');
+  };
+
   const contactInfo = [
     {
-      icon: <MapPin className="h-5 w-5" />,
       title: "Corporate Office",
+      icon: <Building className="h-5 w-5" />,
       details: [
         "Plot No. 26, Road No.1, West Gandhi Nagar",
         "Rampally X Road, Nagaram, Keesara (M)",
@@ -48,203 +137,242 @@ const Contact = () => {
       ]
     },
     {
-      icon: <MapPin className="h-5 w-5" />,
       title: "Factory",
+      icon: <Factory className="h-5 w-5" />,
       details: [
         "Plot No. 34, TIF MSME Green Industrial Park",
         "Dandumalkapur(V), Choutuppal (M)",
         "Yadagiri District, Telangana, India - 508252"
       ]
     },
+    // {
+    //   title: "Phone Numbers",
+    //   icon: <Phone className="h-5 w-5" />,
+    //   details: [
+    //     "+91 720 724 4344 (Primary)",
+    //     "+91 720 724 4345 (Support)",
+    //     "+91 720 724 4346 (Sales)"
+    //   ]
+    // },
+    // {
+    //   title: "Email",
+    //   icon: <Mail className="h-5 w-5" />,
+    //   // details: [
+    //   //   "info@vayaccess.com",
+    //   //   "sales@vayaccess.com",
+    //   //   "support@vayaccess.com"
+    //   // ]
+    // },
     {
-      icon: <Phone className="h-5 w-5" />,
-      title: "Phone Numbers",
+      title: "Business Hours",
+      icon: <Clock className="h-5 w-5" />,
       details: [
-        "Corporate: +91 720 724 4344",
-        "Factory: +91 915 470 3116",
-        "Support: +91 800 123 4567"
-      ]
-    },
-    {
-      icon: <Mail className="h-5 w-5" />,
-      title: "Email Addresses",
-      details: [
-        "info@parkvisionpro.com",
-        "sales@parkvisionpro.com",
-        "support@parkvisionpro.com"
+        "Monday - Friday: 9:00 AM - 6:00 PM",
+        "Saturday: 9:00 AM - 2:00 PM",
+        // "Sunday: Emergency Support Only"
       ]
     }
   ];
 
-  const businessHours = [
-    { day: "Monday - Friday", time: "09:00 AM - 06:00 PM" },
-    { day: "Saturday", time: "09:00 AM - 02:00 PM" },
-    { day: "Sunday", time: "Closed" },
-    { day: "Emergency Support", time: "24/7 Available" }
-  ];
-
   return (
-    <section id="contact" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-tech-blue/10 text-tech-blue border-tech-blue/20">
+    <section id="contact" className="py-16 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 scroll-mt-20 relative overflow-x-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 right-20 w-72 h-72 bg-blue-600 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-64 h-64 bg-blue-400 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-3xl opacity-20"></div>
+      </div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative w-full overflow-x-hidden">
+        {/* Section Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 font-poppins">
             Contact Us
-          </Badge>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Get In Touch
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Ready to transform your parking infrastructure? Drop us a line and our experts 
-            will get back to you with a customized solution for your needs.
+          <p className="text-sm text-gray-600 max-w-3xl mx-auto leading-relaxed font-poppins font-normal">
+            Get in touch for customized parking solutions and expert support from our experienced team.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-12">
+        <div className="grid lg:grid-cols-2 gap-6">
           {/* Contact Form */}
-          <div className="lg:col-span-2">
-            <Card className="border-0 shadow-xl bg-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-2xl">
-                  <MessageSquare className="h-6 w-6 text-tech-blue" />
-                  <span>Send us a Message</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        placeholder="Enter your full name"
-                        required
-                        className="border-tech-gray-light focus:border-tech-blue"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address *</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        placeholder="Enter your email"
-                        required
-                        className="border-tech-gray-light focus:border-tech-blue"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="message">Message *</Label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      placeholder="Tell us about your parking solution requirements..."
-                      rows={6}
-                      required
-                      className="border-tech-gray-light focus:border-tech-blue resize-none"
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <CheckCircle className="h-4 w-4 text-success-green" />
-                    <span>We respect your privacy and will never share your information</span>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90"
-                  >
-                    Send Message
-                    <Send className="ml-2 h-4 w-4" />
-                  </Button>
-                </form>
-
-                {/* WhatsApp Button */}
-                <div className="mt-6 pt-6 border-t">
-                  <Button 
-                    variant="outline"
-                    size="lg"
-                    className="w-full border-success-green text-success-green hover:bg-success-green hover:text-white"
-                  >
-                    <MessageSquare className="mr-2 h-5 w-5" />
-                    Message us on WhatsApp
-                  </Button>
+          <div className="bg-white p-6 rounded-lg shadow-sm image-container" data-aos="fade-right" data-aos-delay="200">
+            <h3 className="text-lg font-bold text-gray-900 mb-3 font-poppins">
+              Send us a Message
+            </h3>
+            
+            <p className="text-gray-600 mb-5 text-sm font-poppins font-normal">
+              Complete the form below with details about your parking solution requirements. Our technical 
+              specialists will review your information and provide a detailed response with recommendations, 
+              pricing estimates, and implementation timelines within 2 hours during business hours.
+            </p>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-700 font-poppins">Full Name *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Your full name"
+                    required
+                    disabled={isSubmitting}
+                    className="mt-1 font-poppins font-normal"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700 font-poppins">Email Address *</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="your@email.com"
+                    required
+                    disabled={isSubmitting}
+                    className="mt-1 font-poppins font-normal"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="message" className="text-sm font-medium text-gray-700 font-poppins">Project Details *</Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  placeholder="Tell us about your parking solution requirements..."
+                  rows={3}
+                  required
+                  disabled={isSubmitting}
+                  className="mt-1 resize-none font-poppins font-normal"
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-tech-blue hover:bg-tech-blue/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-2 text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300 font-poppins"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending Message...
+                  </>
+                ) : (
+                  'Send Message'
+                )}
+              </Button>
+            </form>
           </div>
 
           {/* Contact Information */}
-          <div className="space-y-8">
-            {/* Contact Details */}
-            <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3 font-poppins">
+              Get In Touch
+            </h3>
+            
+            {/* <p className="text-gray-600 mb-5 text-sm font-poppins font-normal">
+              Connect with our parking solution experts through multiple channels. Our team provides comprehensive 
+              support from initial consultation through installation, training, and ongoing maintenance. We're 
+              committed to ensuring your parking infrastructure operates at peak efficiency.
+            </p> */}
+            
+            {/* <div className="bg-blue-50 p-3 rounded-lg mb-5">
+              <h4 className="font-semibold text-gray-900 mb-2 font-poppins text-sm">Free Consultation Available</h4>
+              <p className="text-xs text-gray-600 font-poppins font-normal">
+                Schedule a complimentary site assessment and consultation with our technical experts. 
+                We'll evaluate your current infrastructure and provide detailed recommendations for 
+                optimization and upgrades at no cost.
+              </p>
+            </div> */}
+            
+            <div className="space-y-4">
               {contactInfo.map((info, index) => (
-                <Card key={index} className="border-0 bg-tech-gray-light">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 bg-tech-blue/10 rounded-lg flex items-center justify-center text-tech-blue mt-1">
-                        {info.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-2">{info.title}</h3>
-                        <div className="space-y-1">
-                          {info.details.map((detail, detailIndex) => (
-                            <p key={detailIndex} className="text-sm text-muted-foreground">
-                              {detail}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div key={index} className="space-y-1">
+                  <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2 font-poppins">
+                    <span className="text-tech-blue">{info.icon}</span>
+                    {info.title}
+                  </h4>
+                  <div className="ml-7 space-y-1">
+                    {info.details.map((detail, detailIndex) => (
+                      <p key={detailIndex} className="text-gray-600 text-sm font-poppins font-normal">{detail}</p>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
 
-            {/* Business Hours */}
-            <Card className="border-0 bg-tech-gray-light">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5 text-tech-blue" />
-                  <span>Business Hours</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {businessHours.map((hour, index) => (
-                  <div key={index} className="flex justify-between items-center py-2">
-                    <span className="text-sm font-medium text-foreground">{hour.day}</span>
-                    <span className="text-sm text-muted-foreground">{hour.time}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            {/* Quick Action Buttons */}
+            <div className="space-y-3 mt-6">
+              {/* AI Call - Featured */}
+              <Button 
+                onClick={handleAICall}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2.5 text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300 font-poppins"
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                🤖 Talk to AI Expert - Instant Answers!
+              </Button>
+              
+              {/* Traditional options */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  onClick={handlePhoneCall}
+                  variant="outline"
+                  className="border-blue-200 hover:bg-blue-50 text-blue-700 py-2 text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-poppins"
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call Sales
+                </Button>
+                <Button 
+                  onClick={handleEmailContact}
+                  variant="outline"
+                  className="border-amber-200 hover:bg-amber-50 text-amber-700 py-2 text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-poppins"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email Sales
+                </Button>
+              </div>
 
-            {/* Quick Response Promise */}
-            <Card className="border-0 bg-gradient-to-br from-tech-blue/5 to-tech-blue-light/5 border-tech-blue/20">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 bg-tech-blue/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="h-8 w-8 text-tech-blue" />
-                </div>
-                <h3 className="font-bold text-foreground mb-2">Quick Response Guarantee</h3>
-                <p className="text-sm text-muted-foreground">
-                  We respond to all inquiries within 24 hours during business days. 
-                  Emergency support is available 24/7 for existing customers.
-                </p>
-              </CardContent>
-            </Card>
+              {/* Quick selectable queries */}
+              {/* <div className="flex flex-wrap gap-2 pt-1">
+                {[
+                  'Barrier gates options',
+                  'Turnstiles for office lobby',
+                  'Parking guidance system',
+                  'Ticketless parking with LPR',
+                  'Access control with RFID/biometric',
+                  'Site visit and quotation',
+                ].map((q) => (
+                  <Button
+                    key={q}
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setFormData({ ...formData, message: q })}
+                    className="h-8 px-3 text-xs font-poppins"
+                  >
+                    {q}
+                  </Button>
+                ))}
+              </div> */}
+            </div>
           </div>
         </div>
+
+
       </div>
+
+      {/* AI Call Modal */}
+      <AICallModal
+        isOpen={isAICallModalOpen}
+        onClose={() => setIsAICallModalOpen(false)}
+        customerName={formData.name}
+        customerPhone=""
+      />
     </section>
   );
 };

@@ -1,0 +1,135 @@
+/* User Dashboard Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.border-left-primary {
+    border-left: 4px solid #2563eb !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #10b981 !important;
+}
+
+.border-left-info {
+    border-left: 4px solid #0ea5e9 !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #f59e0b !important;
+}
+
+.text-xs {
+    font-size: 0.7rem;
+}
+
+.font-weight-bold {
+    font-weight: 700;
+}
+
+.card {
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.navbar-brand i {
+    margin-right: 8px;
+}
+
+.nav-link i {
+    margin-right: 6px;
+}
+
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+    transform: translateY(-1px);
+}
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+}
+
+/* Custom spacing for dashboard cards */
+.dashboard-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Activity timeline styles */
+.activity-item {
+    border-left: 2px solid #e5e7eb;
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 0.5rem;
+    width: 8px;
+    height: 8px;
+    background-color: #2563eb;
+    border-radius: 50%;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .navbar-nav .nav-link {
+        padding: 0.5rem 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Loading states */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Status badges */
+.badge {
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+.bg-success {
+    background-color: #10b981 !important;
+}
+
+.bg-warning {
+    background-color: #f59e0b !important;
+}
+
+.bg-danger {
+    background-color: #ef4444 !important;
+}
+
+.bg-info {
+    background-color: #0ea5e9 !important;
+}

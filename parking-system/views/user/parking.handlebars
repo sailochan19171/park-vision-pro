@@ -1,0 +1,691 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Find Parking</h2>
+                <button class="btn btn-success" onclick="refreshSpots()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="locationSearch" placeholder="Search by location name">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="spotTypeFilter">
+                                <option value="">All Types</option>
+                                <option value="regular">Regular</option>
+                                <option value="disabled">Disabled</option>
+                                <option value="electric">Electric</option>
+                                <option value="vip">VIP</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="priceRangeFilter">
+                                <option value="">Any Price</option>
+                                <option value="0-50">₹0 - ₹50/hr</option>
+                                <option value="50-100">₹50 - ₹100/hr</option>
+                                <option value="100-200">₹100 - ₹200/hr</option>
+                                <option value="200+">₹200+/hr</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="sortBy">
+                                <option value="distance">Distance</option>
+                                <option value="price">Price</option>
+                                <option value="rating">Rating</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="searchParking()">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map View Toggle -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="viewToggle" id="listView" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="listView">
+                        <i class="bi bi-list-ul"></i> List View
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="viewToggle" id="mapView" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="mapView">
+                        <i class="bi bi-geo-alt"></i> Map View
+                    </label>
+                </div>
+                
+                <div class="text-muted">
+                    <i class="bi bi-geo-alt-fill text-success"></i> <span id="availableCount">12</span> spots available nearby
+                </div>
+            </div>
+
+            <!-- Parking Spots List -->
+            <div id="parkingSpotsList">
+                <!-- Available Spot -->
+                <div class="card mb-3 border-success">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <i class="bi bi-p-square-fill text-success" style="font-size: 2rem;"></i>
+                                    <h5 class="mb-0">A-12</h5>
+                                    <small class="text-success">Available</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-1">
+                                    <i class="bi bi-geo-alt"></i> City Mall Parking
+                                </h5>
+                                <p class="text-muted mb-2">123 Main Street, Downtown</p>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-primary">Regular</span>
+                                    <span class="badge bg-info">Covered</span>
+                                    <span class="badge bg-success">Security</span>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-star-fill text-warning"></i> 4.5 (234 reviews) • 
+                                        <i class="bi bi-geo"></i> 0.8 km away
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <h4 class="text-success mb-0">₹60</h4>
+                                <small class="text-muted">per hour</small>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-success w-100" onclick="bookSpot('A-12')">
+                                    <i class="bi bi-calendar-check"></i> Book Now
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm w-100 mt-1" onclick="viewDetails('A-12')">
+                                    <i class="bi bi-info-circle"></i> Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Another Available Spot -->
+                <div class="card mb-3 border-success">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <i class="bi bi-ev-station-fill text-primary" style="font-size: 2rem;"></i>
+                                    <h5 class="mb-0">E-05</h5>
+                                    <small class="text-success">Available</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-1">
+                                    <i class="bi bi-geo-alt"></i> Tech Park Electric Station
+                                </h5>
+                                <p class="text-muted mb-2">456 Tech Boulevard, Business District</p>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-warning">Electric</span>
+                                    <span class="badge bg-info">Fast Charging</span>
+                                    <span class="badge bg-secondary">24/7</span>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-star-fill text-warning"></i> 4.8 (156 reviews) • 
+                                        <i class="bi bi-geo"></i> 1.2 km away
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <h4 class="text-success mb-0">₹120</h4>
+                                <small class="text-muted">per hour</small>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-success w-100" onclick="bookSpot('E-05')">
+                                    <i class="bi bi-calendar-check"></i> Book Now
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm w-100 mt-1" onclick="viewDetails('E-05')">
+                                    <i class="bi bi-info-circle"></i> Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Occupied Spot -->
+                <div class="card mb-3 border-danger">
+                    <div class="card-body opacity-75">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <i class="bi bi-p-square-fill text-danger" style="font-size: 2rem;"></i>
+                                    <h5 class="mb-0">B-08</h5>
+                                    <small class="text-danger">Occupied</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-1">
+                                    <i class="bi bi-geo-alt"></i> Shopping Center Parking
+                                </h5>
+                                <p class="text-muted mb-2">789 Retail Avenue, Shopping District</p>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-primary">Regular</span>
+                                    <span class="badge bg-info">Ground Floor</span>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> Available in ~2h 15m • 
+                                        <i class="bi bi-geo"></i> 0.5 km away
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <h4 class="text-muted mb-0">₹45</h4>
+                                <small class="text-muted">per hour</small>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-secondary w-100" disabled>
+                                    <i class="bi bi-clock"></i> Occupied
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm w-100 mt-1" onclick="setReminder('B-08')">
+                                    <i class="bi bi-bell"></i> Notify Me
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Container (hidden by default) -->
+            <div id="mapContainer" style="display: none;">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="parkingMap" style="height: 500px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                            <div class="text-center text-muted">
+                                <i class="bi bi-map display-1"></i>
+                                <h4>Interactive Map</h4>
+                                <p>Map integration would be implemented here<br>
+                                (Google Maps, Mapbox, etc.)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More Button -->
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-primary" onclick="loadMoreSpots()">
+                    <i class="bi bi-arrow-down-circle"></i> Load More Spots
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingModalLabel">
+                    <i class="bi bi-calendar-check"></i> Book Parking Spot
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="spotDetails">
+                    <!-- Spot details will be populated here -->
+                </div>
+                <form id="quickBookingForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bookingVehicle" class="form-label">Vehicle</label>
+                                <select class="form-select" id="bookingVehicle" required>
+                                    <option value="">Select Vehicle</option>
+                                    <option value="ABC-1234">ABC-1234 (Honda City)</option>
+                                    <option value="XYZ-5678">XYZ-5678 (Toyota Camry)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bookingDuration" class="form-label">Duration</label>
+                                <select class="form-select" id="bookingDuration" required>
+                                    <option value="">Select Duration</option>
+                                    <option value="1">1 hour</option>
+                                    <option value="2">2 hours</option>
+                                    <option value="4">4 hours</option>
+                                    <option value="8">8 hours</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Total Cost:</strong> <span id="totalCost">₹0</span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="confirmBooking()">
+                    <i class="bi bi-credit-card"></i> Proceed to Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// View toggle functionality
+document.getElementById('listView').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('parkingSpotsList').style.display = 'block';
+        document.getElementById('mapContainer').style.display = 'none';
+    }
+});
+
+document.getElementById('mapView').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('parkingSpotsList').style.display = 'none';
+        document.getElementById('mapContainer').style.display = 'block';
+    }
+});
+
+// Global variables
+let currentSpots = [];
+let currentFilters = {};
+let selectedSpot = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadParkingSpots();
+    loadUserVehicles();
+});
+
+// Load parking spots from API
+async function loadParkingSpots(filters = {}) {
+    try {
+        showLoading('parkingSpotsList', 'Loading parking spots...');
+        
+        const queryParams = new URLSearchParams(filters);
+        const response = await fetch(`/api/user/parking-spots?${queryParams}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            currentSpots = result.data;
+            renderParkingSpots(currentSpots);
+            updateAvailableCount(currentSpots.filter(spot => spot.status === 'available').length);
+        } else {
+            showAlert('Failed to load parking spots: ' + result.message, 'error');
+            document.getElementById('parkingSpotsList').innerHTML = '<div class="alert alert-danger">Failed to load parking spots</div>';
+        }
+    } catch (error) {
+        console.error('Error loading parking spots:', error);
+        showAlert('Error loading parking spots', 'error');
+        document.getElementById('parkingSpotsList').innerHTML = '<div class="alert alert-danger">Error loading parking spots</div>';
+    }
+}
+
+// Render parking spots in the UI
+function renderParkingSpots(spots) {
+    const container = document.getElementById('parkingSpotsList');
+    
+    if (spots.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-p-square display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No Parking Spots Found</h4>
+                <p class="text-muted">Try adjusting your search filters.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const spotsHtml = spots.map(spot => {
+        const isAvailable = spot.status === 'available';
+        const borderClass = isAvailable ? 'border-success' : 'border-danger';
+        const statusClass = isAvailable ? 'text-success' : 'text-danger';
+        const statusText = isAvailable ? 'Available' : 'Occupied';
+        const iconClass = getSpotTypeIcon(spot.type);
+        
+        return `
+            <div class="card mb-3 ${borderClass}">
+                <div class="card-body ${!isAvailable ? 'opacity-75' : ''}">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <i class="${iconClass} ${statusClass}" style="font-size: 2rem;"></i>
+                                <h5 class="mb-0">${spot.spotNumber}</h5>
+                                <small class="${statusClass}">${statusText}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="card-title mb-1">
+                                <i class="bi bi-geo-alt"></i> ${spot.location.name}
+                            </h5>
+                            <p class="text-muted mb-2">${spot.location.floor}, Section ${spot.location.section}</p>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-${getSpotTypeBadgeColor(spot.type)}">${spot.type.charAt(0).toUpperCase() + spot.type.slice(1)}</span>
+                                <span class="badge bg-info">Indoor</span>
+                                <span class="badge bg-success">Security</span>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-star-fill text-warning"></i> 4.${Math.floor(Math.random() * 5) + 3} (${Math.floor(Math.random() * 200) + 50} reviews) • 
+                                    <i class="bi bi-geo"></i> ${(Math.random() * 2 + 0.5).toFixed(1)} km away
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <h4 class="${isAvailable ? 'text-success' : 'text-muted'} mb-0">₹${spot.pricePerHour}</h4>
+                            <small class="text-muted">per hour</small>
+                        </div>
+                        <div class="col-md-2">
+                            ${isAvailable ? `
+                                <button class="btn btn-success w-100" onclick="bookSpot('${spot._id}')">
+                                    <i class="bi bi-calendar-check"></i> Book Now
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm w-100 mt-1" onclick="viewDetails('${spot._id}')">
+                                    <i class="bi bi-info-circle"></i> Details
+                                </button>
+                            ` : `
+                                <button class="btn btn-outline-secondary w-100" disabled>
+                                    <i class="bi bi-clock"></i> Occupied
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm w-100 mt-1" onclick="setReminder('${spot._id}')">
+                                    <i class="bi bi-bell"></i> Notify Me
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = spotsHtml;
+}
+
+// Get spot type icon
+function getSpotTypeIcon(type) {
+    const icons = {
+        'regular': 'bi-p-square-fill',
+        'premium': 'bi-star-fill',
+        'disabled': 'bi-universal-access'
+    };
+    return icons[type] || 'bi-p-square-fill';
+}
+
+// Get spot type badge color
+function getSpotTypeBadgeColor(type) {
+    const colors = {
+        'regular': 'primary',
+        'premium': 'warning',
+        'disabled': 'info'
+    };
+    return colors[type] || 'primary';
+}
+
+// Update available count
+function updateAvailableCount(count) {
+    document.getElementById('availableCount').textContent = count;
+}
+
+// Search and filter functions
+function searchParking() {
+    const location = document.getElementById('locationSearch').value;
+    const type = document.getElementById('spotTypeFilter').value;
+    const priceRange = document.getElementById('priceRangeFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+    
+    currentFilters = {
+        location: location || undefined,
+        type: type || undefined,
+        priceRange: priceRange || undefined,
+        sortBy: sortBy || undefined
+    };
+    
+    // Remove undefined values
+    Object.keys(currentFilters).forEach(key => 
+        currentFilters[key] === undefined && delete currentFilters[key]
+    );
+    
+    loadParkingSpots(currentFilters);
+}
+
+function refreshSpots() {
+    loadParkingSpots(currentFilters);
+    showAlert('Parking availability refreshed', 'success');
+}
+
+function loadMoreSpots() {
+    // In a real implementation, this would load more spots with pagination
+    showAlert('All available spots are already loaded', 'info');
+}
+
+// Booking functions
+async function bookSpot(spotId) {
+    try {
+        // Find the spot details
+        const spot = currentSpots.find(s => s._id === spotId);
+        if (!spot) {
+            showAlert('Parking spot not found', 'error');
+            return;
+        }
+        
+        selectedSpot = spot;
+        
+        console.log('Booking spot:', spotId);
+        console.log('Confirming booking:', spot);
+        
+        // Populate spot details in modal
+        document.getElementById('spotDetails').innerHTML = `
+            <div class="alert alert-success">
+                <h5><i class="bi bi-p-square-fill"></i> Parking Spot ${spot.spotNumber}</h5>
+                <p class="mb-1"><strong>Location:</strong> ${spot.location.name}</p>
+                <p class="mb-1"><strong>Floor:</strong> ${spot.location.floor}, Section ${spot.location.section}</p>
+                <p class="mb-1"><strong>Type:</strong> ${spot.type.charAt(0).toUpperCase() + spot.type.slice(1)}</p>
+                <p class="mb-0"><strong>Rate:</strong> ₹${spot.pricePerHour}/hour</p>
+            </div>
+        `;
+        
+        // Show booking modal
+        new bootstrap.Modal(document.getElementById('bookingModal')).show();
+    } catch (error) {
+        console.error('Error booking spot:', error);
+        showAlert('Error booking spot', 'error');
+    }
+}
+
+function viewDetails(spotId) {
+    const spot = currentSpots.find(s => s._id === spotId);
+    if (!spot) {
+        showAlert('Parking spot not found', 'error');
+        return;
+    }
+    
+    // Show detailed information in an alert for now
+    alert(`Parking Spot Details:\n\nSpot: ${spot.spotNumber}\nLocation: ${spot.location.name}\nFloor: ${spot.location.floor}\nSection: ${spot.location.section}\nType: ${spot.type}\nRate: ₹${spot.pricePerHour}/hour\nStatus: ${spot.status}`);
+}
+
+function setReminder(spotId) {
+    // In a real implementation, this would set up a notification
+    showAlert('Reminder set! We\'ll notify you when this spot becomes available.', 'success');
+}
+
+async function confirmBooking() {
+    const vehicle = document.getElementById('bookingVehicle').value;
+    const duration = document.getElementById('bookingDuration').value;
+    
+    if (!vehicle || !duration) {
+        showAlert('Please select vehicle and duration', 'warning');
+        return;
+    }
+    
+    if (!selectedSpot) {
+        showAlert('No parking spot selected', 'error');
+        return;
+    }
+    
+    try {
+        // Calculate booking times
+        const now = new Date();
+        const startTime = now.toISOString();
+        const endTime = new Date(now.getTime() + duration * 60 * 60 * 1000).toISOString();
+        
+        const response = await fetch('/api/user/bookings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                vehicleId: vehicle,
+                parkingSpotId: selectedSpot._id,
+                startTime: startTime,
+                endTime: endTime
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('Booking created successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+            
+            // Refresh the parking spots to update availability
+            setTimeout(() => {
+                loadParkingSpots(currentFilters);
+            }, 1000);
+            
+            // Redirect to bookings page after a short delay
+            setTimeout(() => {
+                window.location.href = '/user/bookings';
+            }, 2000);
+        } else {
+            showAlert('Failed to create booking: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error creating booking:', error);
+        showAlert('Error creating booking', 'error');
+    }
+}
+
+// Load user vehicles for booking form
+async function loadUserVehicles() {
+    try {
+        const response = await fetch('/api/user/vehicles');
+        const result = await response.json();
+        
+        if (result.success) {
+            const vehicleSelect = document.getElementById('bookingVehicle');
+            vehicleSelect.innerHTML = '<option value="">Select Vehicle</option>';
+            
+            result.data.forEach(vehicle => {
+                const option = document.createElement('option');
+                option.value = vehicle._id;
+                option.textContent = `${vehicle.licensePlate} (${vehicle.model})`;
+                vehicleSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading vehicles:', error);
+    }
+}
+
+// View toggle functionality
+document.getElementById('listView').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('parkingSpotsList').style.display = 'block';
+        document.getElementById('mapContainer').style.display = 'none';
+    }
+});
+
+document.getElementById('mapView').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('parkingSpotsList').style.display = 'none';
+        document.getElementById('mapContainer').style.display = 'block';
+    }
+});
+
+// Auto-search on filter change
+document.getElementById('locationSearch').addEventListener('input', debounce(searchParking, 500));
+document.getElementById('spotTypeFilter').addEventListener('change', searchParking);
+document.getElementById('priceRangeFilter').addEventListener('change', searchParking);
+document.getElementById('sortBy').addEventListener('change', searchParking);
+
+// Debounce function for search input
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Utility functions
+function showLoading(elementId, message) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center py-5">
+            <div class="spinner-border text-primary me-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <span>${message}</span>
+        </div>
+    `;
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1055; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Calculate total cost when duration changes
+document.getElementById('bookingDuration').addEventListener('change', function() {
+    const duration = parseInt(this.value) || 0;
+    const hourlyRate = 60; // Default rate, would come from selected spot
+    const total = duration * hourlyRate;
+    document.getElementById('totalCost').textContent = `₹${total}`;
+});
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1055; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>

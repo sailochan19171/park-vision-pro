@@ -1,263 +1,245 @@
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { 
-  Settings, 
-  Smartphone, 
-  BarChart3, 
-  Shield,
-  ArrowRight,
-  Star,
-  Users,
-  Clock,
-  TrendingUp
-} from "lucide-react";
+import { useToast } from "../hooks/use-toast";
+import { CheckCircle, ArrowRight } from "lucide-react";
 
-const Products = () => {
-  const productCategories = [
-    {
-      id: "hardware",
-      label: "Hardware Solutions",
-      icon: <Settings className="h-4 w-4" />,
-      products: [
-        {
-          name: "ParkGate Pro X1",
-          description: "Premium turnstile with advanced biometric authentication",
-          features: ["Facial recognition", "RFID support", "Weather resistant", "Remote monitoring"],
-          price: "From ₹2,50,000",
-          rating: 4.9,
-          image: "🚪",
-          popular: true
-        },
-        {
-          name: "SmartBarrier Elite",
-          description: "Automated barrier gates for vehicle access control",
-          features: ["ANPR integration", "LED guidance", "Emergency override", "Cloud connectivity"],
-          price: "From ₹1,80,000", 
-          rating: 4.8,
-          image: "🚧",
-          popular: false
-        },
-        {
-          name: "AccessPod Mini",
-          description: "Compact pedestrian access control system",
-          features: ["QR scanning", "Mobile integration", "Compact design", "Easy installation"],
-          price: "From ₹85,000",
-          rating: 4.7,
-          image: "📱",
-          popular: false
-        }
-      ]
-    },
-    {
-      id: "software",
-      label: "Software Solutions", 
-      icon: <Smartphone className="h-4 w-4" />,
-      products: [
-        {
-          name: "ParkVision Dashboard",
-          description: "Comprehensive parking management platform",
-          features: ["Real-time monitoring", "Analytics", "Multi-site management", "Mobile app"],
-          price: "From ₹15,000/month",
-          rating: 4.9,
-          image: "📊",
-          popular: true
-        },
-        {
-          name: "PayPark Mobile",
-          description: "User-friendly mobile payment application",
-          features: ["Digital payments", "Booking system", "Navigation", "Notifications"],
-          price: "From ₹8,000/month",
-          rating: 4.6,
-          image: "💳",
-          popular: false
-        },
-        {
-          name: "SecurityWatch AI",
-          description: "AI-powered surveillance and security monitoring",
-          features: ["Object detection", "Incident alerts", "Video analytics", "24/7 monitoring"],
-          price: "From ₹25,000/month",
-          rating: 4.8,
-          image: "🔒",
-          popular: false
-        }
-      ]
-    },
-    {
-      id: "analytics",
-      label: "Analytics & Reports",
-      icon: <BarChart3 className="h-4 w-4" />,
-      products: [
-        {
-          name: "DataInsight Pro",
-          description: "Advanced analytics and business intelligence platform",
-          features: ["Predictive analytics", "Custom reports", "Revenue optimization", "Forecasting"],
-          price: "From ₹20,000/month",
-          rating: 4.9,
-          image: "📈",
-          popular: true
-        },
-        {
-          name: "TrendAnalyzer",
-          description: "Traffic pattern and usage trend analysis",
-          features: ["Pattern recognition", "Heat maps", "Occupancy tracking", "Peak hour analysis"],
-          price: "From ₹12,000/month",
-          rating: 4.7,
-          image: "🔄",
-          popular: false
-        }
-      ]
-    },
-    {
-      id: "services", 
-      label: "Support Services",
-      icon: <Shield className="h-4 w-4" />,
-      products: [
-        {
-          name: "24/7 Premium Support",
-          description: "Round-the-clock technical support and maintenance",
-          features: ["24/7 helpdesk", "Remote assistance", "On-site support", "Emergency response"],
-          price: "From ₹10,000/month",
-          rating: 4.8,
-          image: "🛠️",
-          popular: false
-        },
-        {
-          name: "Installation & Setup",
-          description: "Professional installation and configuration services",
-          features: ["Site survey", "Custom installation", "Training", "Go-live support"],
-          price: "From ₹50,000",
-          rating: 4.9,
-          image: "⚙️",
-          popular: true
-        }
-      ]
-    }
-  ];
+// Image imports - Updated with new VAY branded images
+import smartParkingBarrier20 from "../assets/11.jpg";
+import smartAccessBarrier12 from "../assets/12.jpg";
+import vayParkingBarrierGate10 from "../assets/vay-parking-barrier-gate-10.jpg";
+import kioskTerminal22 from "../assets/22-removebg-preview.png";
+import vayParkingGuidanceDisplay23 from "../assets/vay-parking-guidance-display-23.jpg";
+import barrierGate13 from "../assets/13-removebg-preview.png";
+import barrierGate20 from "../assets/20-removebg-preview.png";
 
-  const stats = [
-    { icon: <Users className="h-6 w-6" />, value: "500+", label: "Happy Clients" },
-    { icon: <Settings className="h-6 w-6" />, value: "1000+", label: "Installations" },
-    { icon: <Clock className="h-6 w-6" />, value: "99.9%", label: "Uptime" },
-    { icon: <TrendingUp className="h-6 w-6" />, value: "24/7", label: "Support" }
+interface ProductsProps {
+  showPrices?: boolean;
+}
+
+const Products: React.FC<ProductsProps> = ({ showPrices = true }) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [clickedProduct, setClickedProduct] = useState<string | null>(null);
+
+  const handleProductView = (productName: string) => {
+    // Show immediate feedback
+    setClickedProduct(productName);
+    
+    // Reset feedback after 1 second
+    setTimeout(() => {
+      setClickedProduct(null);
+    }, 1000);
+
+    // Navigate to products page
+    navigate('/products');
+
+    toast({
+      title: "Redirecting to Products",
+      description: "View all our products and solutions.",
+    });
+  };
+
+  const products = [
+    {
+      id: "smart-barrier-20",
+      name: "Ticketless Parking Management System",
+      image: smartParkingBarrier20,
+      description:
+        "Our goal is to simplify parking management and create a seamless experience for users, operators, and owners. We offer ticketless parking management system that not only manage parking but also optimize space usage, striking the ideal balance that leads to happier customers and a more profitable operation.",
+      price: "₹1,85,000+",
+    },
+    {
+      id: "management-kiosk",
+      name: "Ticket Based Parking Management",
+      image: kioskTerminal22,
+      description:
+        "A parking ticket dispenser plays a major component in automated car parking management systems, commonly found at the entry points of parking facilities such as malls, airports, and commercial complexes. These devices streamline the process of issuing tickets to vehicles entering the parking area, enabling efficient management of parking spaces.",
+      price: "₹1,25,000+",
+    },
+    {
+      id: "vay-parking-guidance-display",
+      name: "VAY Parking Guidance Display",
+      image: vayParkingGuidanceDisplay23,
+      description:
+        "Advanced guidance display with LED indicators showing real-time parking availability and navigation information. Enhanced overall safety and security with improved user experience.",
+      price: "₹85,000+",
+    },
+    {
+      id: "vay-parking-barrier-gate",
+      name: "VAY Parking Barrier Gate",
+      image: barrierGate13,
+      description:
+        "Advanced parking barrier gate with smart access control integration. Features weatherproof design with anti-crash mechanism and remote monitoring capabilities for modern parking facilities.",
+      price: "₹2,15,000+",
+    },
+    {
+      id: "access-barrier-12",
+      name: "Professional Access Control",
+      image: smartAccessBarrier12,
+      description:
+        "Professional-grade barrier with LED display and full access control integration. Weatherproof design supports boom light, safety photocells, and ANPR system integration for comprehensive parking management.",
+      price: "₹2,25,000+",
+    },
   ];
 
   return (
-    <section id="products" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-success-green/10 text-success-green border-success-green/20">
-            Products & Solutions
-          </Badge>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Complete Product Portfolio
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Discover our comprehensive range of parking solutions designed to meet every business need, 
-            from small facilities to large enterprise deployments.
-          </p>
+    <section id="products" className="py-12 sm:py-16 bg-gray-50 relative overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Blue curved shapes like in screenshot */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-900 rounded-full opacity-10 transform translate-x-48 -translate-y-48"></div>
+        <div className="absolute top-1/3 left-0 w-80 h-80 bg-slate-300 rounded-full opacity-15 transform -translate-x-40"></div>
+        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-blue-900 rounded-full opacity-10 transform translate-y-36"></div>
+      </div>
+
+      <div className="container mx-auto px-2 sm:px-4 lg:px-6 max-w-6xl relative z-10">
+        
+        {/* Header Section */}
+        <div className="text-center mb-16" data-aos="fade-up">
+          <div className="inline-block mb-8">
+            <span className="text-orange-500 text-sm font-semibold tracking-[0.2em] uppercase font-poppins">
+              OUR PRODUCTS ——
+            </span>
+          </div>
+          
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight font-poppins" data-aos="fade-up" data-aos-delay="100">
+            Building Tomorrow's
+            <br />
+            <span className="text-blue-900">Solutions</span>
+          </h1>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="w-16 h-16 bg-tech-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-tech-blue">
-                {stat.icon}
+        {/* Products Sections */}
+        <div className="space-y-12 sm:space-y-16">
+          {products.map((product, idx) => (
+            <div key={product.id} className="relative mx-0 sm:mx-2 lg:mx-4">
+              {/* Background decorative shapes for each product */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {idx % 2 === 0 ? (
+                  <div className="absolute top-1/2 right-0 w-64 h-64 bg-blue-900 rounded-full opacity-8 transform translate-x-32 -translate-y-32"></div>
+                ) : (
+                  <div className="absolute top-1/2 left-0 w-64 h-64 bg-slate-300 rounded-full opacity-12 transform -translate-x-32 -translate-y-32"></div>
+                )}
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-foreground mb-2">{stat.value}</div>
-              <div className="text-muted-foreground">{stat.label}</div>
+
+              <div className={`grid lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-center min-h-[350px] ${
+                idx % 2 === 1 ? 'lg:grid-flow-col-dense' : ''
+              }`}>
+                
+                {/* Text Content Section */}
+                <div className={`space-y-4 sm:space-y-6 ${idx % 2 === 1 ? 'lg:col-start-2' : ''}`} data-aos={idx % 2 === 0 ? "fade-right" : "fade-left"} data-aos-delay="200">
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900 leading-tight font-poppins">
+                    {product.name}
+                  </h2>
+                  
+                  <p className="text-gray-700 text-sm sm:text-base leading-relaxed font-poppins font-normal">
+                    {product.description}
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <Button 
+                      onClick={() => handleProductView(product.name)}
+                      className={`${
+                        clickedProduct === product.name 
+                          ? "bg-green-600 hover:bg-green-700" 
+                          : "bg-blue-900 hover:bg-blue-800"
+                      } text-white px-6 py-2.5 text-base font-medium rounded-lg transition-all duration-300 flex items-center justify-center gap-2 font-poppins`}
+                    >
+                      {clickedProduct === product.name ? (
+                        <>
+                          <CheckCircle className="h-5 w-5" />
+                          Redirecting...
+                        </>
+                      ) : (
+                        <>
+                          Learn More
+                          <ArrowRight className="h-5 w-5" />
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleProductView(`${product.name} Quote`)}
+                      className="border-2 border-blue-900 text-blue-900 hover:bg-blue-900 hover:text-white px-6 py-2.5 text-base font-medium rounded-lg transition-all duration-300 font-poppins"
+                    >
+                      Get Quote
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Image Section - No white spaces, full width */}
+                <div className={`relative flex justify-center items-center ${idx % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''}`} data-aos={idx % 2 === 0 ? "fade-left" : "fade-right"} data-aos-delay="300">
+                  <div className="relative w-full">
+                    {/* Clean image container without white backgrounds */}
+                    <div className="relative image-container w-full">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-auto object-contain perfect-image transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg mx-auto"
+                        loading="lazy"
+                        style={{
+                          filter: 'brightness(1.02) contrast(1.05) saturate(1.05)',
+                          minHeight: '250px',
+                          maxHeight: '400px',
+                          backgroundColor: 'transparent',
+                          display: 'block'
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Product Tabs */}
-        <Tabs defaultValue="hardware" className="w-full">
-          <TabsList className="grid w-full md:w-auto grid-cols-2 md:grid-cols-4 mb-12 bg-tech-gray-light">
-            {productCategories.map((category) => (
-              <TabsTrigger 
-                key={category.id} 
-                value={category.id}
-                className="flex items-center space-x-2 data-[state=active]:bg-tech-blue data-[state=active]:text-white"
-              >
-                {category.icon}
-                <span className="hidden sm:inline">{category.label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {productCategories.map((category) => (
-            <TabsContent key={category.id} value={category.id} className="space-y-8">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {category.products.map((product, index) => (
-                  <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 bg-card relative overflow-hidden">
-                    {product.popular && (
-                      <div className="absolute top-4 right-4 z-10">
-                        <Badge className="bg-warning-orange text-white">
-                          Popular
-                        </Badge>
-                      </div>
-                    )}
-                    
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="text-4xl">{product.image}</div>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 text-warning-orange fill-current" />
-                          <span className="text-sm font-medium">{product.rating}</span>
-                        </div>
-                      </div>
-                      <CardTitle className="text-xl group-hover:text-tech-blue transition-colors">
-                        {product.name}
-                      </CardTitle>
-                      <p className="text-muted-foreground text-sm">
-                        {product.description}
-                      </p>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        {product.features.map((feature, featureIndex) => (
-                          <div key={featureIndex} className="flex items-center space-x-2 text-sm">
-                            <div className="w-2 h-2 rounded-full bg-success-green"></div>
-                            <span className="text-muted-foreground">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="pt-4 border-t">
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-lg font-bold text-tech-blue">{product.price}</span>
-                        </div>
-                        <Button className="w-full bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
-                          Get Quote
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-
-        {/* CTA Section */}
-        <div className="text-center mt-16 p-8 bg-tech-gray-light rounded-2xl">
-          <h3 className="text-2xl font-bold text-foreground mb-4">
-            Need a Custom Solution?
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            Our experts can design and implement a tailored parking solution for your specific requirements.
-          </p>
-          <Button size="lg" className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
-            Consult Our Experts
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </div>
-      </div>
+        {/* Bottom CTA Section */}
+        {/* <div className="text-center mt-32 pt-16 border-t border-gray-200"> */}
+          {/* <div className="inline-block mb-6"> */}
+            {/* <span className="text-orange-500 text-sm font-semibold tracking-[0.2em] uppercase">
+              OUR PROJECTS ——
+            </span> */}
+          </div>
+          
+          {/* <h3 className="text-4xl font-bold text-blue-900 mb-8">
+            Ready to Transform Your Parking Experience?
+          </h3> */}
+          
+          {/* <p className="text-gray-700 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
+            Let our experts help you choose the perfect combination of products for your specific needs and create a comprehensive parking management solution.
+          </p> */}
+          
+          {/* <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={() => handleProductView("Complete Solution Package")}
+              className={`${
+                clickedProduct === "Complete Solution Package" 
+                  ? "bg-green-600 hover:bg-green-700" 
+                  : "bg-blue-900 hover:bg-blue-800"
+              } text-white px-10 py-4 text-lg font-medium rounded-lg transition-all duration-300`}
+            >
+              {clickedProduct === "Complete Solution Package" ? (
+                <span className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  Redirecting...
+                </span>
+              ) : (
+                'View All Projects'
+              )}
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={() => handleProductView("Consultation")} */}
+              // className="border-2 border-blue-900 text-blue-900 hover:bg-blue-900 hover:text-white px-10 py-4 text-lg font-medium rounded-lg transition-all duration-300"
+            // 
+              {/* Schedule Consultation */}
+            {/* </Button> */}
+          {/* </div> */}
+        {/* </div> */}
+      {/* </div> */}
     </section>
   );
 };

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - VayAccess Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/admin.css" rel="stylesheet">
+    <!-- Socket.IO removed - using polling-based real-time updates instead -->
+</head>
+<body>
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="/admin/dashboard">
+            <i class="bi bi-shield-check"></i> VayAccess Admin
+        </a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" 
+                data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <input class="form-control form-control-dark w-100 rounded-0 border-0" type="text" 
+               placeholder="Search" aria-label="Search">
+        <div class="navbar-nav">
+            <div class="nav-item text-nowrap">
+                <div class="dropdown">
+                    <a class="nav-link px-3 dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> {{admin.name}}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/admin/profile"><i class="bi bi-person"></i> Profile</a></li>
+                        <li><a class="dropdown-item" href="/admin/settings"><i class="bi bi-gear"></i> Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="/admin/logout" method="POST" class="d-inline">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="bi bi-box-arrow-right"></i> Sign out
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse">
+                <div class="position-sticky pt-3 sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'dashboard')}}active{{/if}}" href="/admin/dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'parking')}}active{{/if}}" href="/admin/parking">
+                                <i class="bi bi-p-square"></i> Parking Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'bookings')}}active{{/if}}" href="/admin/bookings">
+                                <i class="bi bi-calendar-check"></i> Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'users')}}active{{/if}}" href="/admin/users">
+                                <i class="bi bi-people"></i> Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'vehicles')}}active{{/if}}" href="/admin/vehicles">
+                                <i class="bi bi-car-front"></i> Vehicles
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'payments')}}active{{/if}}" href="/admin/payments">
+                                <i class="bi bi-credit-card"></i> Payments
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
+                        <span>Analytics</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'reports')}}active{{/if}}" href="/admin/reports">
+                                <i class="bi bi-graph-up"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'analytics')}}active{{/if}}" href="/admin/analytics">
+                                <i class="bi bi-bar-chart"></i> Analytics
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'insights')}}active{{/if}}" href="/admin/insights">
+                                <i class="bi bi-lightbulb"></i> Insights
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
+                        <span>System</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'settings')}}active{{/if}}" href="/admin/settings">
+                                <i class="bi bi-gear"></i> Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'logs')}}active{{/if}}" href="/admin/logs">
+                                <i class="bi bi-file-text"></i> System Logs
+                            </a>
+                        </li>
+                        {{#if (eq admin.role 'super_admin')}}
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'admin-management')}}active{{/if}}" href="/admin/manage-admins">
+                                <i class="bi bi-shield-lock"></i> Admin Management
+                            </a>
+                        </li>
+                        {{/if}}
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {{{body}}}
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="/js/admin.js"></script>
+    
+    <!-- Mobile Responsiveness Enhancements -->
+    <style>
+        @media (max-width: 768px) {
+            .container-fluid { padding-left: 10px; padding-right: 10px; }
+            .card { margin-bottom: 15px; }
+            .btn-toolbar .btn-group { margin-bottom: 10px; }
+            .table-responsive { font-size: 0.875rem; }
+            .modal-lg { max-width: 95%; }
+            .h2 { font-size: 1.5rem; }
+            .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        }
+        
+        /* Ensure proper spacing on mobile */
+        @media (max-width: 576px) {
+            .d-flex.justify-content-between { 
+                flex-direction: column; 
+                align-items: flex-start !important; 
+                gap: 10px; 
+            }
+            .btn-toolbar { width: 100%; }
+            .btn-group { width: 100%; }
+            .btn-group .btn { flex: 1; }
+        }
+        
+        /* Loading states */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Error states */
+        .error-state {
+            color: #dc3545;
+            font-size: 0.875rem;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* Success states */
+        .success-state {
+            color: #28a745;
+            font-size: 0.875rem;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+    <script>
+        // Global notification function for admin dashboard
+        function showNotification(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;';
+            alert.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-${getNotificationIcon(type)} me-2"></i>
+                    <div class="flex-grow-1">${message}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 4000);
+        }
+        
+        function getNotificationIcon(type) {
+            const icons = {
+                'success': 'check-circle-fill',
+                'danger': 'exclamation-triangle-fill', 
+                'warning': 'exclamation-circle-fill',
+                'info': 'info-circle-fill',
+                'primary': 'info-circle-fill'
+            };
+            return icons[type] || 'info-circle-fill';
+        }
+        
+        // Global function to refresh current page data
+        function refreshCurrentPageData() {
+            const currentPath = window.location.pathname;
+            
+            if (currentPath.includes('dashboard') && typeof loadDashboardData === 'function') {
+                loadDashboardData();
+            } else if (currentPath.includes('parking') && typeof loadParkingData === 'function') {
+                loadParkingData();
+            } else if (currentPath.includes('bookings') && typeof loadBookingsData === 'function') {
+                loadBookingsData();
+            }
+        }
+        
+        // Auto-refresh data every 30 seconds for active tab only
+        let autoRefreshInterval;
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Page is hidden, stop auto-refresh to save resources
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                }
+            } else {
+                // Page is visible, start auto-refresh
+                if (!autoRefreshInterval) {
+                    autoRefreshInterval = setInterval(refreshCurrentPageData, 30000);
+                }
+            }
+        });
+        
+        // Start auto-refresh when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Only start auto-refresh if page is visible
+            if (!document.hidden) {
+                autoRefreshInterval = setInterval(refreshCurrentPageData, 30000);
+            }
+        });
+    </script>
+</body>
+</html>

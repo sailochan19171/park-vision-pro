@@ -1,0 +1,730 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Parking Management</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addSpotModal">
+                    <i class="bi bi-plus-circle"></i> Add Spot
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshParkingData()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parking Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Spots</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalSpots">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-p-square fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Available</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="availableSpots">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Occupied</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="occupiedSpots">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-car-front fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Occupancy Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="occupancyRate">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-pie-chart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parking Grid and Recent Activity -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Parking Layout</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow">
+                            <a class="dropdown-item" href="#">Floor 1</a>
+                            <a class="dropdown-item" href="#">Floor 2</a>
+                            <a class="dropdown-item" href="#">Floor 3</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="parking-grid" id="parkingGrid">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading parking layout...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                </div>
+                <div class="card-body" id="recentParkingActivity">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading activity...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parking Spots Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Parking Spots Management</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm" id="parkingTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Spot ID</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Current Vehicle</th>
+                            <th class="d-none d-lg-table-cell">Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="parkingTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading parking data...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Spot Modal -->
+<div class="modal fade" id="addSpotModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Parking Spot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSpotForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="level" class="form-label">Level</label>
+                            <select class="form-select" id="level" required>
+                                <option value="">Select Level</option>
+                                <option value="Level 1">Level 1</option>
+                                <option value="Level 2">Level 2</option>
+                                <option value="Level 3">Level 3</option>
+                                <option value="Ground Floor">Ground Floor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="section" class="form-label">Section</label>
+                            <select class="form-select" id="section" required>
+                                <option value="">Select Section</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option>
+                                <option value="D">Section D</option>
+                                <option value="E">Section E</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="number" class="form-label">Spot Number</label>
+                            <input type="number" class="form-control" id="number" min="1" max="999" required placeholder="e.g. 1, 2, 3...">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="rate" class="form-label">Hourly Rate (₹)</label>
+                            <input type="number" class="form-control" id="rate" min="1" max="1000" value="25" required placeholder="25">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Preview Spot ID</label>
+                        <div class="form-control bg-light" id="spotPreview">Select level and section first</div>
+                        <small class="text-muted">Spot ID will be auto-generated as: [Section]-[Number]</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="addSpotBtn">Add Spot</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+    .border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+    .text-xs { font-size: 0.7rem; }
+    .text-gray-300 { color: #dddfeb !important; }
+    .text-gray-800 { color: #5a5c69 !important; }
+    
+    .parking-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+        gap: 5px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .parking-spot {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .spot-available { background-color: #d4edda; border-color: #28a745; color: #155724; }
+    .spot-occupied { background-color: #f8d7da; border-color: #dc3545; color: #721c24; }
+    .spot-reserved { background-color: #fff3cd; border-color: #ffc107; color: #856404; }
+    .spot-maintenance { background-color: #f1f3f4; border-color: #6c757d; color: #495057; }
+    
+    @media (max-width: 768px) {
+        .parking-grid { grid-template-columns: repeat(auto-fill, minmax(35px, 1fr)); }
+        .parking-spot { width: 35px; height: 35px; font-size: 8px; }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadParkingData();
+    loadParkingSpotsTable(); // Load the spots table too
+    setupRealTimeUpdates();
+    
+    // Add event listener for the add spot button
+    const addSpotBtn = document.getElementById('addSpotBtn');
+    if (addSpotBtn) {
+        addSpotBtn.addEventListener('click', addSpot);
+    }
+    
+    // Ensure functions are globally available
+    window.addSpot = addSpot;
+    window.editSpot = editSpot;
+    window.deleteSpot = deleteSpot;
+    
+    // Add event listeners for spot preview
+    const sectionElement = document.getElementById('section');
+    const numberElement = document.getElementById('number');
+    
+    if (sectionElement && numberElement) {
+        sectionElement.addEventListener('change', updateSpotPreview);
+        numberElement.addEventListener('input', updateSpotPreview);
+    }
+});
+
+async function loadParkingData() {
+    try {
+        const response = await fetch('/api/admin/parking', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+            window.location.href = '/admin/login';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update stats cards - check if elements exist
+            const totalSpots = document.getElementById('totalSpots');
+            const availableSpots = document.getElementById('availableSpots');
+            const occupiedSpots = document.getElementById('occupiedSpots');
+            const occupancyRate = document.getElementById('occupancyRate');
+            
+            if (totalSpots) totalSpots.textContent = data.totalSpots.toLocaleString();
+            if (availableSpots) availableSpots.textContent = data.availableSpots.toLocaleString();
+            if (occupiedSpots) occupiedSpots.textContent = data.occupiedSpots.toLocaleString();
+            if (occupancyRate) occupancyRate.textContent = ((data.occupiedSpots / data.totalSpots) * 100).toFixed(1) + '%';
+            
+            // Update parking grid
+            updateParkingGrid(data.spots);
+            
+            // Update parking table
+            updateParkingTable(data.spots);
+            
+            // Update recent activity
+            updateRecentActivity(data.recentActivity);
+            
+        } else {
+            console.error('Failed to load parking data');
+            showError('Failed to load parking data');
+        }
+    } catch (error) {
+        console.error('Error loading parking data:', error);
+        showError('Error loading parking data. Please refresh the page.');
+        
+        // Show error for all loading elements
+        const loadingElements = ['totalSpots', 'availableSpots', 'occupiedSpots', 'occupancyRate'];
+        loadingElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element && element.textContent === 'Loading...') {
+                element.textContent = 'Error';
+            }
+        });
+    }
+}
+
+async function loadParkingSpotsTable() {
+    try {
+        console.log('🅿️ Loading parking spots table...');
+        
+        const response = await fetch('/api/admin/parking/spots', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.status === 401) {
+            window.location.href = '/admin/login';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('🅿️ Spots table data loaded:', result);
+        
+        if (result.success) {
+            // Handle the actual API response format
+            const spots = result.parkingSpots || result.data?.spots || [];
+            updateParkingSpotsTable(spots);
+        } else {
+            console.error('Failed to load parking spots table:', result);
+            showError('Failed to load parking spots table');
+        }
+    } catch (error) {
+        console.error('❌ Error loading parking spots table:', error);
+        showError('Error loading parking spots table. Please try again.');
+    }
+}
+
+function updateParkingSpotsTable(spots) {
+    try {
+        console.log('🅿️ Updating parking spots table with', spots.length, 'spots');
+        
+        const tbody = document.querySelector('#spotsTable tbody') || document.getElementById('spotsTable');
+        if (!tbody) {
+            console.warn('⚠️ Spots table element not found');
+            return;
+        }
+        
+        if (!Array.isArray(spots) || spots.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No parking spots found</td></tr>';
+            return;
+        }
+        
+        const spotsHtml = spots.map(spot => {
+            const statusClass = getSpotStatusClass(spot.status);
+            const statusIcon = getSpotStatusIcon(spot.status);
+            
+            return `
+                <tr>
+                    <td><strong>${spot.id}</strong></td>
+                    <td>${spot.level}</td>
+                    <td>${spot.section}</td>
+                    <td>${spot.number}</td>
+                    <td>
+                        <span class="badge bg-${statusClass}">
+                            <i class="bi ${statusIcon}"></i> ${spot.status}
+                        </span>
+                    </td>
+                    <td>${spot.vehicle || '<span class="text-muted">-</span>'}</td>
+                    <td>${spot.customer || '<span class="text-muted">-</span>'}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        tbody.innerHTML = spotsHtml;
+        console.log('✅ Parking spots table updated successfully');
+        
+    } catch (error) {
+        console.error('❌ Error updating parking spots table:', error);
+    }
+}
+
+function getSpotStatusClass(status) {
+    const classes = {
+        'available': 'success',
+        'occupied': 'danger', 
+        'reserved': 'warning',
+        'maintenance': 'secondary'
+    };
+    return classes[status] || 'secondary';
+}
+
+function getSpotStatusIcon(status) {
+    const icons = {
+        'available': 'bi-check-circle',
+        'occupied': 'bi-x-circle',
+        'reserved': 'bi-clock',
+        'maintenance': 'bi-tools'
+    };
+    return icons[status] || 'bi-info-circle';
+}
+
+function updateParkingGrid(spots) {
+    const grid = document.getElementById('parkingGrid');
+    if (!grid || !spots) return;
+    
+    const gridHtml = spots.slice(0, 100).map(spot => {
+        const statusClass = `spot-${spot.status.toLowerCase()}`;
+        return `
+            <div class="parking-spot ${statusClass}" 
+                 onclick="showSpotDetails('${spot.id}')" 
+                 title="Spot ${spot.id} - ${spot.status}">
+                ${spot.id}
+            </div>
+        `;
+    }).join('');
+    
+    grid.innerHTML = gridHtml;
+}
+
+function updateParkingTable(spots) {
+    const tableBody = document.getElementById('parkingTableBody');
+    if (!tableBody || !spots) return;
+    
+    const tableHtml = spots.slice(0, 50).map(spot => {
+        const statusBadge = getStatusBadge(spot.status);
+        const duration = spot.occupiedSince ? 
+            Math.floor((Date.now() - new Date(spot.occupiedSince).getTime()) / (1000 * 60)) + ' min' : '-';
+        
+        return `
+            <tr>
+                <td class="fw-bold">${spot.id}</td>
+                <td>${spot.location}</td>
+                <td><span class="badge bg-secondary">${spot.type}</span></td>
+                <td>${statusBadge}</td>
+                <td>${spot.currentVehicle || '-'}</td>
+                <td class="d-none d-lg-table-cell">${duration}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="editSpot('${spot.id}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSpot('${spot.id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tableBody.innerHTML = tableHtml;
+}
+
+function updateRecentActivity(activities) {
+    const activityContainer = document.getElementById('recentParkingActivity');
+    if (!activityContainer || !activities) return;
+    
+    const activityHtml = activities.map(activity => `
+        <div class="d-flex align-items-center mb-3">
+            <div class="me-3">
+                <div class="bg-${getActivityColor(activity.type)} rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                    <i class="bi bi-${getActivityIcon(activity.type)} text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1">
+                <div class="small fw-bold">${activity.description}</div>
+                <div class="small text-muted">${activity.time}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    activityContainer.innerHTML = activityHtml;
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'available': '<span class="badge bg-success">Available</span>',
+        'occupied': '<span class="badge bg-danger">Occupied</span>',
+        'reserved': '<span class="badge bg-warning">Reserved</span>',
+        'maintenance': '<span class="badge bg-secondary">Maintenance</span>'
+    };
+    return badges[status.toLowerCase()] || '<span class="badge bg-light">Unknown</span>';
+}
+
+function getActivityColor(type) {
+    const colors = {
+        'entry': 'success',
+        'exit': 'info',
+        'reservation': 'warning',
+        'maintenance': 'secondary'
+    };
+    return colors[type] || 'primary';
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'entry': 'arrow-down-circle',
+        'exit': 'arrow-up-circle',
+        'reservation': 'bookmark',
+        'maintenance': 'wrench'
+    };
+    return icons[type] || 'info-circle';
+}
+
+function refreshParkingData() {
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Refreshing...';
+    btn.disabled = true;
+    
+    Promise.all([
+        loadParkingData(),
+        loadParkingSpotsTable()
+    ]).then(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        showNotification('Parking data refreshed successfully!', 'success');
+    }).catch(error => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        showError('Failed to refresh parking data');
+        console.error('Refresh error:', error);
+    });
+}
+
+function setupRealTimeUpdates() {
+    // Update parking data every 30 seconds
+    setInterval(() => {
+        loadParkingData();
+        loadParkingSpotsTable();
+    }, 30000);
+}
+
+function showSpotDetails(spotId) {
+    alert(`Spot Details: ${spotId}\n\nThis would show detailed information about the parking spot.`);
+}
+
+function editSpot(spotId) {
+    alert(`Edit Spot: ${spotId}\n\nThis would open an edit form for the parking spot.`);
+}
+
+async function deleteSpot(spotId) {
+    if (confirm(`Are you sure you want to delete parking spot ${spotId}?`)) {
+        try {
+            const response = await fetch(`/api/admin/parking/spots/${spotId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                loadParkingData();
+            } else {
+                showError(result.message || 'Failed to delete parking spot');
+            }
+        } catch (error) {
+            console.error('Error deleting parking spot:', error);
+            showError('Error deleting parking spot. Please try again.');
+        }
+    }
+}
+
+// Update spot preview when level/section/number changes
+function updateSpotPreview() {
+    const section = document.getElementById('section').value;
+    const number = document.getElementById('number').value;
+    const preview = document.getElementById('spotPreview');
+    
+    if (section && number) {
+        const spotId = `${section}-${String(number).padStart(3, '0')}`;
+        preview.textContent = spotId;
+        preview.classList.remove('text-muted');
+        preview.classList.add('text-success', 'fw-bold');
+    } else {
+        preview.textContent = 'Select section and number first';
+        preview.classList.remove('text-success', 'fw-bold');
+        preview.classList.add('text-muted');
+    }
+}
+
+async function addSpot() {
+    const form = document.getElementById('addSpotForm');
+    
+    try {
+        // Get form values
+        const level = document.getElementById('level').value.trim();
+        const section = document.getElementById('section').value.trim();
+        const number = document.getElementById('number').value.trim();
+        const rate = document.getElementById('rate').value.trim();
+        
+        console.log('🅿️ Form data collected:', { level, section, number, rate });
+        
+        // Validation
+        if (!level || !section || !number) {
+            showError('Please fill in all required fields: Level, Section, and Number');
+            return;
+        }
+        
+        const spotData = {
+            spotNumber: `${section}-${String(number).padStart(3, '0')}`,
+            location: `${level} - Section ${section}`,
+            type: 'standard',
+            hourlyRate: parseInt(rate) || 25
+        };
+        
+        console.log('🅿️ Sending spot data to API:', spotData);
+        
+        const response = await fetch('/api/admin/parking/spots', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(spotData)
+        });
+        
+        const result = await response.json();
+        console.log('🅿️ API response:', result);
+        
+        if (result.success) {
+            showNotification(result.message || 'Parking spot created successfully!', 'success');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addSpotModal'));
+            if (modal) modal.hide();
+            
+            // Reset form
+            form.reset();
+            updateSpotPreview();
+            
+            // Refresh data
+            loadParkingData();
+        } else {
+            showError(result.message || 'Failed to create parking spot');
+        }
+    } catch (error) {
+        console.error('❌ Error creating parking spot:', error);
+        showError('Error creating parking spot: ' + error.message);
+    }
+}
+
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+function showNotification(message, type) {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 3000);
+}
+</script>

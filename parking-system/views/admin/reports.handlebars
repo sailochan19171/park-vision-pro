@@ -1,0 +1,344 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Reports Center</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-primary">Generate Report</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Schedule Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Reports</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalReports">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-file-text fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">This Month</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="monthlyReports">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-month fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Avg Generation Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgTime">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-stopwatch fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Popular Format</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="popularFormat">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-file-pdf fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Generator -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Generate New Report</h6>
+                </div>
+                <div class="card-body">
+                    <form id="reportForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="reportType" class="form-label">Report Type</label>
+                                <select class="form-select" id="reportType" required>
+                                    <option value="">Select Report Type</option>
+                                    <option value="daily">Daily Summary</option>
+                                    <option value="weekly">Weekly Analysis</option>
+                                    <option value="monthly">Monthly Insights</option>
+                                    <option value="user">User Activity</option>
+                                    <option value="revenue">Revenue Report</option>
+                                    <option value="parking">Parking Utilization</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="reportFormat" class="form-label">Format</label>
+                                <select class="form-select" id="reportFormat" required>
+                                    <option value="pdf">PDF</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="startDate" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="startDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="endDate" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="endDate" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="reportDescription" class="form-label">Description (Optional)</label>
+                                <textarea class="form-control" id="reportDescription" rows="3" placeholder="Enter report description..."></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-play-fill"></i> Generate Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Report Templates</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Daily Summary</h6>
+                                <small class="text-muted">Quick</small>
+                            </div>
+                            <small>Daily bookings and revenue overview</small>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Monthly Insights</h6>
+                                <small class="text-muted">Detailed</small>
+                            </div>
+                            <small>Comprehensive monthly business analysis</small>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">User Activity</h6>
+                                <small class="text-muted">Analytics</small>
+                            </div>
+                            <small>User behavior and engagement metrics</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Reports -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Available Reports</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="reportsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Report Name</th>
+                            <th>Description</th>
+                            <th>Last Generated</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadReportsData();
+    initializeDateFields();
+});
+
+function initializeDateFields() {
+    const today = new Date();
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+    
+    document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+}
+
+async function loadReportsData() {
+    try {
+        const response = await fetch('/api/admin/reports', {
+            credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update stats cards
+            document.getElementById('totalReports').textContent = data.summary.totalReports.toLocaleString();
+            document.getElementById('monthlyReports').textContent = data.summary.completedReports.toLocaleString();
+            document.getElementById('avgTime').textContent = '2.3s';
+            document.getElementById('popularFormat').textContent = 'PDF';
+            
+            // Update reports table
+            const tableBody = document.getElementById('reportsTableBody');
+            const reportsHtml = data.reports.map(report => `
+                <tr>
+                    <td><strong>${report.title}</strong></td>
+                    <td>${report.type.charAt(0).toUpperCase() + report.type.slice(1)} Report</td>
+                    <td>${new Date(report.createdAt).toLocaleString()}</td>
+                    <td>
+                        <span class="badge bg-${report.status === 'completed' ? 'success' : report.status === 'generating' ? 'warning' : 'danger'}">
+                            ${report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="generateReport('${report._id}')">
+                                <i class="bi bi-arrow-clockwise"></i> Regenerate
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-download"></i> Download
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-eye"></i> Preview
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            tableBody.innerHTML = reportsHtml || '<tr><td colspan="5" class="text-center">No reports found</td></tr>';
+            
+        } else {
+            console.error('Failed to load reports data');
+            document.getElementById('reportsTableBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Failed to load reports</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading reports data:', error);
+        document.getElementById('reportsTableBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading reports</td></tr>';
+    }
+}
+
+document.getElementById('reportForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const reportType = document.getElementById('reportType').value;
+    const reportFormat = document.getElementById('reportFormat').value;
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const description = document.getElementById('reportDescription').value;
+    
+    const reportData = {
+        title: `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report - ${new Date().toLocaleDateString()}`,
+        type: reportType,
+        dateRange: {
+            start: startDate,
+            end: endDate
+        },
+        filters: {
+            format: reportFormat,
+            description: description
+        }
+    };
+    
+    // Show loading state
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/admin/reports', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(reportData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Report generated successfully!', 'success');
+            document.getElementById('reportForm').reset();
+            initializeDateFields();
+            loadReportsData(); // Refresh the table
+        } else {
+            throw new Error(result.message || 'Failed to generate report');
+        }
+    } catch (error) {
+        console.error('Error generating report:', error);
+        showNotification('Error generating report: ' + error.message, 'danger');
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+});
+
+function generateReport(reportId) {
+    alert('Generating report: ' + reportId);
+    // Here you would trigger the actual report generation
+}
+
+function showNotification(message, type = 'info') {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>

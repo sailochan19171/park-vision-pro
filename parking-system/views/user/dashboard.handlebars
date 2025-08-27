@@ -1,0 +1,358 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Welcome back, {{user.name}}!</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="/find-parking" class="btn btn-sm btn-primary">
+                <i class="bi bi-geo-alt"></i> Find Parking
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Active Bookings</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeBookings">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">My Vehicles</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalVehicles">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-car-front fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">This Month</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="monthlySpending">₹0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-currency-rupee fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Parking Hours</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalHours">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions and Recent Activity -->
+<div class="row">
+    <div class="col-xl-8 col-lg-7">
+        <!-- Current Bookings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Current Bookings</h6>
+                <a href="/bookings" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div id="currentBookings">
+                    <div class="d-flex justify-content-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div id="recentActivity">
+                    <div class="d-flex justify-content-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-lg-5">
+        <!-- Quick Actions -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/find-parking" class="btn btn-primary">
+                        <i class="bi bi-geo-alt"></i> Find Parking Spot
+                    </a>
+                    <a href="/vehicles/add" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle"></i> Add Vehicle
+                    </a>
+                    <a href="/bookings" class="btn btn-outline-secondary">
+                        <i class="bi bi-calendar-check"></i> View Bookings
+                    </a>
+                    <a href="/payments" class="btn btn-outline-success">
+                        <i class="bi bi-credit-card"></i> Payment History
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- My Vehicles -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">My Vehicles</h6>
+                <a href="/vehicles" class="btn btn-sm btn-outline-primary">Manage</a>
+            </div>
+            <div class="card-body">
+                <div id="userVehicles">
+                    <div class="d-flex justify-content-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Nearby Parking -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Nearby Parking</h6>
+            </div>
+            <div class="card-body">
+                <div id="nearbyParking">
+                    <p class="text-muted">Enable location to see nearby parking spots</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="findNearbyParking()">
+                        <i class="bi bi-geo-alt"></i> Find Nearby
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load dashboard data
+    async function loadDashboardData() {
+        try {
+            // Load dashboard data from API
+            const response = await fetch('/api/user/dashboard', {
+                credentials: 'same-origin'
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    const data = result.data;
+                    updateUserStats(data.stats);
+                    renderCurrentBookings(data.recentBookings);
+                    renderUserVehicles(data.userVehicles);
+                    renderRecentActivity(data.recentPayments);
+                } else {
+                    console.error('Failed to load dashboard data');
+                    showNotification('Failed to load dashboard data', 'error');
+                }
+            } else {
+                console.error('Dashboard API error:', response.status);
+                showNotification('Error loading dashboard data', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            showNotification('Error loading dashboard data', 'error');
+        }
+    }
+    
+    function updateUserStats(stats) {
+        document.getElementById('activeBookings').textContent = stats.activeBookings || 0;
+        document.getElementById('totalVehicles').textContent = stats.totalVehicles || 0;
+        document.getElementById('monthlySpending').textContent = '₹' + (stats.totalSpent || 0).toLocaleString();
+        document.getElementById('totalHours').textContent = stats.totalBookings || 0;
+    }
+    
+    function renderCurrentBookings(bookings) {
+        const container = document.getElementById('currentBookings');
+        
+        if (!bookings || bookings.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-calendar-x display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No active bookings</p>
+                    <a href="/find-parking" class="btn btn-primary">Find Parking</a>
+                </div>
+            `;
+            return;
+        }
+        
+        const bookingsHtml = bookings.map(booking => `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1">${booking.parkingSpot?.spotNumber || 'N/A'}</h6>
+                            <p class="text-muted mb-1">${booking.parkingSpot?.location?.name || 'Unknown Location'}</p>
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> ${formatDateTime(booking.startTime)} - ${formatDateTime(booking.endTime)}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-${booking.status === 'active' ? 'success' : 'secondary'}">${booking.status}</span>
+                            <p class="mb-0 mt-1"><strong>₹${booking.totalAmount}</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = bookingsHtml;
+    }
+    
+    function renderUserVehicles(vehicles) {
+        const container = document.getElementById('userVehicles');
+        
+        if (!vehicles || vehicles.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-3">
+                    <i class="bi bi-car-front text-muted"></i>
+                    <p class="text-muted mb-2 mt-1">No vehicles added</p>
+                    <a href="/vehicles/add" class="btn btn-sm btn-primary">Add Vehicle</a>
+                </div>
+            `;
+            return;
+        }
+        
+        const vehiclesHtml = vehicles.slice(0, 3).map(vehicle => `
+            <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-car-front me-2 text-primary"></i>
+                <div class="flex-grow-1">
+                    <small class="fw-bold">${vehicle.licensePlate}</small><br>
+                    <small class="text-muted">${vehicle.type} - ${vehicle.model}</small>
+                </div>
+                <span class="badge bg-${vehicle.status === 'active' ? 'success' : 'secondary'}">${vehicle.status}</span>
+            </div>
+        `).join('');
+        
+        container.innerHTML = vehiclesHtml;
+        
+        if (vehicles.length > 3) {
+            container.innerHTML += `<small class="text-muted">+${vehicles.length - 3} more vehicles</small>`;
+        }
+    }
+    
+    function renderRecentActivity(payments) {
+        const container = document.getElementById('recentActivity');
+        
+        if (!payments || payments.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-3">No recent activity</div>';
+            return;
+        }
+        
+        const activitiesHtml = payments.map(payment => `
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-credit-card me-3 text-primary"></i>
+                <div class="flex-grow-1">
+                    <small class="fw-bold">Payment of ₹${payment.amount}</small><br>
+                    <small class="text-muted">${formatDateTime(payment.createdAt)} - ${payment.method}</small>
+                </div>
+                <span class="badge bg-${payment.status === 'completed' ? 'success' : payment.status === 'pending' ? 'warning' : 'danger'}">${payment.status}</span>
+            </div>
+        `).join('');
+        
+        container.innerHTML = activitiesHtml;
+    }
+    
+    function getActivityIcon(type) {
+        const icons = {
+            'booking': 'bi-calendar-plus',
+            'payment': 'bi-credit-card',
+            'entry': 'bi-arrow-right-circle',
+            'exit': 'bi-arrow-left-circle',
+            'vehicle_added': 'bi-plus-circle'
+        };
+        return icons[type] || 'bi-info-circle';
+    }
+    
+    function findNearbyParking() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const { latitude, longitude } = position.coords;
+                window.location.href = `/find-parking?lat=${latitude}&lng=${longitude}`;
+            }, (error) => {
+                showNotification('Unable to get your location. Please enable location services.', 'warning');
+            });
+        } else {
+            showNotification('Geolocation is not supported by this browser.', 'error');
+        }
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    function formatDateTime(dateString) {
+        return new Date(dateString).toLocaleString('en-IN');
+    }
+    
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardData();
+        
+        // Auto-refresh every 60 seconds
+        setInterval(loadDashboardData, 60000);
+    });
+</script>

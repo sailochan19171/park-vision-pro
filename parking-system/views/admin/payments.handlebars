@@ -1,0 +1,261 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Payment Management</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-primary">Process Payment</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Revenue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRevenue">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-rupee fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Today's Revenue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayRevenue">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-cash-coin fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Amount</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingAmount">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock-history fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Payment Methods</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">4</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-credit-card fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Payment Method Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentMethodChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Stats</h6>
+                </div>
+                <div class="card-body">
+                    <div id="quickStats">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Recent Payments</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="paymentsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Payment ID</th>
+                            <th>Booking ID</th>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadPaymentsData();
+});
+
+async function loadPaymentsData() {
+    try {
+        const response = await fetch('/api/admin/payments');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Update revenue cards
+            document.getElementById('totalRevenue').textContent = '₹' + data.totalRevenue.toLocaleString();
+            document.getElementById('todayRevenue').textContent = '₹' + data.todayRevenue.toLocaleString();
+            document.getElementById('pendingAmount').textContent = '₹' + data.pendingAmount.toLocaleString();
+            
+            // Create payment method chart
+            const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['UPI', 'Card', 'Wallet', 'Cash'],
+                    datasets: [{
+                        data: [data.methods.upi, data.methods.card, data.methods.wallet, data.methods.cash],
+                        backgroundColor: [
+                            '#36A2EB',
+                            '#FF6384',
+                            '#FFCE56',
+                            '#4BC0C0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Update quick stats
+            const statsHtml = `
+                <div class="row text-center">
+                    <div class="col-6 border-end">
+                        <div class="h5 mb-0">₹${data.totalRevenue.toLocaleString()}</div>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h5 mb-0">₹${data.todayRevenue.toLocaleString()}</div>
+                        <small class="text-muted">Today</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>UPI</span>
+                        <strong>${data.methods.upi}%</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Card</span>
+                        <strong>${data.methods.card}%</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Wallet</span>
+                        <strong>${data.methods.wallet}%</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Cash</span>
+                        <strong>${data.methods.cash}%</strong>
+                    </div>
+                </div>
+            `;
+            document.getElementById('quickStats').innerHTML = statsHtml;
+            
+            // Update payments table
+            const tableBody = document.getElementById('paymentsTableBody');
+            const paymentsHtml = data.payments.map(payment => `
+                <tr>
+                    <td><strong>${payment.id}</strong></td>
+                    <td>${payment.booking}</td>
+                    <td>${payment.user}</td>
+                    <td><strong>₹${payment.amount}</strong></td>
+                    <td>
+                        <span class="badge bg-info">${payment.method}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${payment.status === 'completed' ? 'success' : payment.status === 'pending' ? 'warning' : 'danger'}">
+                            ${payment.status}
+                        </span>
+                    </td>
+                    <td>${new Date(payment.date).toLocaleString()}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            ${payment.status === 'pending' ? `
+                                <button type="button" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-check"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            tableBody.innerHTML = paymentsHtml;
+            
+        } else {
+            console.error('Failed to load payments data');
+        }
+    } catch (error) {
+        console.error('Error loading payments data:', error);
+    }
+}
+</script>

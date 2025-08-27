@@ -1,221 +1,305 @@
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
-import { 
-  Target, 
-  Eye, 
-  Award, 
-  Users,
-  ArrowRight,
-  CheckCircle,
-  Globe,
-  Shield,
-  Zap
-} from "lucide-react";
+import { useToast } from "../hooks/use-toast";
+
 import parkingGarage from "../assets/parking-garage.jpg";
+import pic6 from "../assets/PIC_6-removebg-preview.png";
+import missionImage from "../assets/innovation-mission.jpg";
+import smartParkingGuidance from "../assets/smart-parking-guidance.jpg";
+import qtq20 from "../assets/qtq20.jpg";
 
 const About = () => {
+  const { toast } = useToast();
+
+  const handleStartProject = () => {
+    // Scroll to contact section with proper header offset
+    const contactElement = document.querySelector('#contact');
+    if (contactElement) {
+      const headerHeight = 80;
+      const elementPosition = contactElement.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      
+      // Pre-fill the message field with project inquiry
+      setTimeout(() => {
+        const messageTextarea = document.querySelector('textarea[name="message"]');
+        if (messageTextarea) {
+          const textareaElement = messageTextarea as HTMLTextAreaElement;
+          textareaElement.value = "Hi! I'm interested in starting a parking solution project. Please contact me to discuss my requirements and get a comprehensive proposal.";
+          textareaElement.focus();
+        }
+      }, 1000);
+    }
+    
+    toast({
+      title: "Redirecting to Contact Form",
+      description: "Please fill out the form below to start your project inquiry.",
+    });
+  };
+
   const values = [
     {
-      icon: <Target className="h-6 w-6" />,
       title: "Innovation",
-      description: "Continuously developing cutting-edge technologies to transform parking experiences"
+      description: "Advanced parking technology solutions",
     },
     {
-      icon: <Shield className="h-6 w-6" />,
       title: "Security",
-      description: "Ensuring the highest levels of security and reliability in all our solutions"
+      description: "Reliable and secure access control",
     },
     {
-      icon: <Users className="h-6 w-6" />,
-      title: "Customer Focus",
-      description: "Putting our customers' needs first and delivering exceptional service"
-    },
-    {
-      icon: <Zap className="h-6 w-6" />,
       title: "Efficiency",
-      description: "Optimizing operations and maximizing efficiency through smart technology"
-    }
-  ];
-
-  const achievements = [
-    { number: "500+", label: "Successful Projects" },
-    { number: "50+", label: "Cities Covered" },
-    { number: "15+", label: "Years Experience" },
-    { number: "99.9%", label: "System Uptime" }
-  ];
-
-  const certifications = [
-    "ISO 9001:2015 Certified",
-    "CE Marking Compliance", 
-    "FCC Certified Products",
-    "IP65 Weather Protection",
-    "EMC Compliance",
-    "RoHS Compliant"
+      description: "Streamlined parking operations",
+    },
+    {
+      title: "Sustainability",
+      description: "Eco-friendly smart infrastructure",
+    },
   ];
 
   return (
-    <section id="about" className="py-20 bg-tech-gray-light">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 bg-warning-orange/10 text-warning-orange border-warning-orange/20">
-            About Us
-          </Badge>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-            Leading the Future of Parking
+    <section id="about" className="py-18 bg-white scroll-mt-20 relative overflow-x-hidden">
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative w-full">
+        {/* Section Header */}
+        <div className="text-center mb-14" data-aos="fade-up">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            About VayAccess Solutions
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            With over 15 years of expertise in parking solutions, we specialize in innovative technologies 
-            like solar studs and LED lights, committed to becoming a leading supplier in smart infrastructure management.
+          <p className="text-sm text-gray-700 max-w-3xl mx-auto leading-relaxed" data-aos="fade-up" data-aos-delay="100">
+            Building tomorrow's infrastructure with advanced parking technology and proven reliability for modern smart city solutions.
           </p>
         </div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+        <div className="grid lg:grid-cols-2 gap-10 items-start mb-12">
           {/* Content */}
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-                Your One-Stop Solution for Smart Parking, Access Control, and Traffic Management
-              </h3>
+          <div className="space-y-6" data-aos="fade-right" data-aos-delay="200">
+            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+              Engineering Tomorrow's Infrastructure
+            </h3>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                VayAccess Solutions specializes in advanced barrier gates, turnstiles, and access control systems for modern parking facilities. We serve diverse industries including corporate offices, shopping centers, residential complexes, airports, hospitals, and educational institutions.
+              </p>
               
-              <div className="space-y-4 mb-8">
-                <p className="text-muted-foreground">
-                  ParkVision Pro is committed to revolutionizing parking infrastructure through 
-                  innovative technology solutions. We specialize in comprehensive parking management 
-                  systems that enhance efficiency and reliability in modern infrastructure.
-                </p>
-                <p className="text-muted-foreground">
-                  Our expertise spans across smart turnstiles, RFID systems, automatic gates, 
-                  and advanced tools for parking space management, all designed to make spaces 
-                  safer, smarter, and more convenient for everyone.
-                </p>
-              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Our comprehensive solutions include automatic barrier gates, flap barrier turnstiles, tripod turnstiles, pedestrian swing gates, parking management kiosks, and intelligent guidance systems. Each product is designed with cutting-edge technology to ensure maximum security, efficiency, and user satisfaction.
+              </p>
 
-              <div className="grid md:grid-cols-2 gap-4 mb-8">
-                {certifications.map((cert, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-success-green" />
-                    <span className="text-sm text-foreground">{cert}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Mission & Vision */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="border-0 bg-background">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 bg-tech-blue/10 rounded-lg flex items-center justify-center">
-                      <Target className="h-6 w-6 text-tech-blue" />
-                    </div>
-                    <h4 className="font-bold text-foreground">Our Mission</h4>
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    To transform parking infrastructure worldwide through innovative, 
-                    secure, and user-friendly technology solutions.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 bg-background">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 bg-success-green/10 rounded-lg flex items-center justify-center">
-                      <Eye className="h-6 w-6 text-success-green" />
-                    </div>
-                    <h4 className="font-bold text-foreground">Our Vision</h4>
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    To be the global leader in smart parking solutions, 
-                    creating seamless experiences for billions of users.
-                  </p>
-                </CardContent>
-              </Card>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                From consultation and design to installation and ongoing support, we provide end-to-end parking solutions tailored to your specific requirements. Our 24/7 technical support ensures your systems operate smoothly with minimal downtime.
+              </p>
             </div>
           </div>
 
-          {/* Image */}
-          <div className="relative">
-            <img
-              src={parkingGarage}
-              alt="Modern Parking Garage"
-              className="w-full rounded-2xl shadow-2xl"
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-tech-blue/20 to-transparent rounded-2xl"></div>
+          {/* Image - Circular, aligned with Mission styling */}
+          <div className="relative mt-0 lg:mt-8" data-aos="fade-left" data-aos-delay="300">
+            <div className="w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80 mx-auto rounded-full overflow-hidden shadow-2xl ring-4 ring-white/80 border border-gray-200/60">
+              <img
+                src={parkingGarage}
+                alt="Engineering Tomorrow's Smart Parking Infrastructure"
+                className="w-full h-full object-cover"
+                loading="lazy"
+                style={{ 
+                  filter: 'brightness(1.03) contrast(1.08) saturate(1.05)'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Our Vision */}
+        <div className="mb-16">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Vision Image - Circular to match Mission styling */}
+            <div className="relative flex justify-center items-center lg:mt-10">
+              <div className="w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80 rounded-full overflow-hidden shadow-2xl ring-4 ring-white/80 border border-gray-200/60">
+                <img
+                  src={qtq20}
+                  alt="Building Tomorrow's Infrastructure"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  style={{ 
+                    filter: 'brightness(1.03) contrast(1.08) saturate(1.05)'
+                  }}
+                />
+              </div>
+            </div>
             
-            {/* Floating Achievement Card */}
-            <div className="absolute -bottom-6 -left-6 bg-background p-6 rounded-xl shadow-xl border">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-success-green/10 rounded-lg flex items-center justify-center">
-                  <Award className="h-6 w-6 text-success-green" />
+            {/* Vision Content */}
+            <div className="space-y-6">
+              <div>
+                {/* <Badge className="mb-4 bg-blue-100 text-blue-800 border-blue-200">
+                  Our Vision
+                </Badge> */}
+                <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                  Building Tomorrow's Infrastructure
+                </h3>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  To be the global leader in smart parking solutions, creating seamless experiences 
+                  for billions of users worldwide. We envision a future where parking is no longer 
+                  a hassle but a smooth, intelligent process.
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Our vision extends beyond traditional parking management to encompass comprehensive 
+                  smart city infrastructure, integrating IoT sensors, AI-powered analytics, and 
+                  sustainable technologies to create parking ecosystems that are efficient, 
+                  environmentally friendly, and user-centric.
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  We aim to eliminate parking stress, reduce traffic congestion, and contribute to 
+                  cleaner, more organized urban environments through innovative technology solutions 
+                  that adapt to the evolving needs of modern cities.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Our Mission */}
+        <div className="mb-16">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Mission Content */}
+            <div className="space-y-6 lg:order-1">
+              <div>
+                {/* <Badge className="mb-4 bg-green-100 text-green-800 border-green-200">
+                  Our Mission
+                </Badge> */}
+                <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                  Transforming Parking Through Innovation
+                </h3>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  To transform parking infrastructure worldwide through innovative, secure, and 
+                  user-friendly technology solutions that make urban mobility more efficient and 
+                  sustainable for everyone.
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  We are committed to developing cutting-edge parking management systems that integrate 
+                  seamlessly with existing infrastructure while providing scalable solutions for 
+                  businesses, municipalities, and individuals.
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  Our mission involves continuous research and development in solar technology, 
+                  LED lighting systems, RFID integration, and smart access control to deliver 
+                  comprehensive parking solutions that are both technologically advanced and 
+                  environmentally responsible.
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                    <div className="text-gray-900 font-bold">Innovation-Driven Solutions</div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                    <div className="text-gray-900 font-bold">Customer-Centric Approach</div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                    <div className="text-gray-900 font-bold">Sustainable Technology</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-foreground">15+</div>
-                  <div className="text-sm text-muted-foreground">Years Excellence</div>
-                </div>
+              </div>
+            </div>
+            
+            {/* Mission Image - Circular, no white card */}
+            <div className="relative lg:order-2 flex justify-center items-center lg:mt-10">
+              <div className="w-64 h-64 sm:w-72 sm:h-72 lg:w-80 lg:h-80 rounded-full overflow-hidden shadow-2xl ring-4 ring-white/80 border border-gray-200/60">
+                <img
+                  src={missionImage}
+                  alt="Transforming Parking Through Innovation"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  style={{ 
+                    filter: 'brightness(1.03) contrast(1.08) saturate(1.05)'
+                  }}
+                />
               </div>
             </div>
           </div>
         </div>
 
         {/* Achievements */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-          {achievements.map((achievement, index) => (
-            <div key={index} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-tech-blue mb-2">
-                {achievement.number}
-              </div>
-              <div className="text-muted-foreground">{achievement.label}</div>
-            </div>
-          ))}
+        <div className="mb-12">
+          <div className="text-center mb-8">
+            {/* <h3 className="text-3xl font-bold text-foreground mb-4">Our Impact in Numbers</h3> */}
+            {/* <p className="text-lg text-muted-foreground">Real results from real implementations</p> */}
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6 text-center">
+            {/* {achievements.map((achievement, index) => ( */}
+              {/* <div key={index} className="bg-card p-6 rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow"> */}
+                {/* <div className="text-3xl font-bold text-primary mb-1"> */}
+                  {/* {achievement.number} */}
+                {/* </div> */}
+                {/* <div className="text-muted-foreground font-medium">{achievement.label}</div> */}
+              {/* </div> */}
+            {/* ))} */}
+          </div>
         </div>
 
-        {/* Values */}
-        <div className="space-y-8">
-          <div className="text-center">
-            <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Our Core Values
+        {/* Core Values */}
+        <div className="mb-12">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-foreground mb-3">
+              {/* What Drives Our Excellence */}
             </h3>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              The principles that guide everything we do and drive our commitment 
-              to excellence in parking solutions.
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-3">
+              {/* The fundamental principles that shape our approach to parking solutions */}
+            </p>
+            
+            <p className="text-sm text-muted-foreground max-w-4xl mx-auto">
+              {/* Our core values drive every aspect of our business, from product development and customer service 
+              to installation and ongoing support. These principles ensure that every solution we deliver not 
+              only meets but exceeds our clients' expectations while contributing to more efficient, secure, 
+              and sustainable parking infrastructure worldwide. */}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
-              <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 bg-background">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-tech-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-tech-blue group-hover:scale-110 transition-transform duration-300">
-                    {value.icon}
-                  </div>
-                  <h4 className="font-bold text-foreground mb-3">{value.title}</h4>
-                  <p className="text-muted-foreground text-sm">{value.description}</p>
-                </CardContent>
-              </Card>
+              <div key={index} className="text-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <h4 className="text-lg font-bold text-gray-900 mb-3">
+                  {value.title}
+                </h4>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {value.description}
+                </p>
+              </div>
             ))}
           </div>
         </div>
 
         {/* CTA */}
-        <div className="text-center mt-16">
-          <div className="inline-flex items-center space-x-2 bg-tech-blue/10 text-tech-blue px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <Globe className="h-4 w-4" />
-            <span>Global Presence</span>
+        <div className="text-center">
+          <div className="mb-6">
+            {/* <span className="text-primary font-semibold text-lg">Global Presence</span> */}
           </div>
-          <h3 className="text-2xl font-bold text-foreground mb-4">
-            Ready to Transform Your Parking Infrastructure?
+          <h3 className="text-3xl font-bold text-foreground mb-6">
+            {/* Ready to Transform Your Parking Infrastructure? */}
           </h3>
-          <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-            Join hundreds of satisfied customers who have revolutionized their parking operations with our solutions.
+          <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
+            {/* Join hundreds of satisfied customers who have revolutionized their parking operations with our solutions. */}
           </p>
-          <Button size="lg" className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
+          {/* <Button 
+            onClick={handleStartProject}
+            className="bg-gradient-to-r from-primary to-accent hover:opacity-90 px-4 py-2 text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+          >
             Start Your Project
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          </Button> */}
         </div>
       </div>
     </section>

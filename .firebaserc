@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "vayaccess-59fdd"
+  },
+  "targets": {
+    "vayaccess-59fdd": {
+      "hosting": {
+        "main": [
+          "vayaccess-59fdd"
+        ]
+      }
+    }
+  }
+}

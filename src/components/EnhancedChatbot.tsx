@@ -1,0 +1,994 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader } from './ui/card';
+import { Input } from './ui/input';
+import { ScrollArea } from './ui/scroll-area';
+import { Badge } from './ui/badge';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { MessageCircle, Send, X, Bot, User, Minimize2, MapPin, Phone, Mail, ExternalLink } from 'lucide-react';
+// Product images for cards
+import barrierGateImg from '../assets/barrier-gate-10.jpg';
+import tripodImg from '../assets/vay-tripod-turnstile-standard.jpg';
+import flapBarrierImg from '../assets/vay-flap-barrier-slim.jpg';
+import ticketlessImg from '../assets/parking-system-architecture.jpg';
+import guidanceImg from '../assets/parking-guidance-23.jpg';
+import rfidImg from '../assets/rfid-card-reader.jpg';
+import biometricImg from '../assets/facial-recognition-terminal.jpg';
+import mobileAccessImg from '../assets/mobile-access-control.jpg';
+import { useNavigate } from 'react-router-dom';
+import { sendChatbotConversationSimple, type ChatbotConversation } from '../services/chatbotEmailService';
+
+// Single source of truth from site footer
+const COMPANY = {
+  addressLines: [
+    'Plot No. 26, Road No.1, West Gandhi Nagar, Rampally X Road, Nagaram, Keesara (M),',
+    'Hyderabad - 500083, TS, India',
+  ],
+  phone: '+91 915 470 3116',
+  email: 'info@vayaccess.com',
+};
+
+interface SelectableOption {
+  id: string;
+  label: string;
+  action: 'message' | 'link' | 'phone' | 'email' | 'navigate';
+  value: string;
+}
+
+interface ProductCard {
+  id: string;
+  title: string;
+  image: string;
+  action: 'message' | 'navigate';
+  value: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  timestamp: Date;
+  options?: SelectableOption[];
+  cards?: ProductCard[];
+}
+
+interface Product {
+  name: string;
+  description: string;
+  features: string[];
+  applications: string[];
+  route: string;
+  image: string;
+}
+
+interface ProductCategory {
+  name: string;
+  products: Product[];
+}
+
+const EnhancedChatbot = () => {
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [conversationState, setConversationState] = useState<'initial' | 'products_shown' | 'locations_shown' | 'ending'>('initial');
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      content: "Hello! I'm VayBot, your parking solutions assistant. I can help you with information about our products and service locations. How can I assist you today?",
+      role: 'assistant',
+      timestamp: new Date(),
+      options: [
+        { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
+        { id: 'call-sales', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
+        { id: 'email-sales', label: '✉️ Email Sales', action: 'email', value: COMPANY.email }
+      ]
+    }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Product categories with detailed information (no pricing)
+  const productCategories: ProductCategory[] = [
+    {
+      name: 'Barrier Gates',
+      products: [
+        {
+          name: 'Smart Barrier Gate System',
+          description: 'Advanced automatic barrier gates with LED indicators and anti-crash mechanism',
+          features: ['LED Status Indicators', 'Anti-crash Mechanism', 'Remote Monitoring', 'Weather Resistant'],
+          applications: ['Corporate Offices', 'Shopping Malls', 'Residential Complexes', 'Parking Lots'],
+          route: '/products/barrier-gates',
+          image: barrierGateImg
+        },
+        {
+          name: 'Heavy Duty Barriers',
+          description: 'Industrial-grade barrier gates for high-traffic areas',
+          features: ['High Traffic Volume', 'Industrial Grade', '24/7 Operation', 'Reinforced Construction'],
+          applications: ['Airports', 'Industrial Facilities', 'Government Buildings', 'Toll Plazas'],
+          route: '/products/barrier-gates',
+          image: barrierGateImg
+        }
+      ]
+    },
+    {
+      name: 'Pedestrian Gates',
+      products: [
+        {
+          name: 'Tripod Turnstiles',
+          description: 'Compact and reliable pedestrian access control systems',
+          features: ['Biometric Integration', 'Card Reader Support', 'Compact Design', 'Bidirectional Access'],
+          applications: ['Office Buildings', 'Metro Stations', 'Educational Institutions', 'Gyms'],
+          route: '/products/pedestrian-gates',
+          image: tripodImg
+        },
+        {
+          name: 'Flap Barrier Turnstiles',
+          description: 'Elegant and fast-passage pedestrian gates',
+          features: ['Elegant Design', 'Fast Passage', 'LED Indicators', 'Anti-tailgating'],
+          applications: ['Corporate Lobbies', 'Hotels', 'Hospitals', 'Shopping Centers'],
+          route: '/products/pedestrian-gates',
+          image: flapBarrierImg
+        }
+      ]
+    },
+    {
+      name: 'Parking Management',
+      products: [
+        {
+          name: 'Ticketless Parking System',
+          description: 'Modern parking management with mobile app integration',
+          features: ['Mobile App Integration', 'Real-time Monitoring', 'Digital Payments', 'License Plate Recognition'],
+          applications: ['Smart Cities', 'Commercial Complexes', 'Airports', 'Hospitals'],
+          route: '/products/parking-management',
+          image: ticketlessImg
+        },
+        {
+          name: 'Parking Guidance System',
+          description: 'Intelligent parking space detection and guidance',
+          features: ['Space Detection', 'LED Indicators', 'Analytics Dashboard', 'Real-time Updates'],
+          applications: ['Multi-level Parking', 'Shopping Malls', 'Airports', 'Office Complexes'],
+          route: '/products/parking-guidance',
+          image: guidanceImg
+        }
+      ]
+    },
+    {
+      name: 'Access Control',
+      products: [
+        {
+          name: 'RFID Card Readers',
+          description: 'Secure and reliable card-based access control',
+          features: ['Long Range Reading', 'Multiple Card Types', 'Secure Encryption', 'Weather Resistant'],
+          applications: ['Office Buildings', 'Residential Societies', 'Educational Institutions', 'Healthcare Facilities'],
+          route: '/products/access-control/rfid-system',
+          image: rfidImg
+        },
+        {
+          name: 'Biometric Systems',
+          description: 'Advanced biometric authentication systems',
+          features: ['Fingerprint Recognition', 'Face Detection', 'Anti-spoofing', 'Multi-modal Authentication'],
+          applications: ['High Security Areas', 'Government Buildings', 'Banks', 'Data Centers'],
+          route: '/products/access-control/biometric-system',
+          image: biometricImg
+        },
+        {
+          name: 'Mobile Access Control',
+          description: 'Smartphone-based access control solutions',
+          features: ['Smartphone Integration', 'QR Code Support', 'Remote Management', 'Cloud-based'],
+          applications: ['Modern Offices', 'Co-working Spaces', 'Residential Communities', 'Event Venues'],
+          route: '/products/access-control/mobile-system',
+          image: mobileAccessImg
+        }
+      ]
+    }
+  ];
+
+  const serviceLocations = [
+    { type: 'Gated Communities', description: 'Residential complexes and housing societies', available: true },
+    { type: 'Shopping Malls', description: 'Retail and commercial complexes', available: true },
+    { type: 'Airports', description: 'Airport parking and access control', available: true },
+    { type: 'Corporate Offices', description: 'Office buildings and business parks', available: true },
+    { type: 'Hospitals', description: 'Healthcare facilities and medical centers', available: true },
+    { type: 'Educational Institutions', description: 'Schools, colleges, and universities', available: true },
+    { type: 'Hotels', description: 'Hospitality and resort facilities', available: true },
+    { type: 'Government Buildings', description: 'Public sector and administrative buildings', available: true },
+    { type: 'Industrial Facilities', description: 'Manufacturing and warehouse complexes', available: true },
+    { type: 'Remote Areas', description: 'Rural or very remote locations', available: false }
+  ];
+
+  // Helper function to send conversation email
+  const sendConversationEmail = async (userQuestion: string, botResponse: string) => {
+    try {
+      const conversation: ChatbotConversation = {
+        userQuestion,
+        botResponse,
+        timestamp: new Date(),
+        sessionId
+      };
+      
+      await sendChatbotConversationSimple(conversation);
+      console.log('📧 Chatbot conversation sent to info@vayaccess.com');
+      
+    } catch (error) {
+      console.error('❌ Failed to send chatbot conversation email:', error);
+    }
+  };
+
+  const generateAllProductsResponse = () => {
+    let response = "We have the following product categories:\n\n";
+    
+    productCategories.forEach((category, index) => {
+      response += `${index + 1}. **${category.name}** (${category.products.length} products)\n`;
+    });
+
+    const totalProducts = productCategories.reduce((total, category) => total + category.products.length, 0);
+    response += `\nTotal: ${totalProducts} products available`;
+
+    setConversationState('products_shown');
+
+    return {
+      content: response,
+      options: productCategories
+        .map(category => ({
+          id: category.name.toLowerCase().replace(' ', '-'),
+          label: `🔧 ${category.name}`,
+          action: 'message' as const,
+          value: `Tell me about ${category.name}`
+        }))
+        .concat([
+          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
+          { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
+        ]),
+      cards: productCategories.flatMap(cat => cat.products.map(p => ({
+        id: p.name.toLowerCase().replace(/\s+/g, '-'),
+        title: p.name,
+        image: p.image,
+        action: 'message' as const,
+        value: `Tell me about ${p.name}`,
+      })))
+    };
+  };
+
+  const generateCategoryProductsResponse = (categoryName: string) => {
+    const category = productCategories.find(cat => 
+      cat.name.toLowerCase().includes(categoryName.toLowerCase()) ||
+      categoryName.toLowerCase().includes(cat.name.toLowerCase())
+    );
+
+    if (!category) {
+      return {
+        content: "I couldn't find that product category. Please select from our available categories.",
+        options: productCategories.map(cat => ({
+          id: cat.name.toLowerCase().replace(' ', '-'),
+          label: `🔧 ${cat.name}`,
+          action: 'message' as const,
+          value: `Tell me about ${cat.name}`
+        }))
+      };
+    }
+
+    let response = `Here are our ${category.name} products:\n\n`;
+    
+    category.products.forEach((product, index) => {
+      response += `${index + 1}. **${product.name}**\n`;
+      response += `   ${product.description}\n\n`;
+    });
+
+    return {
+      content: response,
+      options: category.products
+        .map(product => ({
+          id: product.name.toLowerCase().replace(/\s+/g, '-'),
+          label: `📋 ${product.name}`,
+          action: 'message' as const,
+          value: `Tell me about ${product.name}`
+        }))
+        .concat([
+          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
+          { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
+        ])
+    };
+  };
+
+  const generateProductDetailsResponse = (productName: string) => {
+    let foundProduct: Product | null = null;
+    let foundCategory: ProductCategory | null = null;
+
+    for (const category of productCategories) {
+      const product = category.products.find(p => 
+        p.name.toLowerCase().includes(productName.toLowerCase()) ||
+        productName.toLowerCase().includes(p.name.toLowerCase())
+      );
+      if (product) {
+        foundProduct = product;
+        foundCategory = category;
+        break;
+      }
+    }
+
+    if (!foundProduct || !foundCategory) {
+      return generateAllProductsResponse();
+    }
+
+    let response = `**${foundProduct.name}**\n\n`;
+    response += `${foundProduct.description}\n\n`;
+    response += `**Key Features:**\n`;
+    foundProduct.features.forEach(feature => {
+      response += `• ${feature}\n`;
+    });
+    response += `\n**Applications:**\n`;
+    foundProduct.applications.forEach(app => {
+      response += `• ${app}\n`;
+    });
+
+    return {
+      content: response,
+      options: [
+        { id: 'view-details', label: '📋 View Full Details', action: 'navigate', value: foundProduct.route },
+        { id: 'other-products', label: '🔍 Other Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
+        { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
+        { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' }
+      ],
+      cards: [
+        {
+          id: foundProduct.name.toLowerCase().replace(/\s+/g, '-'),
+          title: foundProduct.name,
+          image: foundProduct.image,
+          action: 'navigate' as const,
+          value: foundProduct.route,
+        }
+      ]
+    };
+  };
+
+  const generateLocationsResponse = () => {
+    let response = "We provide installation and services at the following types of locations:\n\n";
+    
+    const availableLocations = serviceLocations.filter(loc => loc.available);
+    const unavailableLocations = serviceLocations.filter(loc => !loc.available);
+    
+    availableLocations.forEach((location, index) => {
+      response += `${index + 1}. **${location.type}**\n`;
+      response += `   ${location.description}\n\n`;
+    });
+
+    if (unavailableLocations.length > 0) {
+      response += "**Locations we don't serve:**\n";
+      unavailableLocations.forEach(location => {
+        response += `• ${location.type} - ${location.description}\n`;
+      });
+      response += "\nSorry, we don't provide installation services to very remote areas.\n";
+    }
+
+    setConversationState('locations_shown');
+
+    return {
+      content: response,
+      options: [
+        { id: 'end-conversation', label: '✅ Thank You', action: 'message', value: 'Thank you for the information' }
+      ]
+    };
+  };
+
+  const generateEndConversationResponse = () => {
+    setConversationState('ending');
+    
+    return {
+      content: "Thank you for your interest in VayAccess parking solutions! Our representative will contact you soon to discuss your requirements in detail.\n\nHave a great day! 😊",
+      options: [
+        { id: 'restart', label: '🔄 Start New Chat', action: 'message', value: 'Hello' }
+      ]
+    };
+  };
+
+  const handleOptionClick = (option: SelectableOption) => {
+    switch (option.action) {
+      case 'message':
+        setInputMessage(option.value);
+        handleSendMessage(option.value);
+        break;
+      case 'phone': {
+        // Sanitize phone number and trigger dial reliably
+        const tel = (option.value || '').toString().replace(/\s+/g, '');
+        window.location.href = `tel:${tel}`;
+        break;
+      }
+      case 'email':
+        window.location.href = `mailto:${option.value}`;
+        break;
+      case 'link':
+        window.open(option.value, '_blank');
+        break;
+      case 'navigate':
+        navigate(option.value);
+        break;
+    }
+  };
+
+  const generateSmartResponse = (userInput: string) => {
+    const lowerInput = userInput.toLowerCase();
+
+    // 1) Locations intent (handle first to avoid pricing false positives like 'operate' containing 'rate')
+    const locationIntent = /(where\s+do\s+you\s+(operate|provide)|where.*(operate|located|locations)|service\s+locations?|locations?\s+(do\s+you\s+serve|you\s+serve))/i;
+    if (locationIntent.test(lowerInput) || /\bwhere\b.*\b(factory|office|hq|head\s*office|address|located)\b/i.test(lowerInput)) {
+      // Live footer-based address response
+      const addr = COMPANY.addressLines.join("\n");
+      return {
+        content: `Our address:\n${addr}\n\nPhone: ${COMPANY.phone}\nEmail: ${COMPANY.email}`,
+        options: [
+          { id: 'open-map', label: '📍 View on Maps', action: 'link', value: 'https://maps.google.com/?q=VayAccess Hyderabad 500083' },
+          { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
+          { id: 'email', label: '✉️ Email', action: 'email', value: COMPANY.email },
+        ],
+      };
+    }
+
+    // 2) Pricing queries - redirect to contact (with safe word boundaries)
+    const pricingWordPatterns = [
+      /\bprice(s|d)?\b/i,
+      /\bpricing\b/i,
+      /\bcost(s|ing)?\b/i,
+      /\brate(s)?\b/i,
+      /\bfee(s)?\b/i,
+      /\bcharge(s)?\b/i,
+      /\bbudget(s)?\b/i,
+      /\bquote(s|ation)?\b/i,
+      /\bestimate(s)?\b/i,
+      /\bpayment(s)?\b/i,
+      /\bamount(s)?\b/i,
+      /\bmonthly\b|\byearly\b|\bannual\b/i,
+      /\bper\s+(unit|month|year)\b/i,
+      /\b(lakh|lakhs|thousand|crore|crores)\b/i,
+      /₹|\brupees?\b|\brs\b|\binr\b/i,
+      /how\s+much/i,
+      /what.*(cost|price)/i,
+      /(starting|starts|range|ranges)\s+from/i,
+      /\binvest(ment|ing)?\b|\bspend(ing)?\b|\bfinancial\b/i,
+    ];
+
+    if (pricingWordPatterns.some(p => p.test(lowerInput))) {
+      return {
+        content: "For pricing information and customized quotes, please contact our sales team directly. They'll provide you with detailed pricing based on your specific requirements and project scope.\n\nWould you like me to help you get in touch with them?",
+        options: [
+          { id: 'contact-sales', label: '📞 Call Sales Team', action: 'phone', value: COMPANY.phone.replace(/\s+/g, '') },
+          { id: 'email-sales', label: '✉️ Email Sales Team', action: 'email', value: COMPANY.email },
+          { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'Where do you operate?' },
+          { id: 'products', label: '🏢 View Products Instead', action: 'message', value: 'How many products do you have?' }
+        ]
+      };
+    }
+
+    // Reset conversation if user says hello after ending
+    if (conversationState === 'ending' && (lowerInput.includes('hello') || lowerInput.includes('hi'))) {
+      setConversationState('initial');
+      return {
+        content: "Hello! I'm VayBot, your parking solutions assistant. I can help you with information about our products and service locations. How can I assist you today?",
+        options: [
+          { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
+          { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' }
+        ]
+      };
+    }
+
+    // Handle thank you and end conversation
+    if (lowerInput.includes('thank you') || lowerInput.includes('thanks')) {
+      return generateEndConversationResponse();
+    }
+
+    // Handle product count queries
+    if (lowerInput.includes('how many products') || lowerInput.includes('all products') || lowerInput.includes('show me products')) {
+      return generateAllProductsResponse();
+    }
+
+    // Handle location count queries
+    if (lowerInput.includes('how many locations') || lowerInput.includes('locations do you serve') || lowerInput.includes('where do you provide')) {
+      return generateLocationsResponse();
+    }
+
+    // Handle specific product category queries
+    if (lowerInput.includes('barrier') || lowerInput.includes('gate')) {
+      return generateCategoryProductsResponse('Barrier Gates');
+    }
+    if (lowerInput.includes('pedestrian') || lowerInput.includes('turnstile')) {
+      return generateCategoryProductsResponse('Pedestrian Gates');
+    }
+    if (lowerInput.includes('parking management') || lowerInput.includes('parking system')) {
+      return generateCategoryProductsResponse('Parking Management');
+    }
+
+    // Solutions intent (show a curated set of solution cards)
+    if (lowerInput.includes('solution') || lowerInput.includes('solutions')) {
+      const response = {
+        content: 'Here are some of our key solutions. Tap any to learn more:',
+        options: [
+          { id: 'products', label: '🏢 View All Products', action: 'message' as const, value: 'How many products do you have?' },
+          { id: 'services', label: '🛠️ Services', action: 'navigate' as const, value: '/services' },
+          { id: 'contact', label: '✉️ Contact', action: 'navigate' as const, value: '/#contact' }
+        ],
+        cards: [
+          { id: 'ticketless', title: 'Ticketless Parking System', image: ticketlessImg, action: 'message' as const, value: 'Tell me about Ticketless Parking System' },
+          { id: 'guidance', title: 'Parking Guidance System', image: guidanceImg, action: 'message' as const, value: 'Tell me about Parking Guidance System' },
+          { id: 'barrier', title: 'Smart Barrier Gate System', image: barrierGateImg, action: 'message' as const, value: 'Tell me about Smart Barrier Gate System' },
+          { id: 'turnstiles', title: 'Flap Barrier Turnstiles', image: flapBarrierImg, action: 'message' as const, value: 'Tell me about Flap Barrier Turnstiles' },
+        ]
+      };
+      return response;
+    }
+    if (lowerInput.includes('access control') || lowerInput.includes('rfid') || lowerInput.includes('biometric') || lowerInput.includes('mobile access')) {
+      return generateCategoryProductsResponse('Access Control');
+    }
+
+    // Handle specific product queries
+    if (lowerInput.includes('smart barrier') || lowerInput.includes('barrier gate system')) {
+      return generateProductDetailsResponse('Smart Barrier Gate System');
+    }
+    if (lowerInput.includes('heavy duty') || lowerInput.includes('heavy duty barriers')) {
+      return generateProductDetailsResponse('Heavy Duty Barriers');
+    }
+    if (lowerInput.includes('tripod turnstiles') || lowerInput.includes('tripod')) {
+      return generateProductDetailsResponse('Tripod Turnstiles');
+    }
+    if (lowerInput.includes('flap barrier') || lowerInput.includes('flap turnstiles')) {
+      return generateProductDetailsResponse('Flap Barrier Turnstiles');
+    }
+    if (lowerInput.includes('ticketless parking') || lowerInput.includes('ticketless system')) {
+      return generateProductDetailsResponse('Ticketless Parking System');
+    }
+    if (lowerInput.includes('parking guidance') || lowerInput.includes('guidance system')) {
+      return generateProductDetailsResponse('Parking Guidance System');
+    }
+    if (lowerInput.includes('rfid card') || lowerInput.includes('card readers')) {
+      return generateProductDetailsResponse('RFID Card Readers');
+    }
+    if (lowerInput.includes('biometric systems') || lowerInput.includes('biometric')) {
+      return generateProductDetailsResponse('Biometric Systems');
+    }
+    if (lowerInput.includes('mobile access') || lowerInput.includes('mobile control')) {
+      return generateProductDetailsResponse('Mobile Access Control');
+    }
+
+    // Handle general category mentions
+    if (lowerInput.includes('tell me about')) {
+      const categoryMatch = productCategories.find(cat => 
+        lowerInput.includes(cat.name.toLowerCase())
+      );
+      if (categoryMatch) {
+        return generateCategoryProductsResponse(categoryMatch.name);
+      }
+    }
+
+    // Default response based on conversation state
+    if (conversationState === 'initial') {
+      return {
+        content: "I can help with Products, Solutions, Services, or Office location. What would you like to explore?",
+        options: [
+          { id: 'products', label: '🏢 Products', action: 'message', value: 'How many products do you have?' },
+          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
+          { id: 'office', label: '📍 Office Location', action: 'message', value: 'Where is your office located?' },
+        ]
+      };
+    } else if (conversationState === 'products_shown') {
+      return {
+        content: "Want to navigate to Solutions, Services, or Contact?",
+        options: [
+          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
+          { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
+        ]
+      };
+    } else if (conversationState === 'locations_shown') {
+      return generateEndConversationResponse();
+    }
+
+    return {
+      content: "I can help with Products, Solutions, Services, or Office location. What would you like to explore?",
+      options: [
+        { id: 'products', label: '🏢 Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
+        { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
+        { id: 'office', label: '📍 Office Location', action: 'message', value: 'Where is your office located?' },
+      ]
+    };
+  };
+
+  const handleSendMessage = async (messageText?: string) => {
+    const textToSend = messageText || inputMessage;
+    if (!textToSend.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: textToSend,
+      role: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    try {
+      // Generate rule-based smart response first
+      const smartResponse = generateSmartResponse(textToSend);
+
+      if (smartResponse && smartResponse.content) {
+        // Decide if we should upgrade to AI (ChatGPT-like) instead of a generic rule response
+        const genericHints = [
+          'I can help you with information about our products and service locations',
+          'Would you like to know about our service locations',
+          "I couldn't find that product category",
+        ];
+        const isGeneric = genericHints.some(h => smartResponse.content.includes(h));
+        const isPricingLike = /\b(price|pricing|cost|quote|quotation|estimate|fee|charge|budget|amount|rate|payment|₹|rupee|rs|inr)\b/i.test(textToSend);
+
+        if (!isPricingLike && isGeneric) {
+          // Upgrade to AI response for richer, more accurate content
+          const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+          if (!apiKey || apiKey === 'your_groq_api_key_here') {
+            // If no key, fallback to current smart response
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: smartResponse.content,
+              role: 'assistant',
+              timestamp: new Date(),
+              options: smartResponse.options,
+              cards: smartResponse.cards,
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+            await sendConversationEmail(textToSend, assistantMessage.content);
+          } else {
+            const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+            const completion = await groq.chat.completions.create({
+              messages: [
+                { role: 'system', content: `You are VayBot, an assistant for VayAccess Smart Parking Solutions. Answer accurately about parking products, access control, integrations, and services. Do not provide any pricing or costs. If asked about pricing, say: "For detailed pricing and customized quotes, please contact our sales team at info@vayaccess.com or +91 720 724 4344." Keep answers concise and helpful, and prefer bullet points for lists.` },
+                { role: 'user', content: textToSend }
+              ],
+              model: 'llama-3.3-70b-versatile',
+              temperature: 0.4,
+              max_tokens: 600,
+            });
+            const responseText = completion?.choices[0]?.message?.content || smartResponse.content;
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: responseText,
+              role: 'assistant',
+              timestamp: new Date(),
+              options: [
+                { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
+                { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
+                { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
+                { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
+              ]
+            };
+            setMessages(prev => [...prev, assistantMessage]);
+            await sendConversationEmail(textToSend, assistantMessage.content);
+          }
+        } else {
+          // Keep rule-based response
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: smartResponse.content,
+            role: 'assistant',
+            timestamp: new Date(),
+            options: smartResponse.options,
+            cards: smartResponse.cards,
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          await sendConversationEmail(textToSend, assistantMessage.content);
+        }
+      } else {
+        // Fallback: call Groq for a ChatGPT-like answer focused on VayAccess features only
+        const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+        if (!apiKey || apiKey === 'your_groq_api_key_here') {
+          throw new Error('API key not configured');
+        }
+        const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+        const completion = await groq.chat.completions.create({
+          messages: [
+            { role: 'system', content: `You are VayBot, an assistant for VayAccess Smart Parking Solutions. Answer accurately about parking products, access control, integrations, and services. Do not provide any pricing or costs. If asked about pricing, say: "For detailed pricing and customized quotes, please contact our sales team at info@vayaccess.com or +91 720 724 4344." Keep answers concise and helpful, and prefer bullet points for lists.` },
+            { role: 'user', content: textToSend }
+          ],
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.4,
+          max_tokens: 600,
+        });
+        const responseText = completion?.choices[0]?.message?.content || 'I can help with product and services information. What would you like to know?';
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: responseText,
+          role: 'assistant',
+          timestamp: new Date(),
+          options: [
+            { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
+            { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
+            { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
+            { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
+          ]
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        await sendConversationEmail(textToSend, assistantMessage.content);
+      }
+    } catch (error) {
+      console.error('Error generating response:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'm having trouble responding right now. Please try again or use the quick options below.",
+        role: 'assistant',
+        timestamp: new Date(),
+        options: [
+          { id: 'retry', label: '🔄 Try Again', action: 'message', value: textToSend },
+          { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
+          { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
+        ]
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const quickQuestions = [
+    "How many products do you have?",
+    "Tell me about Barrier Gates",
+    "Tell me about Pedestrian Gates",
+    "Tell me about Access Control",
+    "Tell me about Parking Management",
+    "How many locations do you serve?",
+    "Where do you operate?",
+    "Smart Barrier Gate System",
+    "Flap Barrier Turnstiles",
+    "RFID Card Readers",
+    "Biometric Systems"
+  ];
+
+  const handleQuickQuestion = (question: string) => {
+    handleSendMessage(question);
+  };
+
+  if (!isOpen) {
+    return (
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 group relative"
+          size="icon"
+          title="Open VayBot Assistant"
+        >
+          <MessageCircle className="h-6 w-6" />
+          <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="bg-white rounded-full p-1 shadow-md">
+              <MessageCircle className="h-3 w-3 text-blue-600" />
+            </div>
+          </div>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Card
+      className={`fixed bottom-6 right-6 w-96 shadow-2xl border-2 border-blue-200 z-50 transition-all duration-300 select-none touch-none ${
+        isMinimized ? 'h-16' : 'h-[600px]'
+      }`}
+      style={{ overscrollBehavior: 'contain' }}
+    >
+      <CardHeader className={`bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 ${
+        isMinimized ? 'rounded-lg' : 'rounded-t-lg'
+      } relative`}>
+        <div className="flex items-center justify-between">
+          <div 
+            className={`flex items-center space-x-3 ${isMinimized ? 'cursor-pointer' : ''}`}
+            onClick={isMinimized ? () => setIsMinimized(false) : undefined}
+          >
+            <Avatar className="h-8 w-8 bg-white">
+              <AvatarFallback className="text-blue-600 font-bold">VB</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-sm">
+                  VayBot Assistant
+                  {isMinimized && <span className="ml-2 text-xs opacity-75">(Click to expand)</span>}
+                </h3>
+              </div>
+              {!isMinimized && <p className="text-xs opacity-90">Smart Parking Solutions</p>}
+            </div>
+          </div>
+          <div className="flex space-x-2 items-center">
+            {!isMinimized && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMinimized(true)}
+                className="h-8 w-8 text-white hover:bg-white/20 transition-colors rounded-full flex-shrink-0"
+                title="Minimize chat"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(false)}
+              className="h-10 w-10 bg-red-500/90 hover:bg-red-600 text-white transition-all duration-200 rounded-full border-2 border-white shadow-lg z-30 relative flex-shrink-0"
+              title="Close chat"
+            >
+              <X className="h-6 w-6 stroke-2" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+
+      {!isMinimized && (
+        <CardContent className="p-0 flex flex-col h-[532px]">
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-4">
+              {messages.map((message) => (
+                <div key={message.id}>
+                  <div className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex space-x-2 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                      <Avatar className="h-8 w-8 flex-shrink-0">
+                        <AvatarFallback className={message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200'}>
+                          {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div
+                        className={`rounded-lg p-3 ${
+                          message.role === 'user'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Selectable Options */}
+                  {message.options && message.role === 'assistant' && (
+                    <div className="mt-3 ml-10 flex flex-wrap gap-2">
+                      {message.options.map((option) => (
+                        <Button
+                          key={option.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOptionClick(option)}
+                          className="text-xs h-8 px-3 bg-white hover:bg-blue-50 border-blue-200 hover:border-blue-300 text-blue-700 hover:text-blue-800"
+                        >
+                          {option.label}
+                          {option.action === 'phone' && <Phone className="ml-1 h-3 w-3" />}
+                          {option.action === 'email' && <Mail className="ml-1 h-3 w-3" />}
+                          {option.action === 'link' && <ExternalLink className="ml-1 h-3 w-3" />}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Product Cards Grid */}
+                  {message.cards && message.role === 'assistant' && (
+                    <div className="mt-3 ml-10 grid grid-cols-2 gap-3">
+                      {message.cards.map(card => (
+                        <div
+                          key={card.id}
+                          className="bg-white rounded-lg shadow border hover:shadow-md transition cursor-pointer overflow-hidden"
+                          onClick={() => handleOptionClick({ id: card.id, label: card.title, action: card.action, value: card.value })}
+                          title={card.title}
+                        >
+                          <div className="w-full h-20 bg-gray-100 overflow-hidden">
+                            <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs font-medium text-gray-900 line-clamp-2">{card.title}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="flex space-x-2 max-w-[80%]">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-gray-200">
+                        <Bot className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="bg-gray-100 rounded-lg p-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Quick Questions */}
+          <div className="p-3 border-t bg-gray-50">
+            <p className="text-xs text-gray-600 mb-2">Quick questions:</p>
+            <div className="flex flex-wrap gap-1">
+              {quickQuestions.map((question, index) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-blue-100 text-xs p-1"
+                  onClick={() => handleQuickQuestion(question)}
+                >
+                  {question}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Input Area */}
+          <div className="p-3 sm:p-4 border-t bg-white">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+              <div className="flex-1 relative">
+                <Input
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  placeholder="Ask about products, prices, locations..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="flex-1 min-h-[44px] sm:min-h-[40px] text-base sm:text-sm pr-4 resize-none"
+                  style={{ 
+                    fontSize: '16px',
+                    lineHeight: '1.4',
+                    minHeight: '44px'
+                  }}
+                />
+              </div>
+              <Button
+                onClick={() => handleSendMessage()}
+                disabled={isLoading || !inputMessage.trim()}
+                className="bg-blue-600 hover:bg-blue-700 min-h-[44px] sm:min-h-[40px] px-4 sm:px-3 flex-shrink-0"
+              >
+                <Send className="h-4 w-4 sm:h-4 sm:w-4" />
+                <span className="ml-2 sm:hidden">Send</span>
+              </Button>
+            </div>
+            
+            {/* Status indicator */}
+            <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>AI Assistant Online</span>
+              </div>
+              <span className="hidden sm:inline">Press Enter to send</span>
+            </div>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+};
+
+export default EnhancedChatbot;

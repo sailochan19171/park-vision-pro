@@ -1,0 +1,748 @@
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Booking Management</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-primary" onclick="refreshBookings()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i> Export
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addBookingModal">
+                    <i class="bi bi-plus-circle"></i> New Booking
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Bookings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalBookings">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Bookings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeBookings">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Today's Bookings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayBookings">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-day fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Revenue Today</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayRevenue">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-rupee fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filter Bookings</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter" onchange="filterBookings()">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="dateFilter" class="form-label">Date Range</label>
+                    <select class="form-select" id="dateFilter" onchange="filterBookings()">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="searchBooking" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchBooking" placeholder="Search bookings..." onkeyup="filterBookings()">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="sortBy" class="form-label">Sort By</label>
+                    <select class="form-select" id="sortBy" onchange="filterBookings()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="amount">Amount</option>
+                        <option value="duration">Duration</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Booking Records</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm" id="bookingsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th class="d-none d-md-table-cell">Vehicle</th>
+                            <th>Spot</th>
+                            <th class="d-none d-lg-table-cell">Start Time</th>
+                            <th class="d-none d-lg-table-cell">End Time</th>
+                            <th>Duration</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingsTableBody">
+                        <tr>
+                            <td colspan="10" class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading bookings...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <nav aria-label="Bookings pagination">
+                <ul class="pagination justify-content-center" id="bookingsPagination">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Today's Bookings Chart</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="bookingsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                </div>
+                <div class="card-body" id="recentBookingActivity">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading activity...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Booking Modal -->
+<div class="modal fade" id="addBookingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addBookingForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="customerName" class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="customerName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="customerEmail" class="form-label">Customer Email</label>
+                            <input type="email" class="form-control" id="customerEmail" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vehicleNumber" class="form-label">Vehicle Number</label>
+                            <input type="text" class="form-control" id="vehicleNumber" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="parkingSpot" class="form-label">Parking Spot</label>
+                            <select class="form-select" id="parkingSpot" required>
+                                <option value="">Loading spots...</option>
+                            </select>
+                            <div class="form-text">Available spots will be loaded automatically</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="startDateTime" class="form-label">Start Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="startDateTime" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="endDateTime" class="form-label">End Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="endDateTime" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bookingAmount" class="form-label">Amount (₹)</label>
+                        <input type="number" class="form-control" id="bookingAmount" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createBooking()">Create Booking</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary { border-left: 0.25rem solid #4e73df !important; }
+    .border-left-success { border-left: 0.25rem solid #1cc88a !important; }
+    .border-left-info { border-left: 0.25rem solid #36b9cc !important; }
+    .border-left-warning { border-left: 0.25rem solid #f6c23e !important; }
+    .text-xs { font-size: 0.7rem; }
+    .text-gray-300 { color: #dddfeb !important; }
+    .text-gray-800 { color: #5a5c69 !important; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let bookingsData = [];
+let filteredBookings = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadBookingsData();
+    setupRealTimeUpdates();
+    
+    // Load parking spots when modal opens
+    const bookingModal = document.getElementById('addBookingModal');
+    if (bookingModal) {
+        bookingModal.addEventListener('show.bs.modal', loadAvailableParkingSpots);
+    }
+});
+
+async function loadBookingsData() {
+    try {
+        const response = await fetch('/api/admin/bookings', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // Handle authentication errors
+        if (response.status === 401) {
+            window.location.href = '/admin/login';
+            return;
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            
+            // Update stats cards - check if elements exist
+            const totalBookings = document.getElementById('totalBookings');
+            const activeBookings = document.getElementById('activeBookings');
+            const todayBookings = document.getElementById('todayBookings');
+            const todayRevenue = document.getElementById('todayRevenue');
+            
+            if (totalBookings) totalBookings.textContent = (result.total || 0).toLocaleString();
+            if (activeBookings) activeBookings.textContent = (result.active || 0).toLocaleString();
+            if (todayBookings) todayBookings.textContent = (result.todayCount || 0).toLocaleString();
+            if (todayRevenue) todayRevenue.textContent = '₹' + (result.todayRevenue || 0).toLocaleString();
+            
+            // Store bookings data
+            bookingsData = result.bookings || [];
+            filteredBookings = [...bookingsData];
+            
+            // Update bookings table
+            updateBookingsTable();
+            
+            // Update recent activity
+            updateRecentActivity(result.recentActivity);
+            
+            // Create bookings chart
+            createBookingsChart(result.hourlyData);
+            
+        } else {
+            console.error('Failed to load bookings data');
+            showError('Failed to load bookings data');
+        }
+    } catch (error) {
+        console.error('Error loading bookings data:', error);
+        showError('Error loading bookings data. Please refresh the page.');
+        
+        // Show error for all loading elements
+        const loadingElements = ['totalBookings', 'activeBookings', 'todayBookings', 'todayRevenue'];
+        loadingElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element && element.textContent === 'Loading...') {
+                element.textContent = 'Error';
+            }
+        });
+    }
+}
+
+function updateBookingsTable() {
+    const tableBody = document.getElementById('bookingsTableBody');
+    if (!tableBody || !filteredBookings) return;
+    
+    if (filteredBookings.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No bookings found</td></tr>';
+        return;
+    }
+    
+    const tableHtml = filteredBookings.slice(0, 20).map(booking => {
+        const statusBadge = getStatusBadge(booking.status);
+        const duration = booking.duration || 'N/A';
+        
+        return `
+            <tr>
+                <td class="fw-bold">#${booking.id}</td>
+                <td>${booking.customerName}</td>
+                <td class="d-none d-md-table-cell">${booking.vehicleNumber}</td>
+                <td><span class="badge bg-info">${booking.spotId}</span></td>
+                <td class="d-none d-lg-table-cell">
+                    <small>${new Date(booking.startTime).toLocaleDateString()}<br>
+                    ${new Date(booking.startTime).toLocaleTimeString()}</small>
+                </td>
+                <td class="d-none d-lg-table-cell">
+                    <small>${new Date(booking.endTime).toLocaleDateString()}<br>
+                    ${new Date(booking.endTime).toLocaleTimeString()}</small>
+                </td>
+                <td><small>${duration}</small></td>
+                <td class="fw-bold">₹${booking.amount}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewBooking('${booking.id}')" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editBooking('${booking.id}')" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${booking.status === 'active' ? 
+                            `<button class="btn btn-sm btn-outline-danger" onclick="cancelBooking('${booking.id}')" title="Cancel">
+                                <i class="bi bi-x-circle"></i>
+                            </button>` : ''
+                        }
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tableBody.innerHTML = tableHtml;
+}
+
+function updateRecentActivity(activities) {
+    const activityContainer = document.getElementById('recentBookingActivity');
+    if (!activityContainer || !activities) return;
+    
+    const activityHtml = activities.map(activity => `
+        <div class="d-flex align-items-center mb-3">
+            <div class="me-3">
+                <div class="bg-${getActivityColor(activity.type)} rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                    <i class="bi bi-${getActivityIcon(activity.type)} text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1">
+                <div class="small fw-bold">${activity.description}</div>
+                <div class="small text-muted">${activity.time}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    activityContainer.innerHTML = activityHtml;
+}
+
+function createBookingsChart(hourlyData) {
+    try {
+        const chartElement = document.getElementById('bookingsChart');
+        if (!chartElement || !hourlyData) {
+            console.log('Chart element or data not available');
+            return;
+        }
+        
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded');
+            return;
+        }
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (window.bookingsChart && typeof window.bookingsChart.destroy === 'function') {
+            window.bookingsChart.destroy();
+        }
+        
+        window.bookingsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: hourlyData.map(item => item.hour),
+            datasets: [{
+                label: 'Bookings',
+                data: hourlyData.map(item => item.bookings),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Bookings'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hour of Day'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    } catch (error) {
+        console.error('Error creating bookings chart:', error);
+    }
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'active': '<span class="badge bg-success">Active</span>',
+        'completed': '<span class="badge bg-primary">Completed</span>',
+        'cancelled': '<span class="badge bg-danger">Cancelled</span>',
+        'expired': '<span class="badge bg-secondary">Expired</span>'
+    };
+    return badges[status.toLowerCase()] || '<span class="badge bg-light">Unknown</span>';
+}
+
+function getActivityColor(type) {
+    const colors = {
+        'booking': 'primary',
+        'cancellation': 'danger',
+        'completion': 'success',
+        'payment': 'info'
+    };
+    return colors[type] || 'secondary';
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'booking': 'calendar-plus',
+        'cancellation': 'x-circle',
+        'completion': 'check-circle',
+        'payment': 'currency-rupee'
+    };
+    return icons[type] || 'info-circle';
+}
+
+function filterBookings() {
+    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+    const dateFilter = document.getElementById('dateFilter').value;
+    const searchTerm = document.getElementById('searchBooking').value.toLowerCase();
+    
+    filteredBookings = bookingsData.filter(booking => {
+        const statusMatch = !statusFilter || booking.status.toLowerCase() === statusFilter;
+        const searchMatch = !searchTerm || 
+            booking.customerName.toLowerCase().includes(searchTerm) ||
+            booking.vehicleNumber.toLowerCase().includes(searchTerm) ||
+            booking.id.toString().includes(searchTerm);
+        
+        // Add date filtering logic here
+        let dateMatch = true;
+        if (dateFilter) {
+            const bookingDate = new Date(booking.startTime);
+            const today = new Date();
+            
+            switch (dateFilter) {
+                case 'today':
+                    dateMatch = bookingDate.toDateString() === today.toDateString();
+                    break;
+                case 'yesterday':
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    dateMatch = bookingDate.toDateString() === yesterday.toDateString();
+                    break;
+                // Add more date filters as needed
+            }
+        }
+        
+        return statusMatch && searchMatch && dateMatch;
+    });
+    
+    updateBookingsTable();
+}
+
+function refreshBookings() {
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Refreshing...';
+    btn.disabled = true;
+    
+    loadBookingsData().then(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        showNotification('Bookings data refreshed successfully!', 'success');
+    });
+}
+
+function setupRealTimeUpdates() {
+    // Update bookings data every 30 seconds
+    setInterval(() => {
+        loadBookingsData();
+    }, 30000);
+}
+
+function viewBooking(bookingId) {
+    alert(`View Booking Details: ${bookingId}\n\nThis would show detailed information about the booking.`);
+}
+
+function editBooking(bookingId) {
+    alert(`Edit Booking: ${bookingId}\n\nThis would open an edit form for the booking.`);
+}
+
+function cancelBooking(bookingId) {
+    if (confirm(`Are you sure you want to cancel booking #${bookingId}?`)) {
+        alert(`Booking #${bookingId} would be cancelled.`);
+        // Refresh data after cancellation
+        loadBookingsData();
+    }
+}
+
+async function loadAvailableParkingSpots() {
+    try {
+        const response = await fetch('/api/admin/parking-spots', {
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        const parkingSelect = document.getElementById('parkingSpot');
+        
+        if (data.success && data.spots) {
+            // Clear existing options
+            parkingSelect.innerHTML = '<option value="">Select Available Spot</option>';
+            
+            // Add available spots
+            data.spots
+                .filter(spot => spot.status === 'available')
+                .forEach(spot => {
+                    const option = document.createElement('option');
+                    option.value = spot.spotNumber;
+                    option.textContent = `${spot.spotNumber} - ${spot.location.name} (Floor ${spot.location.floor})`;
+                    parkingSelect.appendChild(option);
+                });
+                
+            if (data.spots.filter(spot => spot.status === 'available').length === 0) {
+                parkingSelect.innerHTML = '<option value="">No spots available</option>';
+            }
+        } else {
+            // Fallback to known spots
+            parkingSelect.innerHTML = `
+                <option value="">Select Available Spot</option>
+                <option value="BLR-001">BLR-001 - Main Area</option>
+                <option value="BLR-002">BLR-002 - Main Area</option>
+                <option value="BLR-003">BLR-003 - Main Area</option>
+                <option value="MUM-001">MUM-001 - Main Area</option>
+                <option value="MUM-002">MUM-002 - Main Area</option>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading parking spots:', error);
+        // Use fallback spots
+        const parkingSelect = document.getElementById('parkingSpot');
+        parkingSelect.innerHTML = `
+            <option value="">Select Available Spot</option>
+            <option value="BLR-001">BLR-001 - Main Area</option>
+            <option value="BLR-002">BLR-002 - Main Area</option>
+            <option value="BLR-003">BLR-003 - Main Area</option>
+            <option value="MUM-001">MUM-001 - Main Area</option>
+            <option value="MUM-002">MUM-002 - Main Area</option>
+        `;
+    }
+}
+
+async function createBooking() {
+    const form = document.getElementById('addBookingForm');
+    const submitButton = document.querySelector('#addBookingModal .btn-primary');
+    
+    // Prevent double submissions
+    if (submitButton.disabled) return;
+    
+    if (form.checkValidity()) {
+        try {
+            // Disable submit button
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating...';
+            
+            const formData = {
+                customerName: document.getElementById('customerName').value.trim(),
+                customerEmail: document.getElementById('customerEmail').value.trim(),
+                vehicleNumber: document.getElementById('vehicleNumber').value.trim().toUpperCase(),
+                parkingSpot: document.getElementById('parkingSpot').value,
+                startDateTime: document.getElementById('startDateTime').value,
+                endDateTime: document.getElementById('endDateTime').value
+            };
+            
+            console.log('📝 Submitting booking:', formData);
+            
+            const response = await fetch('/api/admin/bookings', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('✅ Booking created successfully!', 'success');
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addBookingModal'));
+                if (modal) modal.hide();
+                
+                // Reset form
+                form.reset();
+                
+                // Refresh data
+                loadBookingsData();
+            } else {
+                throw new Error(data.message || 'Failed to create booking');
+            }
+        } catch (error) {
+            console.error('Error creating booking:', error);
+            showError('Error creating booking: ' + error.message);
+        } finally {
+            // Re-enable submit button
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="bi bi-plus-circle"></i> Create Booking';
+        }
+    } else {
+        form.reportValidity();
+    }
+}
+
+function showError(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+function showNotification(message, type) {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 3000);
+}
+</script>

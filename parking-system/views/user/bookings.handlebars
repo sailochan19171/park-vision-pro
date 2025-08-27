@@ -1,0 +1,863 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Bookings</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newBookingModal">
+                    <i class="bi bi-plus-circle"></i> New Booking
+                </button>
+            </div>
+
+            <!-- Booking Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="dateFilter" placeholder="Filter by date">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="searchFilter" placeholder="Search by location or spot ID">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookings List -->
+            <div id="bookingsList">
+                <!-- Active Bookings -->
+                <div class="card mb-3 border-success">
+                    <div class="card-header bg-success text-white">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-geo-alt-fill"></i> 
+                                    Parking Spot A-12 - City Mall
+                                </h5>
+                                <small>Booking ID: BK001</small>
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge bg-light text-success fs-6">ACTIVE</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Vehicle:</strong> ABC-1234 (Honda City)</p>
+                                <p><strong>Duration:</strong> 2h 30m</p>
+                                <p><strong>Start Time:</strong> Dec 16, 2024 10:30 AM</p>
+                                <p><strong>End Time:</strong> Dec 16, 2024 1:00 PM</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Amount:</strong> ₹150.00</p>
+                                <p><strong>Payment Status:</strong> <span class="badge bg-success">Paid</span></p>
+                                <div class="mt-3">
+                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelBooking('BK001')">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="extendBooking('BK001')">
+                                        <i class="bi bi-clock"></i> Extend
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="getDirections('BK001')">
+                                        <i class="bi bi-compass"></i> Directions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completed Booking -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-geo-alt"></i> 
+                                    Parking Spot B-05 - Tech Park
+                                </h5>
+                                <small>Booking ID: BK002</small>
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge bg-success fs-6">COMPLETED</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Vehicle:</strong> XYZ-5678 (Toyota Camry)</p>
+                                <p><strong>Duration:</strong> 8h 15m</p>
+                                <p><strong>Date:</strong> Dec 15, 2024</p>
+                                <p><strong>Time:</strong> 9:00 AM - 5:15 PM</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Amount:</strong> ₹480.00</p>
+                                <p><strong>Payment Status:</strong> <span class="badge bg-success">Paid</span></p>
+                                <div class="mt-3">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="downloadReceipt('BK002')">
+                                        <i class="bi bi-download"></i> Receipt
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="rebookSpot('BK002')">
+                                        <i class="bi bi-arrow-repeat"></i> Book Again
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancelled Booking -->
+                <div class="card mb-3 border-danger">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-geo-alt"></i> 
+                                    Parking Spot C-08 - Shopping Center
+                                </h5>
+                                <small>Booking ID: BK003</small>
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge bg-danger fs-6">CANCELLED</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Vehicle:</strong> PQR-9012 (Maruti Swift)</p>
+                                <p><strong>Cancelled on:</strong> Dec 14, 2024 2:30 PM</p>
+                                <p><strong>Reason:</strong> User cancelled</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Refund:</strong> ₹200.00</p>
+                                <p><strong>Refund Status:</strong> <span class="badge bg-success">Processed</span></p>
+                                <div class="mt-3">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="downloadReceipt('BK003')">
+                                        <i class="bi bi-download"></i> Receipt
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-5" style="display: none;">
+                <i class="bi bi-calendar-x display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No Bookings Found</h4>
+                <p class="text-muted">You don't have any bookings matching the current filters.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newBookingModal">
+                    <i class="bi bi-plus-circle"></i> Make Your First Booking
+                </button>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Bookings pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- New Booking Modal -->
+<div class="modal fade" id="newBookingModal" tabindex="-1" aria-labelledby="newBookingModalLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newBookingModalLabel">
+                    <i class="bi bi-plus-circle"></i> New Parking Booking
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newBookingForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bookingLocation" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="bookingLocation" placeholder="Search for parking location" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bookingVehicle" class="form-label">Vehicle</label>
+                                <select class="form-select" id="bookingVehicle" required>
+                                    <option value="">Select Vehicle</option>
+                                    <option value="ABC-1234">ABC-1234 (Honda City)</option>
+                                    <option value="XYZ-5678">XYZ-5678 (Toyota Camry)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bookingDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="bookingDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="bookingStartTime" class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="bookingStartTime" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="bookingDuration" class="form-label">Duration (hours)</label>
+                                <select class="form-select" id="bookingDuration" required>
+                                    <option value="">Select</option>
+                                    <option value="1">1 hour</option>
+                                    <option value="2">2 hours</option>
+                                    <option value="4">4 hours</option>
+                                    <option value="8">8 hours</option>
+                                    <option value="24">Full Day</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bookingNotes" class="form-label">Special Notes (Optional)</label>
+                        <textarea class="form-control" id="bookingNotes" rows="2" placeholder="Any special requirements or notes"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createBooking()">
+                    <i class="bi bi-check-circle"></i> Create Booking
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let currentBookings = [];
+let currentPage = 1;
+let totalPages = 1;
+
+// Check authentication status
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/user/profile', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.status === 401) {
+            // User not authenticated, redirect to login
+            window.location.href = '/user/login';
+            return false;
+        }
+        
+        return response.ok;
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        return false;
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check if user is authenticated first
+    const isAuthenticated = await checkAuthStatus();
+    if (isAuthenticated) {
+        loadBookings();
+        loadUserVehicles();
+    }
+});
+
+// Load bookings from API
+async function loadBookings(page = 1) {
+    try {
+        showLoading('bookingsList', 'Loading bookings...');
+        
+        console.log('Making API call to:', `/api/user/bookings?page=${page}&limit=10`);
+        
+        const response = await fetch(`/api/user/bookings?page=${page}&limit=10`, {
+            method: 'GET',
+            credentials: 'include', // Include cookies for session
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                showAlert('Please log in to view your bookings', 'warning');
+                window.location.href = '/user/login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('API Response:', result);
+        
+        if (result.success) {
+            currentBookings = result.data.bookings;
+            currentPage = result.data.pagination.currentPage;
+            totalPages = result.data.pagination.totalPages;
+            
+            renderBookings(currentBookings);
+            updatePagination();
+        } else {
+            showAlert('Failed to load bookings: ' + result.message, 'error');
+            document.getElementById('bookingsList').innerHTML = '<div class="alert alert-danger">Failed to load bookings</div>';
+        }
+    } catch (error) {
+        console.error('Error loading bookings:', error);
+        showAlert('Error loading bookings: ' + error.message, 'error');
+        document.getElementById('bookingsList').innerHTML = '<div class="alert alert-danger">Error loading bookings</div>';
+    }
+}
+
+// Render bookings in the UI
+function renderBookings(bookings) {
+    const container = document.getElementById('bookingsList');
+    
+    if (bookings.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No Bookings Found</h4>
+                <p class="text-muted">You don't have any bookings yet.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newBookingModal">
+                    <i class="bi bi-plus-circle"></i> Make Your First Booking
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    const bookingsHtml = bookings.map(booking => {
+        const statusClass = getBookingStatusClass(booking.status);
+        const statusBadge = getBookingStatusBadge(booking.status);
+        
+        return `
+            <div class="card mb-3 ${booking.status === 'active' ? 'border-success' : ''}">
+                <div class="card-header ${booking.status === 'active' ? 'bg-success text-white' : ''}">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">
+                                <i class="bi bi-geo-alt-fill"></i> 
+                                Parking Spot ${booking.parkingSpot.spotNumber} - ${booking.parkingSpot.location.name}
+                            </h5>
+                            <small>Booking ID: ${booking._id.slice(-8)}</small>
+                        </div>
+                        <div class="col-auto">
+                            ${statusBadge}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Vehicle:</strong> ${booking.vehicle.licensePlate} (${booking.vehicle.model})</p>
+                            <p><strong>Duration:</strong> ${formatDuration(booking.duration)}</p>
+                            <p><strong>Start Time:</strong> ${formatDateTime(booking.startTime)}</p>
+                            <p><strong>End Time:</strong> ${formatDateTime(booking.endTime)}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Amount:</strong> ₹${booking.totalAmount.toFixed(2)}</p>
+                            <p><strong>Payment Status:</strong> <span class="badge bg-${booking.paymentStatus === 'paid' ? 'success' : 'warning'}">${booking.paymentStatus.toUpperCase()}</span></p>
+                            <div class="mt-3">
+                                ${getBookingActions(booking)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = bookingsHtml;
+}
+
+// Get booking status class
+function getBookingStatusClass(status) {
+    const classes = {
+        'active': 'success',
+        'completed': 'info',
+        'cancelled': 'danger'
+    };
+    return classes[status] || 'secondary';
+}
+
+// Get booking status badge
+function getBookingStatusBadge(status) {
+    const badges = {
+        'active': '<span class="badge bg-light text-success fs-6">ACTIVE</span>',
+        'completed': '<span class="badge bg-success fs-6">COMPLETED</span>',
+        'cancelled': '<span class="badge bg-danger fs-6">CANCELLED</span>'
+    };
+    return badges[status] || '<span class="badge bg-secondary fs-6">UNKNOWN</span>';
+}
+
+// Get booking actions based on status
+function getBookingActions(booking) {
+    if (booking.status === 'active') {
+        return `
+            <button class="btn btn-outline-danger btn-sm" onclick="cancelBooking('${booking._id}')">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+            <button class="btn btn-outline-primary btn-sm" onclick="extendBooking('${booking._id}')">
+                <i class="bi bi-clock"></i> Extend
+            </button>
+            <button class="btn btn-outline-info btn-sm" onclick="getDirections('${booking._id}')">
+                <i class="bi bi-compass"></i> Directions
+            </button>
+        `;
+    } else if (booking.status === 'completed') {
+        return `
+            <button class="btn btn-outline-primary btn-sm" onclick="downloadReceipt('${booking._id}')">
+                <i class="bi bi-download"></i> Receipt
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="rebookSpot('${booking._id}')">
+                <i class="bi bi-arrow-repeat"></i> Book Again
+            </button>
+        `;
+    } else if (booking.status === 'cancelled') {
+        return `
+            <button class="btn btn-outline-primary btn-sm" onclick="downloadReceipt('${booking._id}')">
+                <i class="bi bi-download"></i> Receipt
+            </button>
+        `;
+    }
+    return '';
+}
+
+// Format duration in minutes to readable format
+function formatDuration(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+}
+
+// Format date time
+function formatDateTime(dateString) {
+    return new Date(dateString).toLocaleString('en-IN');
+}
+
+// Filter functions
+function clearFilters() {
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    document.getElementById('searchFilter').value = '';
+    loadBookings(1);
+}
+
+function filterBookings() {
+    // For now, just reload - in production, you'd send filter params to API
+    loadBookings(1);
+}
+
+// Booking actions
+async function cancelBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking? A 10% cancellation fee will be applied.')) {
+        return;
+    }
+    
+    try {
+        console.log('Cancelling booking:', bookingId);
+        
+        const response = await fetch(`/api/user/bookings/${bookingId}/cancel`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Cancel response status:', response.status);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                showAlert('Please log in to cancel booking', 'warning');
+                window.location.href = '/user/login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Cancel result:', result);
+        
+        if (result.success) {
+            showAlert('Booking cancelled successfully. Refund will be processed shortly.', 'success');
+            loadBookings(currentPage);
+        } else {
+            showAlert('Failed to cancel booking: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error cancelling booking:', error);
+        showAlert('Error cancelling booking: ' + error.message, 'error');
+    }
+}
+
+async function extendBooking(bookingId) {
+    const additionalHours = prompt('How many additional hours do you need?', '1');
+    
+    if (!additionalHours || isNaN(additionalHours) || additionalHours <= 0) {
+        showAlert('Please enter a valid number of hours', 'warning');
+        return;
+    }
+    
+    try {
+        console.log('Extending booking:', bookingId, 'by', additionalHours, 'hours');
+        
+        const response = await fetch(`/api/user/bookings/${bookingId}/extend`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ additionalHours: parseInt(additionalHours) })
+        });
+        
+        console.log('Extend response status:', response.status);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                showAlert('Please log in to extend booking', 'warning');
+                window.location.href = '/user/login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Extend result:', result);
+        
+        if (result.success) {
+            showAlert(`Booking extended by ${additionalHours} hours. Additional cost: ₹${result.data.additionalCost}`, 'success');
+            loadBookings(currentPage);
+        } else {
+            showAlert('Failed to extend booking: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error extending booking:', error);
+        showAlert('Error extending booking: ' + error.message, 'error');
+    }
+}
+
+async function getDirections(bookingId) {
+    try {
+        console.log('Getting directions for booking:', bookingId);
+        
+        const response = await fetch(`/api/user/bookings/${bookingId}/directions`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Directions response status:', response.status);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                showAlert('Please log in to get directions', 'warning');
+                window.location.href = '/user/login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Directions result:', result);
+        
+        if (result.success) {
+            const directions = result.data;
+            
+            // Show directions modal or open maps
+            const useGoogleMaps = confirm(`Get directions to ${directions.destination.name}?\n\nClick OK for Google Maps, Cancel for Apple Maps`);
+            
+            if (useGoogleMaps) {
+                window.open(directions.googleMapsUrl, '_blank');
+            } else {
+                window.open(directions.appleMapsUrl, '_blank');
+            }
+        } else {
+            showAlert('Failed to get directions: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error getting directions:', error);
+        showAlert('Error getting directions: ' + error.message, 'error');
+    }
+}
+
+async function downloadReceipt(bookingId) {
+    try {
+        console.log('Downloading receipt for booking:', bookingId);
+        
+        const response = await fetch(`/api/user/bookings/${bookingId}/receipt`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Receipt response status:', response.status);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                showAlert('Please log in to download receipt', 'warning');
+                window.location.href = '/user/login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Receipt result:', result);
+        
+        if (result.success) {
+            // Create and download receipt
+            const receiptData = result.data;
+            const receiptContent = generateReceiptHTML(receiptData);
+            
+            // Create a new window with the receipt
+            const receiptWindow = window.open('', '_blank');
+            receiptWindow.document.write(receiptContent);
+            receiptWindow.document.close();
+            receiptWindow.print();
+        } else {
+            showAlert('Failed to generate receipt: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error downloading receipt:', error);
+        showAlert('Error downloading receipt: ' + error.message, 'error');
+    }
+}
+
+async function rebookSpot(bookingId) {
+    try {
+        // Get original booking details
+        const booking = currentBookings.find(b => b._id === bookingId);
+        if (!booking) {
+            showAlert('Booking not found', 'error');
+            return;
+        }
+        
+        // Set default times (next day, same time)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const startTime = tomorrow.toISOString();
+        
+        const endTime = new Date(tomorrow.getTime() + booking.duration * 60 * 1000);
+        
+        console.log('Rebooking spot for booking:', bookingId);
+        
+        const response = await fetch(`/api/user/bookings/${bookingId}/book-again`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                startTime: startTime,
+                endTime: endTime.toISOString()
+            })
+        });
+        
+        console.log('Rebook response status:', response.status);
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                showAlert('Please log in to rebook', 'warning');
+                window.location.href = '/user/login';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Rebook result:', result);
+        
+        if (result.success) {
+            showAlert('New booking created successfully!', 'success');
+            loadBookings(currentPage);
+        } else {
+            showAlert('Failed to create new booking: ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error rebooking spot:', error);
+        showAlert('Error creating new booking', 'error');
+    }
+}
+
+// Load user vehicles for new booking form
+async function loadUserVehicles() {
+    try {
+        const response = await fetch('/api/user/vehicles');
+        const result = await response.json();
+        
+        if (result.success) {
+            const vehicleSelect = document.getElementById('bookingVehicle');
+            vehicleSelect.innerHTML = '<option value="">Select Vehicle</option>';
+            
+            result.data.forEach(vehicle => {
+                const option = document.createElement('option');
+                option.value = vehicle._id;
+                option.textContent = `${vehicle.licensePlate} (${vehicle.model})`;
+                vehicleSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading vehicles:', error);
+    }
+}
+
+async function createBooking() {
+    const form = document.getElementById('newBookingForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const formData = new FormData(form);
+    const bookingData = {
+        vehicleId: formData.get('vehicle'),
+        location: formData.get('location'),
+        date: formData.get('date'),
+        startTime: formData.get('startTime'),
+        duration: formData.get('duration')
+    };
+    
+    // This would need to be implemented with parking spot selection
+    showAlert('New booking feature coming soon!', 'info');
+}
+
+// Generate receipt HTML
+function generateReceiptHTML(receiptData) {
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Parking Receipt</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                .details { margin: 20px 0; }
+                .row { display: flex; justify-content: space-between; margin: 5px 0; }
+                .total { font-weight: bold; font-size: 1.2em; border-top: 1px solid #333; padding-top: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>VayAccess Parking</h1>
+                <h2>Parking Receipt</h2>
+            </div>
+            <div class="details">
+                <div class="row"><span>Booking ID:</span><span>${receiptData.booking.id}</span></div>
+                <div class="row"><span>Customer:</span><span>${receiptData.user.name}</span></div>
+                <div class="row"><span>Email:</span><span>${receiptData.user.email}</span></div>
+                <div class="row"><span>Vehicle:</span><span>${receiptData.vehicle.licensePlate} (${receiptData.vehicle.model})</span></div>
+                <div class="row"><span>Parking Spot:</span><span>${receiptData.booking.spotNumber}</span></div>
+                <div class="row"><span>Location:</span><span>${receiptData.booking.location.name}</span></div>
+                <div class="row"><span>Start Time:</span><span>${formatDateTime(receiptData.booking.startTime)}</span></div>
+                <div class="row"><span>End Time:</span><span>${formatDateTime(receiptData.booking.endTime)}</span></div>
+                <div class="row"><span>Duration:</span><span>${formatDuration(receiptData.booking.duration)}</span></div>
+                <div class="row total"><span>Total Amount:</span><span>₹${receiptData.booking.totalAmount.toFixed(2)}</span></div>
+                <div class="row"><span>Status:</span><span>${receiptData.booking.status.toUpperCase()}</span></div>
+                <div class="row"><span>Generated:</span><span>${formatDateTime(receiptData.generatedAt)}</span></div>
+            </div>
+        </body>
+        </html>
+    `;
+}
+
+// Update pagination
+function updatePagination() {
+    // This would update pagination controls - simplified for now
+    console.log(`Page ${currentPage} of ${totalPages}`);
+}
+
+// Utility functions
+function showLoading(elementId, message) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center py-5">
+            <div class="spinner-border text-primary me-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <span>${message}</span>
+        </div>
+    `;
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 1055; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize filters
+document.getElementById('statusFilter').addEventListener('change', filterBookings);
+document.getElementById('dateFilter').addEventListener('change', filterBookings);
+document.getElementById('searchFilter').addEventListener('input', filterBookings);
+
+// Set default date to today
+document.getElementById('bookingDate').valueAsDate = new Date();
+
+// Fix modal accessibility issue
+const newBookingModal = document.getElementById('newBookingModal');
+if (newBookingModal) {
+    newBookingModal.addEventListener('shown.bs.modal', function () {
+        // Remove aria-hidden when modal is shown to fix accessibility warning
+        this.removeAttribute('aria-hidden');
+    });
+    
+    newBookingModal.addEventListener('hidden.bs.modal', function () {
+        // Add aria-hidden back when modal is hidden
+        this.setAttribute('aria-hidden', 'true');
+    });
+}
+</script>
