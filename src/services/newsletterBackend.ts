@@ -1,4 +1,5 @@
 // Newsletter Backend Service - separated from contact service
+import { getDefaultHeaders } from './http';
 
 export interface ApiResponse {
   success: boolean;
@@ -6,17 +7,19 @@ export interface ApiResponse {
   [key: string]: any;
 }
 
-const RAW_API_BASE = (import.meta.env as any).VITE_API_BASE_URL || (import.meta.env as any).VITE_API_URL || 'http://localhost:3001';
-const API_BASE_URL = RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`;
+// Prefer relative /api during dev so Vite proxy can be used; fallback to env for direct access
+const RAW_API_BASE = (import.meta.env as any).VITE_API_BASE_URL || (import.meta.env as any).VITE_API_URL || '';
+const API_BASE_URL = RAW_API_BASE
+  ? (RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`)
+  : '/api';
 
 export const subscribeToNewsletter = async (email: string, source: string = 'footer'): Promise<ApiResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}/newsletter/subscribe`, {
       method: 'POST',
-      headers: {
+      headers: getDefaultHeaders({
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      }),
       body: JSON.stringify({ email, source }),
     });
 
@@ -37,10 +40,9 @@ export const registerPushToken = async (token: string, email?: string): Promise<
   try {
     const response = await fetch(`${API_BASE_URL}/push/register`, {
       method: 'POST',
-      headers: {
+      headers: getDefaultHeaders({
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      }),
       body: JSON.stringify({ token, email }),
     });
     const json = await response.json().catch(() => ({ success: false, message: 'Invalid JSON' }));
@@ -57,11 +59,10 @@ export const autoPublishUpdate = async (version: string, title: string, body: st
   try {
     const response = await fetch(`${API_BASE_URL}/updates/auto-publish`, {
       method: 'POST',
-      headers: {
+      headers: getDefaultHeaders({
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
         'x-admin-token': (import.meta.env as any).VITE_NEWSLETTER_ADMIN_TOKEN || '',
-      },
+      }),
       body: JSON.stringify({ version, title, body, link }),
     });
 

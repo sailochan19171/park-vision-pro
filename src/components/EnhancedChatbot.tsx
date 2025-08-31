@@ -17,6 +17,7 @@ import biometricImg from '../assets/facial-recognition-terminal.jpg';
 import mobileAccessImg from '../assets/mobile-access-control.jpg';
 import { useNavigate } from 'react-router-dom';
 import { sendChatbotConversationSimple, type ChatbotConversation } from '../services/chatbotEmailService';
+import Groq from 'groq-sdk';
 
 // Single source of truth from site footer
 const COMPANY = {
@@ -89,6 +90,13 @@ const EnhancedChatbot = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Purchase/contact flow state
+  const [pendingProduct, setPendingProduct] = useState<string | null>(null);
+  const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
+  const [awaitingContact, setAwaitingContact] = useState(false);
+  const [collectedEmail, setCollectedEmail] = useState<string | null>(null);
+  const [collectedPhone, setCollectedPhone] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -226,19 +234,12 @@ const EnhancedChatbot = () => {
   };
 
   const generateAllProductsResponse = () => {
-    let response = "We have the following product categories:\n\n";
-    
-    productCategories.forEach((category, index) => {
-      response += `${index + 1}. **${category.name}** (${category.products.length} products)\n`;
-    });
-
+    // Show product cards first so user sees images immediately
     const totalProducts = productCategories.reduce((total, category) => total + category.products.length, 0);
-    response += `\nTotal: ${totalProducts} products available`;
-
     setConversationState('products_shown');
 
     return {
-      content: response,
+      content: `Here are our products (${totalProducts} total). Tap any to learn more:`,
       options: productCategories
         .map(category => ({
           id: category.name.toLowerCase().replace(' ', '-'),
@@ -247,7 +248,7 @@ const EnhancedChatbot = () => {
           value: `Tell me about ${category.name}`
         }))
         .concat([
-          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'solutions', label: '🧩 Solutions', action: 'message', value: 'Show me solutions' },
           { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
           { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
         ]),
@@ -299,7 +300,15 @@ const EnhancedChatbot = () => {
           { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
           { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
           { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
-        ])
+        ]),
+      // Show product cards with images for this category
+      cards: category.products.map(p => ({
+        id: p.name.toLowerCase().replace(/\s+/g, '-'),
+        title: p.name,
+        image: p.image,
+        action: 'message' as const,
+        value: `Tell me about ${p.name}`,
+      }))
     };
   };
 
@@ -334,14 +343,20 @@ const EnhancedChatbot = () => {
       response += `• ${app}\n`;
     });
 
+    // After details, ask to buy
+    response += `\nAre you willing to buy this product?`;
+
+    // Prepare state-driving follow-up handled in handleSendMessage
+    setPendingProduct(foundProduct.name);
+    setAwaitingBuyConfirm(true);
+
     return {
       content: response,
       options: [
+        { id: 'buy-yes', label: '✅ Yes', action: 'message', value: 'Yes, I want to buy' },
+        { id: 'buy-no', label: '❌ No', action: 'message', value: 'No, not now' },
         { id: 'view-details', label: '📋 View Full Details', action: 'navigate', value: foundProduct.route },
         { id: 'other-products', label: '🔍 Other Products', action: 'message', value: 'How many products do you have?' },
-        { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
-        { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
-        { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' }
       ],
       cards: [
         {
@@ -472,6 +487,34 @@ const EnhancedChatbot = () => {
       };
     }
 
+    // 3) Multi-intent and plural queries → show selectable options for disambiguation
+    const categoryHits: SelectableOption[] = [];
+    if (/(barrier|gate)s?/i.test(lowerInput)) {
+      categoryHits.push({ id: 'barrier-gates', label: '🔧 Barrier Gates', action: 'message', value: 'Tell me about Barrier Gates' });
+    }
+    if (/(turnstiles?|pedestrian|flap)/i.test(lowerInput)) {
+      categoryHits.push({ id: 'pedestrian-gates', label: '🚶 Pedestrian Gates', action: 'message', value: 'Tell me about Pedestrian Gates' });
+    }
+    if (/(parking\s*management|ticketless|guidance)/i.test(lowerInput)) {
+      categoryHits.push({ id: 'parking-management', label: '🅿️ Parking Management', action: 'message', value: 'Tell me about Parking Management' });
+    }
+    if (/(access\s*control|rfid|biometric|mobile\s*access)/i.test(lowerInput)) {
+      categoryHits.push({ id: 'access-control', label: '🔐 Access Control', action: 'message', value: 'Tell me about Access Control' });
+    }
+    const pluralHint = /\b(many|multiple|several|all|list|kinds|types|options|products|solutions)\b/i.test(lowerInput);
+    if (categoryHits.length >= 2 || pluralHint) {
+      const defaultOptions: SelectableOption[] = [
+        { id: 'opt-products', label: '🏢 Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'opt-solutions', label: '🧩 Solutions', action: 'message', value: 'Show me solutions' },
+        { id: 'opt-access', label: '🔐 Access Control', action: 'message', value: 'Tell me about Access Control' },
+        { id: 'opt-barrier', label: '🔧 Barrier Gates', action: 'message', value: 'Tell me about Barrier Gates' },
+      ];
+      return {
+        content: 'I found multiple topics in your question. Please choose one:',
+        options: (categoryHits.length ? categoryHits : defaultOptions)
+      };
+    }
+
     // Reset conversation if user says hello after ending
     if (conversationState === 'ending' && (lowerInput.includes('hello') || lowerInput.includes('hi'))) {
       setConversationState('initial');
@@ -490,12 +533,22 @@ const EnhancedChatbot = () => {
     }
 
     // Handle product count queries
-    if (lowerInput.includes('how many products') || lowerInput.includes('all products') || lowerInput.includes('show me products')) {
+    if (
+      lowerInput.includes('how many products') ||
+      lowerInput.includes('all products') ||
+      lowerInput.includes('show me products') ||
+      lowerInput.includes('show all products') ||
+      /\b(view|list|show)\b.*\bproducts\b/i.test(lowerInput)
+    ) {
       return generateAllProductsResponse();
     }
 
     // Handle location count queries
-    if (lowerInput.includes('how many locations') || lowerInput.includes('locations do you serve') || lowerInput.includes('where do you provide')) {
+    if (
+      lowerInput.includes('how many locations') ||
+      lowerInput.includes('locations do you serve') ||
+      lowerInput.includes('where do you provide')
+    ) {
       return generateLocationsResponse();
     }
 
@@ -606,6 +659,50 @@ const EnhancedChatbot = () => {
     };
   };
 
+  // Ensure image cards appear for AI responses too
+  const getCardsForQuery = (q: string): ProductCard[] | undefined => {
+    const lower = q.toLowerCase();
+    // Show all products
+    if (/(all|show|view|list).*products/.test(lower) || lower.includes('how many products')) {
+      return productCategories.flatMap(cat => cat.products.map(p => ({
+        id: p.name.toLowerCase().replace(/\s+/g, '-'),
+        title: p.name,
+        image: p.image,
+        action: 'message' as const,
+        value: `Tell me about ${p.name}`,
+      })));
+    }
+    // Category-specific
+    const addCategory = (name: string) => {
+      const cat = productCategories.find(c => c.name.toLowerCase() === name.toLowerCase());
+      return cat ? cat.products.map(p => ({
+        id: p.name.toLowerCase().replace(/\s+/g, '-'),
+        title: p.name,
+        image: p.image,
+        action: 'message' as const,
+        value: `Tell me about ${p.name}`,
+      })) : [];
+    };
+    if (lower.includes('barrier') || lower.includes('gate')) return addCategory('Barrier Gates');
+    if (lower.includes('turnstile') || lower.includes('pedestrian') || lower.includes('flap')) return addCategory('Pedestrian Gates');
+    if (lower.includes('parking management') || lower.includes('ticketless') || lower.includes('guidance')) return addCategory('Parking Management');
+    if (lower.includes('access control') || lower.includes('rfid') || lower.includes('biometric') || lower.includes('mobile access')) return addCategory('Access Control');
+    // Specific product
+    for (const cat of productCategories) {
+      const product = cat.products.find(p => lower.includes(p.name.toLowerCase()));
+      if (product) {
+        return [{
+          id: product.name.toLowerCase().replace(/\s+/g, '-'),
+          title: product.name,
+          image: product.image,
+          action: 'message' as const,
+          value: `Tell me about ${product.name}`,
+        }];
+      }
+    }
+    return undefined;
+  };
+  
   const handleSendMessage = async (messageText?: string) => {
     const textToSend = messageText || inputMessage;
     if (!textToSend.trim()) return;
@@ -622,6 +719,68 @@ const EnhancedChatbot = () => {
     setIsLoading(true);
 
     try {
+      const lower = textToSend.toLowerCase();
+
+      // If awaiting contact, capture email and phone
+      if (awaitingContact) {
+        const emailMatch = textToSend.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+        const phoneMatch = textToSend.match(/\+?\d[\d\s\-()]{6,}/);
+        if (emailMatch) setCollectedEmail(emailMatch[0]);
+        if (phoneMatch) setCollectedPhone(phoneMatch[0].replace(/\s+/g, ''));
+
+        if (!emailMatch || !phoneMatch) {
+          const needMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            content: `Thanks! I still need your ${!emailMatch && !phoneMatch ? 'email and phone number' : !emailMatch ? 'email address' : 'phone number'} to proceed. You can paste both together, e.g.: john@company.com, +91 98765 43210`,
+            role: 'assistant',
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, needMsg]);
+          setIsLoading(false);
+          return;
+        }
+
+        const ok: Message = {
+          id: (Date.now() + 2).toString(),
+          content: `Great! We received your details. Email: ${emailMatch[0]}, Phone: ${phoneMatch[0]}. Our representative will contact you shortly regarding ${pendingProduct ?? 'your selected product'}.`,
+          role: 'assistant',
+          timestamp: new Date(),
+        };
+        setAwaitingContact(false);
+        setPendingProduct(null);
+        setMessages(prev => [...prev, ok]);
+        setIsLoading(false);
+        return;
+      }
+
+      // If awaiting buy confirm
+      if (awaitingBuyConfirm && (/^yes[,\s.!]?/.test(textToSend) || /i want to buy/.test(lower))) {
+        const askContacts: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `Ohh, nice to hear you're interested in ${pendingProduct ?? 'this product'}! Our representative will contact you. Please provide your email and phone number.`,
+          role: 'assistant',
+          timestamp: new Date(),
+        };
+        setAwaitingBuyConfirm(false);
+        setAwaitingContact(true);
+        setMessages(prev => [...prev, askContacts]);
+        setIsLoading(false);
+        return;
+      }
+      if (awaitingBuyConfirm && (/^no[,\s.!]?/.test(textToSend) || /not now/.test(lower))) {
+        const noMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          content: 'Ohh, thanks for your valuable time and interest in VayAccess control systems. If you need anything later, feel free to ask or explore more products.',
+          role: 'assistant',
+          timestamp: new Date(),
+        };
+        setAwaitingBuyConfirm(false);
+        setPendingProduct(null);
+        setMessages(prev => [...prev, noMsg]);
+        setIsLoading(false);
+        return;
+      }
+
       // Generate rule-based smart response first
       const smartResponse = generateSmartResponse(textToSend);
 
@@ -646,7 +805,8 @@ const EnhancedChatbot = () => {
               role: 'assistant',
               timestamp: new Date(),
               options: smartResponse.options,
-              cards: smartResponse.cards,
+              // Prefer dynamic cards for the query; fallback to smartResponse cards
+              cards: getCardsForQuery(textToSend) ?? smartResponse.cards,
             };
             setMessages(prev => [...prev, assistantMessage]);
             await sendConversationEmail(textToSend, assistantMessage.content);
@@ -672,7 +832,8 @@ const EnhancedChatbot = () => {
                 { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
                 { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
                 { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
-              ]
+              ],
+              cards: getCardsForQuery(textToSend)
             };
             setMessages(prev => [...prev, assistantMessage]);
             await sendConversationEmail(textToSend, assistantMessage.content);
@@ -685,7 +846,7 @@ const EnhancedChatbot = () => {
             role: 'assistant',
             timestamp: new Date(),
             options: smartResponse.options,
-            cards: smartResponse.cards,
+            cards: getCardsForQuery(textToSend) ?? smartResponse.cards,
           };
           setMessages(prev => [...prev, assistantMessage]);
           await sendConversationEmail(textToSend, assistantMessage.content);
@@ -717,7 +878,8 @@ const EnhancedChatbot = () => {
             { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
             { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
             { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
-          ]
+          ],
+          cards: getCardsForQuery(textToSend)
         };
         setMessages(prev => [...prev, assistantMessage]);
         await sendConversationEmail(textToSend, assistantMessage.content);
@@ -742,7 +904,9 @@ const EnhancedChatbot = () => {
   };
 
   const quickQuestions = [
-    "How many products do you have?",
+    "Show all products",
+    "Show me solutions",
+    "List multiple options for parking systems",
     "Tell me about Barrier Gates",
     "Tell me about Pedestrian Gates",
     "Tell me about Access Control",

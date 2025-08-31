@@ -81,6 +81,15 @@ const Products: React.FC<ProductsProps> = ({ showPrices = true }) => {
         "Professional-grade barrier with LED display and full access control integration. Weatherproof design supports boom light, safety photocells, and ANPR system integration for comprehensive parking management.",
       price: "₹2,25,000+",
     },
+    // New product (content-change trigger)
+    {
+      id: "smart-parking-suite",
+      name: "VAY Smart Parking Suite",
+      image: vayParkingBarrierGate10,
+      description:
+        "End-to-end smart parking software suite combining ANPR, guidance, digital payments, and admin dashboard for multi-site operations.",
+      price: "Custom",
+    },
   ];
 
   return (

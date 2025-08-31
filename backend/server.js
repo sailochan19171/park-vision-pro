@@ -7,6 +7,9 @@ const { Server } = require('socket.io');
 const multer = require('multer');
 const voiceAIService = require('./services/voiceAIService');
 const asteriskService = require('./services/asteriskService');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
 
 // MongoDB Atlas (replaces Firestore for subscribers/tokens)
 const { MongoClient } = require('mongodb');
@@ -14,7 +17,7 @@ let mongoClient = null;
 let mongoDb = null;
 (async () => {
   const uri = process.env.MONGODB_URI;
-  const dbName = process.env.MONGODB_DB || 'vayaccess';
+  const dbName = process.env.MONGODB_DB || 'vay_parking_system';
   if (!uri) {
     console.warn('MongoDB not initialized: missing MONGODB_URI. Newsletter persistence will be disabled.');
     return;
@@ -102,7 +105,7 @@ let mongoDb = null;
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Initialize Socket.IO for real-time call communication
 const io = new Server(server, {
@@ -125,6 +128,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serve assets with stable URLs for emails and previews
+app.use('/assets', express.static(path.resolve(__dirname, '../src/assets')));
+
 // Demo routes (FREE - no Twilio needed)
 const demoRoutes = require('./routes/demo');
 app.use('/api', demoRoutes);
@@ -132,6 +138,22 @@ app.use('/api', demoRoutes);
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, status: 'healthy', mongo: !!mongoDb });
+});
+
+// One-click unsubscribe (for List-Unsubscribe-Post)
+app.post('/api/newsletter/unsubscribe', express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const email = (req.body?.email || req.query?.e || '').toString().toLowerCase();
+    const token = (req.body?.token || req.query?.t || '').toString();
+    if (!email || token !== signUnsubToken(email)) return res.status(400).send('Invalid request');
+    if (mongoDb) {
+      await mongoDb.collection('subscribers').updateOne({ email }, { $set: { active: false, updatedAt: new Date() } });
+    }
+    // RFC-compliant one-click: respond 200 with empty body
+    return res.status(200).send('');
+  } catch (e) {
+    return res.status(500).send('');
+  }
 });
 
 // Connect to Asterisk AMI on server start (optional via ENABLE_AMI)
@@ -203,23 +225,806 @@ io.on('connection', (socket) => {
 });
 
 // Email configuration using SMTP (Gmail/Outlook/Custom SMTP)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false otherwise
-  auth: {
-    user: process.env.SMTP_USER, // info@vayaccess.com
-    pass: process.env.SMTP_PASS  // App-specific password
+let transporter;
+let smtpReady = false;
+let smtpError = null;
+if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false otherwise
+    auth: {
+      user: process.env.SMTP_USER, // info@vayaccess.com
+      pass: process.env.SMTP_PASS  // App-specific password
+    }
+  });
+
+  // Verify email configuration
+  transporter.verify((error) => {
+    if (error) {
+      smtpReady = false;
+      smtpError = String(error?.message || error);
+      console.error(' Email configuration error:', error);
+    } else {
+      smtpReady = true;
+      smtpError = null;
+      console.log(' Email server is ready to send messages');
+    }
+  });
+} else {
+  // Fallback to JSON transport: no actual SMTP connection; prevents runtime EAUTH errors
+  transporter = nodemailer.createTransport({ jsonTransport: true });
+  smtpReady = false;
+  smtpError = 'SMTP_USER/SMTP_PASS missing (jsonTransport)';
+  console.log(' Email disabled: missing SMTP_USER/SMTP_PASS (using jsonTransport)');
+}
+
+// SMTP status endpoint
+app.get('/api/admin/smtp-status', (req, res) => {
+  res.json({ ready: smtpReady, error: smtpError, user: process.env.SMTP_USER || null, host: process.env.SMTP_HOST || 'smtp.gmail.com' });
+});
+
+// Email helper (categorized sending with flags + tracking)
+const createEmailHelper = require('./emailHelper');
+const emailHelper = createEmailHelper(transporter, () => mongoDb);
+
+// --- Site content digest and auto-news ---
+const CONTENT_FILES = [
+  path.resolve(__dirname, '../src/components/Products.tsx'),
+  path.resolve(__dirname, '../src/components/Solutions.tsx'),
+];
+
+function readFileSafe(p) {
+  try { return fs.readFileSync(p, 'utf8'); } catch { return ''; }
+}
+
+function sha256(str) {
+  return crypto.createHash('sha256').update(str, 'utf8').digest('hex');
+}
+
+function parseProductNames(content) {
+  // Extract product names from Products.tsx: name: "..."
+  const names = new Set();
+  const nameRegex = /name:\s*["'`]([^"'`]+)["'`]/g;
+  let m;
+  while ((m = nameRegex.exec(content))) {
+    const name = m[1].trim();
+    if (name && !/quote$/i.test(name)) names.add(name);
+  }
+  return Array.from(names);
+}
+
+function parseSolutionTitles(content) {
+  // Extract titles from Solutions.tsx: title: "..."
+  const titles = new Set();
+  const titleRegex = /title:\s*["'`]([^"'`]+)["'`]/g;
+  let m;
+  while ((m = titleRegex.exec(content))) {
+    const title = m[1].trim();
+    if (title) titles.add(title);
+  }
+  return Array.from(titles);
+}
+
+function getContentSnapshot() {
+  const productsTsx = readFileSafe(CONTENT_FILES[0]);
+  const solutionsTsx = readFileSafe(CONTENT_FILES[1]);
+  const products = parseProductNames(productsTsx).slice(0, 20);
+  const solutions = parseSolutionTitles(solutionsTsx).slice(0, 30);
+  const combined = `${products.join('\n')}\n---\n${solutions.join('\n')}`;
+  const hash = sha256(combined);
+  return { hash, products, solutions };
+}
+
+function buildDigestHtml(snapshot) {
+  const { products, solutions } = snapshot;
+  const productsList = products.map(p => `<li>${p}</li>`).join('');
+  const solutionsList = solutions.map(s => `<li>${s}</li>`).join('');
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+      <h2 style="margin:0 0 12px 0;">VayAccess Products & Solutions</h2>
+      <p style="color:#374151;line-height:1.6;">Here are our current offerings. You will also receive future updates automatically.</p>
+      <div style="margin:16px 0;">
+        <h3 style="margin:8px 0;">Products</h3>
+        <ul style="padding-left:18px;color:#374151;">${productsList || '<li>See all on our website</li>'}</ul>
+      </div>
+      <div style="margin:16px 0;">
+        <h3 style="margin:8px 0;">Solutions</h3>
+        <ul style="padding-left:18px;color:#374151;">${solutionsList || '<li>See all on our website</li>'}</ul>
+      </div>
+      <p style="margin-top:18px;"><a href="https://vayaccess.com/products" style="color:#2563eb;text-decoration:none;">View all products</a> • <a href="https://vayaccess.com/solutions" style="color:#2563eb;text-decoration:none;">View all solutions</a></p>
+    </div>
+  `;
+}
+
+function buildDigestText(snapshot) {
+  const { products, solutions } = snapshot;
+  return [
+    'VayAccess Products & Solutions',
+    '',
+    'Products:',
+    ...products.map(p => `- ${p}`),
+    '',
+    'Solutions:',
+    ...solutions.map(s => `- ${s}`),
+    '',
+    'View all: https://vayaccess.com'
+  ].join('\n');
+}
+
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
+// Use admin token for signing unsubscribe tokens (fallback to legacy secret if present)
+const NEWSLETTER_SECRET = process.env.NEWSLETTER_ADMIN_TOKEN || process.env.NEWSLETTER_SECRET || 'change-me';
+
+function signUnsubToken(email) {
+  return crypto.createHmac('sha256', NEWSLETTER_SECRET).update(String(email).toLowerCase()).digest('hex');
+}
+
+function buildUnsubscribeHeaders(email) {
+  const e = encodeURIComponent(String(email).toLowerCase());
+  const t = signUnsubToken(email);
+  const httpUrl = `${PUBLIC_BASE_URL}/api/newsletter/unsubscribe?e=${e}&t=${t}`;
+  const mailto = `mailto:${process.env.SMTP_USER || 'no-reply@vayaccess.com'}?subject=unsubscribe`;
+  const base = {
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    'List-Id': 'VayAccess Newsletter <newsletter.vayaccess.com>',
+  };
+  if (process.env.ENABLE_MANAGE_LINK === 'true') {
+    return {
+      ...base,
+      'List-Unsubscribe': `<${httpUrl}>, <${mailto}>`,
+      'X-List-Manage': `${PUBLIC_BASE_URL}/newsletter/manage`,
+    };
+  }
+  return {
+    ...base,
+    'List-Unsubscribe': `<${mailto}>`,
+  };
+}
+
+function withFooter(html) {
+  const manageUrl = `${PUBLIC_BASE_URL}/newsletter/manage`;
+  const manageLine = process.env.ENABLE_MANAGE_LINK === 'true'
+    ? `<br/>Manage: <a style="color:#2563eb;" href="${manageUrl}">subscription portal</a>`
+    : '';
+  return `${html}
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;"/>
+    <p style="font-size:12px;color:#6b7280;line-height:1.6;">
+      This email was sent by VayAccess. Update your preferences or unsubscribe anytime.
+      ${manageLine}
+    </p>`;
+}
+
+// --- Hourly digest templates (random rotation) ---
+const DIGEST_TEMPLATES = [
+  {
+    key: 'p1',
+    subject: () => 'VayAccess Hourly Update: Products you may like',
+    buildHtml: (snapshot) => withFooter(`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <h2 style="margin:0 0 10px 0;">Popular Products</h2>
+        ${buildDigestHtml(snapshot)}
+      </div>`),
+    buildText: (snapshot) => buildDigestText(snapshot),
+  },
+  {
+    key: 's1',
+    subject: () => 'VayAccess Hourly Update: Solutions spotlight',
+    buildHtml: (snapshot) => withFooter(`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <h2 style="margin:0 0 10px 0;">Featured Solutions</h2>
+        ${buildDigestHtml(snapshot)}
+      </div>`),
+    buildText: (snapshot) => buildDigestText(snapshot),
+  },
+  {
+    key: 'm1',
+    subject: () => 'VayAccess Hourly Update',
+    buildHtml: (snapshot) => withFooter(`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <h2 style="margin:0 0 10px 0;">Latest from VayAccess</h2>
+        ${buildDigestHtml(snapshot)}
+      </div>`),
+    buildText: (snapshot) => buildDigestText(snapshot),
+  },
+];
+
+function pickRandomTemplate() {
+  return DIGEST_TEMPLATES[Math.floor(Math.random() * DIGEST_TEMPLATES.length)];
+}
+
+async function sendDigestToEmail(to, snapshot) {
+  try {
+    const html = withFooter(buildDigestHtml(snapshot));
+    const text = buildDigestText(snapshot);
+    await emailHelper.sendCategorizedEmail({
+      category: 'content_digest',
+      to,
+      subject: 'VayAccess: Products & Solutions Digest',
+      html,
+      text,
+      headers: buildUnsubscribeHeaders(to),
+      dedupeKey: `digest:${snapshot.hash}:${String(to).toLowerCase()}`,
+      meta: { type: 'digest' },
+    });
+  } catch (e) {
+    console.warn('Digest email failed:', e?.message || e);
+  }
+}
+
+async function broadcastDigest(snapshot, opts = {}) {
+  if (!mongoDb) return { success: false, message: 'MongoDB not initialized' };
+  const { products, solutions } = getArticlesSnapshot();
+  const filter = { active: { $ne: false } };
+  const subs = await mongoDb.collection('subscribers').find(filter, { projection: { email: 1 } }).toArray();
+  const emails = subs.map(s => s.email).filter(e => /.+@.+\..+/.test(e));
+
+  let stats = { products: { sent: 0, failed: 0 }, solutions: { sent: 0, failed: 0 } };
+
+  // Products broadcast (categorized + tracked)
+  if (products?.length) {
+    for (const to of emails) {
+      const res = await emailHelper.sendCategorizedEmail({
+        category: 'content_digest_products',
+        to,
+        subject: 'VayAccess: New Products (with images)',
+        html: buildArticleDigestHtml(products),
+        text: products.map(a => `${a.title}\n${a.description || ''}`).join('\n\n'),
+        headers: buildUnsubscribeHeaders(to),
+        meta: { broadcast: true, count: products.length },
+        dedupeKey: `broadcast-products:${to}`,
+      });
+      if (res?.success) stats.products.sent++; else if (!res?.skipped) stats.products.failed++;
+    }
+  }
+
+  // Solutions broadcast (categorized + tracked)
+  if (solutions?.length) {
+    for (const to of emails) {
+      const res = await emailHelper.sendCategorizedEmail({
+        category: 'content_digest_solutions',
+        to,
+        subject: 'VayAccess: Latest Solutions',
+        html: buildArticleDigestHtml(solutions),
+        text: solutions.map(a => `${a.title}\n${a.description || ''}`).join('\n\n'),
+        headers: buildUnsubscribeHeaders(to),
+        meta: { broadcast: true, count: solutions.length },
+        dedupeKey: `broadcast-solutions:${to}`,
+      });
+      if (res?.success) stats.solutions.sent++; else if (!res?.skipped) stats.solutions.failed++;
+    }
+  }
+
+  // Optional push notification title/body
+  try {
+    const tokens = await mongoDb.collection('pushTokens').find({ active: { $ne: false } }, { projection: { token: 1 } }).toArray();
+    for (const t of tokens) {
+      try { await sendFcmMessage(t.token, 'VayAccess Updates', 'See the latest products and solutions', '/products'); } catch (_) {}
+    }
+  } catch (_) {}
+
+  return { success: true, products: stats.products, solutions: stats.solutions, recipients: emails.length };
+}
+
+async function checkAndBroadcastContentUpdates() {
+  try {
+    if (!mongoDb) return;
+    // Use full articles snapshot (title, description, image) for change detection
+    const { hash } = getArticlesSnapshot();
+    const stateCol = mongoDb.collection('site_content_state');
+    const id = 'articles_digest_v1';
+    const existing = await stateCol.findOne({ _id: id });
+    if (!existing || existing.hash !== hash) {
+      await stateCol.updateOne(
+        { _id: id },
+        { $set: { _id: id, hash, updatedAt: new Date() } },
+        { upsert: true }
+      );
+      // Broadcast update with latest snapshot
+      await broadcastDigest(getArticlesSnapshot());
+      console.log('Auto-news: broadcasted new articles digest');
+    }
+  } catch (e) {
+    console.warn('Auto-news check failed:', e?.message || e);
+  }
+}
+
+// Articles generator for products & solutions (with images, no links)
+// Uses PUBLIC_BASE_URL defined earlier
+
+function toAssetUrl(relPath) {
+  if (!relPath) return null;
+  try {
+    const file = path.basename(relPath);
+    return `${PUBLIC_BASE_URL}/assets/${file}`;
+  } catch (_) { return null; }
+}
+
+function parseImportsMap(content) {
+  // import varName from "../assets/file.jpg";
+  const map = {};
+  const importRe = /import\s+(\w+)\s+from\s+["']([^"']+)["'];?/g;
+  let m;
+  while ((m = importRe.exec(content))) {
+    map[m[1]] = m[2];
+  }
+  return map;
+}
+
+function parseProductsDetailed(content) {
+  const imports = parseImportsMap(content);
+  // Extract the products array block
+  const arrMatch = content.match(/const\s+products\s*=\s*\[([\s\S]*?)\];/);
+  if (!arrMatch) return [];
+  const arrBody = arrMatch[1];
+  const items = [];
+  // Split by object boundaries (rough but works with our formatting)
+  const objRe = /\{([\s\S]*?)\}/g;
+  let om;
+  while ((om = objRe.exec(arrBody))) {
+    const obj = om[1];
+    const name = (obj.match(/name:\s*["'`]([^"'`]+)["'`]/) || [])[1];
+    // capture description until the next field or end of object (robust to line breaks and trailing commas)
+    const desc = (obj.match(/description:\s*["'`]([\s\S]*?)["'`](?:,|\n|\r|\s*\})/) || [])[1];
+    const imageVar = (obj.match(/image:\s*(\w+)/) || [])[1];
+    if (name) {
+      const rel = imports[imageVar];
+      items.push({
+        type: 'product',
+        title: name,
+        description: (desc || '').trim(),
+        image: toAssetUrl(rel),
+      });
+    }
+  }
+  return items;
+}
+
+function parseSolutionsDetailed(content) {
+  // Solutions currently don't have image assets; add a generic illustrative image
+  const placeholder = `${PUBLIC_BASE_URL}/assets/parking-system-architecture.jpg`;
+  const items = [];
+  const arrMatch = content.match(/const\s+solutions\s*=\s*\[([\s\S]*?)\];/);
+  if (!arrMatch) return items;
+  const arrBody = arrMatch[1];
+  const objRe = /\{([\s\S]*?)\}/g;
+  let om;
+  while ((om = objRe.exec(arrBody))) {
+    const obj = om[1];
+    const title = (obj.match(/title:\s*["'`]([^"'`]+)["'`]/) || [])[1];
+    const desc = (obj.match(/description:\s*["'`]([\s\S]*?)["'`](?:,|\n|\r|\s*\})/) || [])[1];
+    if (title) items.push({ type: 'solution', title, description: (desc || '').trim(), image: placeholder });
+  }
+  return items;
+}
+
+function getArticlesSnapshot() {
+  const productsTsx = readFileSafe(CONTENT_FILES[0]);
+  const solutionsTsx = readFileSafe(CONTENT_FILES[1]);
+  const products = parseProductsDetailed(productsTsx).slice(0, 20);
+  const solutions = parseSolutionsDetailed(solutionsTsx).slice(0, 30);
+  const articles = [...products, ...solutions];
+  const hash = sha256(JSON.stringify(articles).slice(0, 2000));
+  return { hash, articles, products, solutions };
+}
+
+function buildArticleDigestHtml(articles) {
+  // generic combined template
+  const card = (a) => `
+    <div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;background:#ffffff;">
+      ${a.image ? `<img src="${a.image}" alt="${a.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" />` : ''}
+      <h3 style="margin:0 0 8px 0;color:#111827;">${a.title}</h3>
+      <p style="margin:0;color:#374151;line-height:1.6;">${a.description || ''}</p>
+    </div>`;
+  const list = articles.map(card).join('');
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:12px;">
+      <h2 style="margin:8px 0 12px 0;">VayAccess Products & Solutions</h2>
+      <p style="color:#374151;line-height:1.6;margin:0 0 12px 0;">Latest offerings for our subscribers. This email contains full content without external links.</p>
+      ${list}
+    </div>`;
+}
+
+function buildProductsDigestHtml(products) {
+  const list = products.map(a => `
+    <div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;background:#ffffff;">
+      ${a.image ? `<img src="${a.image}" alt="${a.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" />` : ''}
+      <h3 style="margin:0 0 8px 0;color:#111827;">${a.title}</h3>
+      <p style="margin:0;color:#374151;line-height:1.6;">${a.description || ''}</p>
+    </div>`).join('');
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:12px;">
+      <h2 style="margin:8px 0 12px 0;">VayAccess Product Highlights</h2>
+      ${list || '<p>No products today.</p>'}
+    </div>`;
+}
+
+function buildSolutionsDigestHtml(solutions) {
+  const list = solutions.map(a => `
+    <div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;background:#ffffff;">
+      ${a.image ? `<img src="${a.image}" alt="${a.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" />` : ''}
+      <h3 style="margin:0 0 8px 0;color:#111827;">${a.title}</h3>
+      <p style="margin:0;color:#374151;line-height:1.6;">${a.description || ''}</p>
+    </div>`).join('');
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:12px;">
+      <h2 style="margin:8px 0 12px 0;">VayAccess Solutions Spotlight</h2>
+      ${list || '<p>No solutions today.</p>'}
+    </div>`;
+}
+
+function buildMarketingDigestHtml() {
+  return `
+    <div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;background:#ffffff;">
+      <h3 style="margin:0 0 8px 0;color:#111827;">Special Offers & Updates</h3>
+      <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
+        <li>This week only: 20% off on new camera integrations.</li>
+        <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
+      </ul>
+      <p style="margin-top:10px;"><a href="https://vayaccess.com/contact" style="color:#2563eb;text-decoration:none;">Contact sales</a></p>
+    </div>`;
+}
+
+// Content APIs
+app.get('/api/content/articles', (req, res) => {
+  try {
+    const snap = getArticlesSnapshot();
+    res.json({ success: true, count: snap.articles.length, articles: snap.articles });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e?.message || 'Failed to build articles' });
   }
 });
 
-// Verify email configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.error(' Email configuration error:', error);
-  } else {
-    console.log(' Email server is ready to send messages');
+// Admin-protected triggers for content digest
+function isAdmin(req) {
+  const header = req.headers['x-admin-secret'] || req.headers['x-admin-token'];
+  const query = req.query?.secret || req.query?.token;
+  const provided = header || query;
+  const expected = process.env.ADMIN_SECRET;
+  return expected && provided && String(provided) === String(expected);
+}
+
+app.post('/api/admin/content/auto-check', async (req, res) => {
+  try {
+    if (!isAdmin(req)) return res.status(403).json({ success: false, message: 'Forbidden' });
+    await checkAndBroadcastContentUpdates();
+    res.json({ success: true, message: 'Auto-check executed' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e?.message || 'Failed to run auto-check' });
   }
+});
+
+app.post('/api/admin/content/broadcast', async (req, res) => {
+  try {
+    if (!isAdmin(req)) return res.status(403).json({ success: false, message: 'Forbidden' });
+    const snap = getArticlesSnapshot();
+    const result = await broadcastDigest(snap, { force: true });
+    res.json({ success: true, message: 'Broadcast triggered', result });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e?.message || 'Failed to broadcast' });
+  }
+});
+
+// Newsletter subscribe endpoint (legacy v1) - renamed to avoid shadowing improved version below
+app.post('/api/newsletter/subscribe-v1', async (req, res) => {
+  try {
+    const { email, source } = req.body || {};
+    if (!email || !/.+@.+\..+/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Valid email is required' });
+    }
+    if (!mongoDb) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
+    }
+
+    const col = mongoDb.collection('subscribers');
+    await col.updateOne(
+      { email: email.toLowerCase() },
+      { $set: { email: email.toLowerCase(), source: source || 'footer', active: true, updatedAt: new Date() }, $setOnInsert: { createdAt: new Date() } },
+      { upsert: true }
+    );
+
+    // Category-wise triggers: send separate emails for products and solutions
+    try {
+      const { products, solutions } = getArticlesSnapshot();
+
+      // Products trigger
+      if (products?.length) {
+        await emailHelper.sendCategorizedEmail({
+          category: 'content_digest_products',
+          to: String(email).trim().toLowerCase(),
+          subject: 'VayAccess — Top Products for You',
+          html: buildArticleDigestHtml(products),
+          text: products.map(a => `${a.title}\n${a.description || ''}`).join('\n\n'),
+          meta: { source: source || 'footer', count: products.length },
+          dedupeKey: `welcome-products:${String(email).trim().toLowerCase()}`,
+        });
+      }
+
+      // Solutions trigger
+      if (solutions?.length) {
+        await emailHelper.sendCategorizedEmail({
+          category: 'content_digest_solutions',
+          to: String(email).trim().toLowerCase(),
+          subject: 'VayAccess — Latest Parking Solutions',
+          html: buildArticleDigestHtml(solutions),
+          text: solutions.map(a => `${a.title}\n${a.description || ''}`).join('\n\n'),
+          meta: { source: source || 'footer', count: solutions.length },
+          dedupeKey: `welcome-solutions:${String(email).trim().toLowerCase()}`,
+        });
+      }
+    } catch (digestErr) {
+      console.warn('Welcome category digests failed (continuing):', digestErr?.message || digestErr);
+    }
+
+    res.json({ success: true, message: 'Subscribed successfully' });
+  } catch (e) {
+    console.error(' Subscribe error:', e);
+    res.status(500).json({ success: false, message: 'Failed to subscribe' });
+  }
+});
+
+// Scheduler (configurable, default every 3 minutes)
+if (process.env.ENABLE_CONTENT_AUTONEWS !== 'false') {
+  const minutes = Number(process.env.CONTENT_AUTONEWS_INTERVAL_MIN || process.env.CONTENT_AUTONEWS_INTERVAL || 3);
+  const intervalMs = Math.max(60_000, Math.floor(minutes) * 60 * 1000); // >= 1 minute
+  setInterval(checkAndBroadcastContentUpdates, intervalMs);
+  // Initial delayed check to allow Mongo to connect
+  setTimeout(checkAndBroadcastContentUpdates, 30 * 1000);
+}
+
+// --- Daily Digest (Email + Web Push) ---
+let ENABLE_DAILY_DIGEST = process.env.ENABLE_DAILY_DIGEST !== 'false';
+if (!ENABLE_DAILY_DIGEST) {
+  console.warn('Daily digest disabled by env, overriding to enabled.');
+  ENABLE_DAILY_DIGEST = true;
+}
+const DAILY_DIGEST_HOUR_IST = Number(process.env.DAILY_DIGEST_HOUR_IST || 9); // 9 AM IST by default
+const DAILY_DIGEST_CHECK_MIN = Number(process.env.DAILY_DIGEST_CHECK_MIN || 5); // check every 5 minutes
+
+function nowIST() {
+  // Create a Date object representing current time in Asia/Kolkata
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+}
+
+function formatISTDate(d = nowIST()) {
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+}
+
+function ymd(d = nowIST()) {
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
+function getDailySubject(d = nowIST()) {
+  const dateStr = formatISTDate(d);
+  const options = [
+    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    'VayAccess Daily: Smarter Parking, Safer Access',
+    '🔔 New Features + Live Analytics for Parking Control',
+    `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
+  ];
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+async function buildDailySections() {
+  // Compute lightweight stats from existing Mongo collections (fallback to placeholders)
+  try {
+    if (!mongoDb) return null;
+    const subsCount = await mongoDb.collection('subscribers').countDocuments({ active: { $ne: false } });
+    const todayStartIST = nowIST();
+    todayStartIST.setHours(0, 0, 0, 0);
+    const todayEndIST = new Date(todayStartIST);
+    todayEndIST.setHours(23, 59, 59, 999);
+
+    // Convert IST bounds to UTC by reconstructing from string to avoid timezone drift
+    const startUTC = new Date(new Date(todayStartIST).toISOString());
+    const endUTC = new Date(new Date(todayEndIST).toISOString());
+
+    const todaysAnnouncements = await mongoDb.collection('announcements').countDocuments({
+      createdAt: { $gte: startUTC, $lte: endUTC }
+    });
+
+    const { articles } = getArticlesSnapshot();
+    const top3 = articles.slice(0, 3).map(a => a.title);
+
+    return {
+      subsCount,
+      todaysAnnouncements,
+      top3,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function buildDailyDigestHtml(sections, d = nowIST()) {
+  const dateStr = formatISTDate(d);
+  const logoUrl = `${PUBLIC_BASE_URL}/assets/vay-logo.jpg`;
+  const highlight = (
+    sections?.top3?.length ? sections.top3.map(t => `“${t}”`).join(' • ') :
+    'New Hikvision camera integration live on 2 sites. RFID reduced wait time by 38%.'
+  );
+  return `
+  <div style="font-family:Arial,sans-serif;max-width:720px;margin:0 auto;background:#f9fafb;padding:18px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <img src="${logoUrl}" alt="VayAccess" style="height:36px;width:auto;" />
+      <div style="font-weight:700;color:#111827;">Smart Parking. Secure Access. Seamless Control.</div>
+    </div>
+    <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
+
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
+      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <p style="color:#374151;line-height:1.6;margin:0;">
+        ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
+      </p>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
+      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
+        <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
+        <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
+        <li>Peak entry time: 9:12 AM (sample)</li>
+        <li>Average parking duration: 3h 20m (sample)</li>
+      </ul>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
+      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
+      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
+        <li>This week only: Get 20% off on new camera integrations.</li>
+        <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
+      </ul>
+    </div>
+
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
+      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
+    </div>
+
+    <p style="color:#6b7280;font-size:12px;text-align:center;margin-top:14px;">Sent on ${dateStr} • VayAccess</p>
+  </div>`;
+}
+
+function buildDailyDigestText(sections, d = nowIST()) {
+  const dateStr = formatISTDate(d);
+  return [
+    getDailySubject(d),
+    '',
+    '📰 Daily System Highlights:',
+    (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
+    '',
+    '📊 Analytics Snapshot:',
+    `- Subscribers: ${sections?.subsCount ?? '—'}`,
+    `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
+    '- Peak entry time: 9:12 AM (sample)',
+    '- Average parking duration: 3h 20m (sample)',
+    '',
+    '💡 Product Tips / Knowledge:',
+    '- Dashboard supports live push alerts and automated reports',
+    '',
+    '📢 Marketing / Offers:',
+    '- 20% off on new camera integrations',
+    '- Enterprise unlocks advanced AI analytics',
+    '',
+    `Sent on ${dateStr}`
+  ].join('\n');
+}
+
+async function sendDailyDigest({ force = false } = {}) {
+  if (!mongoDb) return { success: false, message: 'MongoDB not initialized' };
+  const todayKey = ymd();
+  const sentCol = mongoDb.collection('daily_digest_sent');
+  const exists = await sentCol.findOne({ _id: todayKey });
+  if (exists && !force) return { success: true, message: 'Already sent today' };
+
+  const sections = await buildDailySections();
+
+  // Collect subscribers with prefs
+  const subs = await mongoDb.collection('subscribers').find({ active: { $ne: false } }, { projection: { email: 1, prefs: 1 } }).toArray();
+  const validSubs = subs.filter(s => /.+@.+\..+/.test(s.email));
+
+  // Email broadcast per-subscriber with category templates
+  let sent = 0, failed = 0;
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    for (const s of validSubs) {
+      const to = String(s.email).toLowerCase();
+      const prefs = s.prefs || { products: true, solutions: true };
+      const { products, solutions } = getArticlesSnapshot();
+
+      // Build personalized content with category templates
+      const chunks = [];
+      if (prefs.products) chunks.push(buildProductsDigestHtml(products.slice(0, 8)));
+      if (prefs.solutions) chunks.push(buildSolutionsDigestHtml(solutions.slice(0, 8)));
+      if (prefs.marketing) chunks.push(buildMarketingDigestHtml());
+      const html = chunks.join('\n');
+      const subject = getDailySubject();
+      const text = [
+        subject,
+        '',
+        prefs.products ? (products.slice(0, 5).map(a => `- [Product] ${a.title}`).join('\n')) : '',
+        prefs.solutions ? (solutions.slice(0, 5).map(a => `- [Solution] ${a.title}`).join('\n')) : '',
+        prefs.marketing ? ('- [Marketing] Special offers available') : '',
+      ].filter(Boolean).join('\n');
+
+      try {
+        await emailHelper.sendCategorizedEmail({
+          category: 'daily_personalized',
+          to,
+          subject,
+          html: withFooter(html),
+          text,
+          headers: buildUnsubscribeHeaders(to),
+          dedupeKey: `daily:${todayKey}:${to}`,
+          meta: { daily: true, prefs },
+        });
+        sent++;
+      } catch (_) { failed++; }
+    }
+  }
+
+  // Push notifications
+  let pushOk = 0, pushFail = 0;
+  try {
+    const tokens = await mongoDb.collection('pushTokens').find({ active: { $ne: false } }, { projection: { token: 1 } }).toArray();
+    for (const t of tokens) {
+      try { await sendFcmMessage(t.token || t, 'VayAccess Daily', 'Open for today\'s updates', '/'); pushOk++; } catch (_) { pushFail++; }
+    }
+  } catch (_) {}
+
+  await sentCol.updateOne({ _id: todayKey }, { $set: { _id: todayKey, sentAt: new Date(), emails: sent, failed } }, { upsert: true });
+  return { success: true, emails: { sent, failed, total: emails.length }, push: { sent: pushOk, failed: pushFail } };
+}
+
+// Admin: manual daily digest
+app.post('/api/admin/daily-digest/send', async (req, res) => {
+  try {
+    if (!isAdmin(req)) return res.status(403).json({ success: false, message: 'Forbidden' });
+    const force = String(req.query.force || '').toLowerCase() === 'true';
+    const result = await sendDailyDigest({ force });
+    res.json({ success: true, result });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e?.message || 'Failed to send daily digest' });
+  }
+});
+
+// Admin: preview daily digest HTML
+app.get('/api/admin/daily-digest/preview', async (req, res) => {
+  try {
+    if (!isAdmin(req)) return res.status(403).send('Forbidden');
+    const sections = await buildDailySections();
+    res.setHeader('Content-Type', 'text/html');
+    res.send(buildDailyDigestHtml(sections));
+  } catch (e) {
+    res.status(500).send('Failed to build preview');
+  }
+});
+
+// Daily scheduler (IST hour)
+if (ENABLE_DAILY_DIGEST) {
+  setInterval(async () => {
+    try {
+      if (!mongoDb) return;
+      const n = nowIST();
+      if (n.getHours() >= DAILY_DIGEST_HOUR_IST) {
+        await sendDailyDigest();
+      }
+    } catch (e) {
+      console.warn('Daily digest scheduler error:', e?.message || e);
+    }
+  }, Math.max(60_000, DAILY_DIGEST_CHECK_MIN * 60 * 1000));
+}
+
+// Start HTTP server (required for Vite proxy to work)
+server.listen(PORT, () => {
+  console.log(`HTTP server listening on http://localhost:${PORT}`);
 });
 
 // Contact form submission endpoint
@@ -1010,93 +1815,105 @@ app.post('/api/test-email', async (req, res) => {
   }
 });
 
-// Newsletter subscription endpoint (sends admin notification + welcome email)
+// Newsletter subscription endpoint (MongoDB-first, email optional)
 app.post('/api/newsletter/subscribe', async (req, res) => {
   try {
-    const { email, source = 'footer' } = req.body || {};
-
-    // Basic validation
+    const { email, source = 'website' } = req.body || {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
       return res.status(400).json({ success: false, message: 'Invalid email address' });
     }
 
-    const nowIST = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-
-    // 1) Notify admin
-    const adminEmail = {
-      from: `"VayAccess Newsletter" <${process.env.SMTP_USER}>`,
-      to: 'info@vayaccess.com',
-      subject: 'New Newsletter Subscription',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="margin:0 0 10px 0;">New Newsletter Subscription</h2>
-          <p style="margin:0 0 6px 0; color:#374151;">A new user has subscribed to the newsletter.</p>
-          <div style="margin:16px 0; padding:12px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
-            <p style="margin:6px 0;"><strong>Email:</strong> ${email}</p>
-            <p style="margin:6px 0;"><strong>Source:</strong> ${source}</p>
-            <p style="margin:6px 0;"><strong>Time:</strong> ${nowIST}</p>
-          </div>
-          <p style="font-size:12px; color:#9ca3af;">This is an automated notification.</p>
-        </div>
-      `
-    };
-
-    // 2) Welcome email to subscriber
-    const welcomeEmail = {
-      from: `"VayAccess Team" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: 'Welcome to VayAccess Newsletter! 🎉',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; padding: 24px; border-radius: 8px 8px 0 0;">
-            <h1 style="margin: 0; font-size: 22px;">Welcome to VayAccess Newsletter</h1>
-            <p style="margin: 8px 0 0 0; opacity: 0.9;">Thanks for subscribing!</p>
-          </div>
-          <div style="background: white; padding: 24px; border: 1px solid #e5e7eb; border-top: none;">
-            <p style="color:#374151;">You'll now receive:</p>
-            <ul style="color:#374151; line-height:1.8;">
-              <li>Latest parking technology insights</li>
-              <li>Product updates and announcements</li>
-              <li>Industry best practices</li>
-              <li>Exclusive offers</li>
-            </ul>
-            <p style="margin-top: 16px; color:#6b7280;">Visit our website: <a href="https://vayaccess.com" style="color:#2563eb; text-decoration:none;">vayaccess.com</a></p>
-            <p style="margin-top: 16px; color:#9ca3af; font-size:12px;">You can unsubscribe anytime by replying to this email.</p>
-          </div>
-        </div>
-      `
-    };
-
-    await Promise.all([
-      transporter.sendMail(adminEmail),
-      transporter.sendMail(welcomeEmail)
-    ]);
-
-    // 3) Persist subscriber to MongoDB (server-side) if available
+    // Persist to MongoDB if available; otherwise, skip persistence gracefully
     try {
       if (mongoDb) {
-        const normalizedEmail = String(email).trim().toLowerCase();
-        await mongoDb.collection('subscribers').updateOne(
-          { email: normalizedEmail },
+        const normalized = String(email).trim().toLowerCase();
+        const now = new Date();
+        const col = mongoDb.collection('subscribers');
+        const existing = await col.findOne({ email: normalized });
+        if (existing && existing.active !== false) {
+          return res.json({ success: true, message: 'You are already subscribed. You will receive live news daily from VayAccess.' });
+        }
+
+        await col.updateOne(
+          { email: normalized },
           {
-            $set: { email: normalizedEmail, source, active: true, updatedAt: new Date() },
-            $setOnInsert: { createdAt: new Date() }
+            $setOnInsert: { createdAt: now, prefs: { products: true, solutions: true, marketing: true } },
+            $set: { email: normalized, source, active: true, updatedAt: now },
           },
           { upsert: true }
+        );
+        // Ensure default prefs exist on existing records
+        await col.updateOne(
+          { email: normalized, $or: [ { prefs: { $exists: false } }, { prefs: null } ] },
+          { $set: { 'prefs.products': true, 'prefs.solutions': true, 'prefs.marketing': true } }
         );
       } else {
         console.warn('Skipping MongoDB persistence: mongoDb not initialized');
       }
     } catch (persistErr) {
-      console.warn('Failed to persist subscriber to MongoDB (continuing):', persistErr);
+      console.warn('Failed to persist subscriber to MongoDB (continuing):', persistErr?.message || persistErr);
     }
 
-    // Success
-    return res.json({ success: true, message: 'Subscribed successfully. Emails sent.' });
+    // Optional welcome email; do not fail if SMTP is missing
+    try {
+      await emailHelper.sendCategorizedEmail({
+        category: 'newsletter_welcome',
+        to: String(email).trim().toLowerCase(),
+        subject: 'Welcome to VayAccess Newsletter',
+        html: withFooter(`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                 <h2 style="margin:0 0 12px 0;">Welcome to VayAccess Newsletter</h2>
+                 <p style="color:#374151;line-height:1.6;">You will receive product news, articles, and live updates.</p>
+                 <p style="margin-top:16px;"><a href="https://vayaccess.com" style="color:#2563eb;text-decoration:none;">Visit website</a></p>
+               </div>`),
+        text: 'Welcome to VayAccess Newsletter\nYou will receive product news, articles, and live updates.',
+        meta: { source },
+        headers: buildUnsubscribeHeaders(email),
+        dedupeKey: `welcome:${String(email).trim().toLowerCase()}`
+      });
+    } catch (emailErr) {
+      console.warn('Welcome email failed (continuing):', emailErr?.message || emailErr);
+    }
+
+    // Conditionally send present products/solutions digest immediately
+    try {
+      if (process.env.SEND_DIGEST_ON_SUBSCRIBE === 'true') {
+        const snapshot = getContentSnapshot();
+        await sendDigestToEmail(String(email).trim().toLowerCase(), snapshot);
+      }
+    } catch (e) {
+      console.warn('Failed to send initial digest (continuing):', e?.message || e);
+    }
+
+    // Optional: send a marketing promo immediately on subscribe
+    try {
+      if ((process.env.SEND_MARKETING_ON_SUBSCRIBE || 'true').toLowerCase() !== 'false') {
+        await emailHelper.sendCategorizedEmail({
+          category: 'marketing',
+          to: String(email).trim().toLowerCase(),
+          subject: 'VayAccess — Transform Your Parking with Smart Access',
+          html: withFooter(`<div style='font-family:Arial,sans-serif;max-width:700px;margin:0 auto;'>
+  <h2 style='margin:0 0 10px 0;color:#111827;'>Welcome to VayAccess</h2>
+  <p style='color:#374151;line-height:1.6;margin:0 0 10px 0;'>Explore ANPR vehicle access, robust barrier gates, turnstiles, and real-time management.</p>
+  <p style='margin-top:12px;'>
+    <a href='https://vayaccess.com/products' style='background:#2563eb;color:#fff;text-decoration:none;padding:10px 14px;border-radius:8px;'>Explore Products</a>
+    <span style='margin-left:12px;'><a href='https://vayaccess.com/solutions' style='color:#2563eb;text-decoration:none;'>View Solutions</a></span>
+  </p>
+</div>`),
+          text: 'Explore VayAccess products and solutions: https://vayaccess.com',
+          headers: buildUnsubscribeHeaders(email),
+          dedupeKey: `marketing-on-subscribe:${String(email).trim().toLowerCase()}`,
+          meta: { source, onSubscribe: true },
+        });
+      }
+    } catch (marketingErr) {
+      console.warn('Marketing email on subscribe failed (continuing):', marketingErr?.message || marketingErr);
+    }
+
+    return res.json({ success: true, message: 'Subscribed successfully!' });
   } catch (error) {
-    console.error('Newsletter subscribe failed:', error);
-    return res.status(500).json({ success: false, message: 'Failed to subscribe' });
+    console.error('Subscribe failed:', error);
+    return res.status(500).json({ success: false, message: 'Subscription failed' });
   }
 });
 
@@ -1113,15 +1930,14 @@ app.post('/api/newsletter/send', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required fields: to, subject, and html or text' });
     }
 
-    const mail = {
+    await transporter.sendMail({
       from: `"VayAccess Updates" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html: html || undefined,
       text: text || undefined,
-    };
+    });
 
-    await transporter.sendMail(mail);
     return res.json({ success: true, message: 'Email sent.' });
   } catch (error) {
     console.error('Send update failed:', error);
@@ -1142,7 +1958,7 @@ app.post('/api/newsletter/broadcast', async (req, res) => {
       return res.status(500).json({ success: false, message: 'MongoDB not initialized' });
     }
 
-    const { subject, html, text, dryRun = false, onlyActive = true } = req.body || {};
+    const { subject, html, text, dryRun = false, onlyActive = true, category = 'marketing' } = req.body || {};
     if (!subject || (!html && !text)) {
       return res.status(400).json({ success: false, message: 'Missing required fields: subject and html or text' });
     }
@@ -1166,12 +1982,15 @@ app.post('/api/newsletter/broadcast', async (req, res) => {
     let ok = 0, fail = 0;
     for (const to of emails) {
       try {
-        await transporter.sendMail({
-          from: `"VayAccess Updates" <${process.env.SMTP_USER}>`,
+        await emailHelper.sendCategorizedEmail({
+          category,
           to,
           subject,
-          html: html || undefined,
+          html: withFooter(html || ''),
           text: text || undefined,
+          headers: buildUnsubscribeHeaders(to),
+          dedupeKey: `broadcast:${category}:${subject}:${String(to).toLowerCase()}`,
+          meta: { broadcast: true },
         });
         ok++;
       } catch (e) {
@@ -1179,7 +1998,7 @@ app.post('/api/newsletter/broadcast', async (req, res) => {
       }
     }
 
-    return res.json({ success: true, message: 'Broadcast completed', sent: ok, failed: fail, count: emails.length });
+    return res.json({ success: true, message: 'Broadcast completed', category, sent: ok, failed: fail, count: emails.length });
   } catch (error) {
     console.error('Broadcast failed:', error);
     return res.status(500).json({ success: false, message: 'Failed to broadcast' });
@@ -1421,54 +2240,7 @@ app.post('/api/updates/auto-publish', async (req, res) => {
   }
 });
 
-// Newsletter: subscribe (MongoDB) + optional welcome email
-app.post('/api/newsletter/subscribe', async (req, res) => {
-  try {
-    if (!mongoDb) return res.status(500).json({ success: false, message: 'MongoDB not initialized' });
 
-    const { email, source = 'website' } = req.body || {};
-    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
-
-    const normalized = String(email).trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalized)) return res.status(400).json({ success: false, message: 'Invalid email address' });
-
-    const now = new Date();
-    await mongoDb.collection('subscribers').updateOne(
-      { email: normalized },
-      {
-        $setOnInsert: { createdAt: now },
-        $set: { email: normalized, source, active: true, updatedAt: now },
-      },
-      { upsert: true }
-    );
-
-    // Optional: send a welcome email (skip silently if SMTP missing)
-    try {
-      if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-        await transporter.sendMail({
-          from: `"VayAccess Updates" <${process.env.SMTP_USER}>`,
-          to: normalized,
-          subject: 'Welcome to VayAccess Newsletter',
-          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-                   <h2 style="margin:0 0 12px 0;">Welcome to VayAccess Newsletter</h2>
-                   <p style="color:#374151;line-height:1.6;">You will receive product news, articles, and live updates.</p>
-                   <p style="margin-top:16px;"><a href="https://vayaccess.com" style="color:#2563eb;text-decoration:none;">Visit website</a></p>
-                 </div>`,
-          text: 'Welcome to VayAccess Newsletter\nYou will receive product news, articles, and live updates.'
-        });
-      }
-    } catch (e) {
-      // Do not fail subscription if email sending fails
-      console.warn('Welcome email failed:', e?.message || e);
-    }
-
-    return res.json({ success: true, message: 'Subscribed successfully' });
-  } catch (error) {
-    console.error('Subscribe failed:', error);
-    return res.status(500).json({ success: false, message: 'Subscription failed' });
-  }
-});
 
 
 
@@ -1500,10 +2272,106 @@ app.post('/api/newsletter/send', async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(` VayAccess AI Call Service running on port ${PORT}`);
-  console.log(` SMTP configured for: ${process.env.SMTP_USER}`);
-  console.log(` AI Call Agent service initialized`);
-  console.log(` Socket.IO server ready for real-time communication`);
-  console.log(` Accepting requests from frontend...`);
-});
+
+// --- Hourly Digest Scheduler ---
+const ENABLE_HOURLY_DIGEST = (process.env.ENABLE_HOURLY_DIGEST || 'false').toLowerCase() === 'true';
+const DIGEST_CATEGORY = process.env.DIGEST_CATEGORY || 'content_digest';
+const DIGEST_EMAIL = (process.env.DIGEST_EMAIL || 'true').toLowerCase() === 'true';
+const DIGEST_PUSH = (process.env.DIGEST_PUSH || 'true').toLowerCase() === 'true';
+const DIGEST_DEDUPE_WINDOW_MIN = parseInt(process.env.DIGEST_DEDUPE_WINDOW_MINUTES || '60', 10);
+
+async function sendHourlyDigestOnce() {
+  try {
+    if (!mongoDb) {
+      console.warn('[digest] Skipped: MongoDB not initialized');
+      return;
+    }
+
+    // Snapshot current site content
+    const snapshot = getContentSnapshot();
+    const tpl = pickRandomTemplate();
+
+    // Dedupe: prevent re-sending same template within the window (optional)
+    const now = new Date();
+    const since = new Date(now.getTime() - DIGEST_DEDUPE_WINDOW_MIN * 60 * 1000);
+    const recentKey = `digest:${tpl.key}:${snapshot.hash}`;
+    const alreadySent = await mongoDb.collection('email_events').findOne({
+      dedupeKey: { $regex: `^${recentKey}:` }, // per recipient entry saved below
+      createdAt: { $gte: since },
+      result: 'sent',
+    });
+    if (alreadySent) {
+      console.log('[digest] Recently sent this template+hash. Skipping to avoid repetition.');
+      return;
+    }
+
+    // Fetch subscribers
+    const subs = await mongoDb.collection('subscribers')
+      .find({ active: { $ne: false } }, { projection: { email: 1 } })
+      .toArray();
+    const emails = subs.map(s => s.email).filter(e => /.+@.+\..+/.test(e));
+
+    // Fetch push tokens
+    const tokens = DIGEST_PUSH
+      ? (await mongoDb.collection('pushTokens')
+          .find({ active: { $ne: false } }, { projection: { token: 1 } })
+          .toArray()).map(d => d.token)
+      : [];
+
+    // Send email
+    if (DIGEST_EMAIL && emails.length) {
+      let sent = 0, fail = 0;
+      for (const to of emails) {
+        try {
+          await emailHelper.sendCategorizedEmail({
+            category: DIGEST_CATEGORY,
+            to,
+            subject: tpl.subject(snapshot),
+            html: tpl.buildHtml(snapshot),
+            text: tpl.buildText(snapshot),
+            headers: buildUnsubscribeHeaders(to),
+            // Make dedupe per-recipient
+            dedupeKey: `${recentKey}:${String(to).toLowerCase()}`,
+            meta: { hourly: true, template: tpl.key },
+          });
+          sent++;
+        } catch (_) { fail++; }
+      }
+      console.log(`[digest] Email done: sent=${sent} fail=${fail}`);
+    }
+
+    // Send push
+    if (DIGEST_PUSH && tokens.length) {
+      let ok = 0, fail = 0;
+      const pushTitle = 'VayAccess Update';
+      const pushBody = 'Check the latest products and solutions.';
+      const pushLink = '/';
+      for (const t of tokens) {
+        try {
+          await sendFcmMessage(t, pushTitle, pushBody, pushLink);
+          ok++;
+        } catch (_) { fail++; }
+      }
+      console.log(`[digest] Push done: sent=${ok} fail=${fail}`);
+    }
+
+  } catch (e) {
+    console.error('[digest] Failed:', e?.message || e);
+  }
+}
+
+if (ENABLE_HOURLY_DIGEST) {
+  // Fire soon after boot, then every hour
+  setTimeout(sendHourlyDigestOnce, 15 * 1000);
+  setInterval(sendHourlyDigestOnce, 60 * 60 * 1000);
+  console.log('[digest] Hourly digest scheduler enabled');
+}
+
+// Start the HTTP server (guard to avoid double-listen when imported or re-evaluated)
+if (require.main === module) {
+  if (!server.listening) {
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  }
+}

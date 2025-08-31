@@ -1,4 +1,5 @@
 // Contact Service - separates contact form logic from newsletter
+import { getDefaultHeaders } from './http';
 
 export interface ContactFormData {
   name: string;
@@ -20,10 +21,9 @@ export const submitContactForm = async (formData: ContactFormData): Promise<ApiR
   try {
     const response = await fetch(`${API_BASE_URL}/contact`, {
       method: 'POST',
-      headers: {
+      headers: getDefaultHeaders({
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      }),
       body: JSON.stringify(formData),
     });
 

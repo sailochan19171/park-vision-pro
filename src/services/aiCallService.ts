@@ -1,6 +1,8 @@
 import { io, Socket } from 'socket.io-client';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const isNgrok = /ngrok/i.test(String(import.meta.env.VITE_API_BASE_URL || ''));
+const defaultHeaders: Record<string,string> = isNgrok ? { 'ngrok-skip-browser-warning': 'true' } : {};
 
 export interface CallSession {
   sessionId: string;
@@ -87,9 +89,7 @@ class AICallService {
 
       const response = await fetch(`${API_BASE_URL}/api/ai-call/initialize`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json', ...defaultHeaders },
         body: JSON.stringify({
           customerPhone,
           customerName
@@ -136,9 +136,7 @@ class AICallService {
 
       const response = await fetch(`${API_BASE_URL}/api/ai-call/chat`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json', ...defaultHeaders },
         body: JSON.stringify({
           message,
           sessionId: this.currentSession.sessionId

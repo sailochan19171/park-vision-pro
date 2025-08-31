@@ -3,11 +3,28 @@ const OpenAI = require('openai');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Initialize Twilio and OpenAI clients
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize Twilio and OpenAI clients safely (don't crash if env vars are missing)
+let twilioClient = null;
+if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+  try {
+    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  } catch (e) {
+    console.warn('Twilio init failed:', e.message);
+  }
+} else {
+  console.warn('Twilio disabled: missing TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN');
+}
+
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  try {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  } catch (e) {
+    console.warn('OpenAI init failed:', e.message);
+  }
+} else {
+  console.warn('OpenAI disabled: missing OPENAI_API_KEY');
+}
 
 // Parking solutions knowledge base for the AI agent
 const PARKING_SOLUTIONS_KNOWLEDGE = `

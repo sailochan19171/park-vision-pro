@@ -39,6 +39,7 @@ import AnalyticsReporting from "./pages/solutions/AnalyticsReporting";
 import RevenueManagement from "./pages/solutions/RevenueManagement";
 import CookieConsent from "./components/CookieConsent";
 import FloatingAIButton from "./components/FloatingAIButton";
+import Contact from "./components/Contact";
 import LoadingScreen from "./components/LoadingScreen";
 // import NearbyParkingLocations from './components/NearbyParkingLocations';
 
@@ -128,6 +129,15 @@ const App = () => {
         <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/vayaccess" element={<VayAccess />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/solutions" element={<Solutions />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/about" element={<About />} />
+
+          <Route path="/contact" element={<Contact />} />
           <Route path="/vayaccess" element={<VayAccess />} />
           <Route path="/services" element={<Services />} />
           <Route path="/products" element={<Products />} />
