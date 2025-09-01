@@ -33,6 +33,16 @@ const Solutions = () => {
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
+    try {
+      import('@/utils/eventTracker').then(({ trackCategoryView }) => {
+        trackCategoryView('parking-management', { route: '/solutions' });
+      });
+    } catch {}
+    try {
+      import('@/utils/eventTracker').then(({ trackCategoryView }) => {
+        trackCategoryView('parking-management', { route: '/solutions' });
+      });
+    } catch {}
   }, []);
 
   const solutions: Solution[] = [

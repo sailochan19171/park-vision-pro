@@ -50,6 +50,15 @@ const Products = () => {
     setSelectedProduct("");
   };
 
+  // Auto-track initial view of default tab
+  useEffect(() => {
+    try {
+      import('@/utils/eventTracker').then(({ trackCategoryView }) => {
+        trackCategoryView('barrier-gates', { route: '/products' });
+      });
+    } catch {}
+  }, []);
+
   const productCategories: ProductCategory[] = [
     {
       id: "barrier-gates",
@@ -197,6 +206,9 @@ const Products = () => {
                   key={category.id}
                   value={category.id}
                   className="text-sm font-medium px-4 py-3 rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                  onClick={() => {
+                    import('@/utils/eventTracker').then(({ trackCategoryView }) => trackCategoryView(category.id as any, { route: `/products#${category.id}` }));
+                  }}
                 >
                   {category.label}
                 </TabsTrigger>
@@ -240,7 +252,14 @@ const Products = () => {
                         </div>
 
                         <div className="flex flex-col gap-2 mt-auto">
-                          <Link to={product.link || '#'}>
+                          <Link to={product.link || '#'} onClick={() => {
+                            import('@/utils/eventTracker').then(({ trackProductClick }) => {
+                              // infer category from parent scope by searching the category containing this product
+                              const containing = productCategories.find(c => c.products.includes(product as any));
+                              const cat = (containing?.id || 'general') as any;
+                              trackProductClick(cat, product.name, { route: product.link || '/products' });
+                            });
+                          }}>
                             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-poppins text-sm py-2 mb-2">
                               View Details
                               <ArrowRight className="ml-2 h-4 w-4" />

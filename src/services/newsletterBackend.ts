@@ -74,3 +74,20 @@ export const autoPublishUpdate = async (version: string, title: string, body: st
     return { success: false, message: error instanceof Error ? error.message : 'Failed to auto-publish' };
   }
 };
+
+// Track website events (category pages, product views, CTA clicks)
+export const trackEvent = async (data: { type?: string; category?: string; email?: string; meta?: Record<string, any> }): Promise<ApiResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/events/track`, {
+      method: 'POST',
+      headers: getDefaultHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data || {}),
+    });
+    const json = await response.json().catch(() => ({ success: false, message: 'Invalid JSON' }));
+    if (!response.ok) throw new Error(json.message || `HTTP ${response.status}`);
+    return json;
+  } catch (error) {
+    console.error('❌ trackEvent API error:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Failed to track event' };
+  }
+};

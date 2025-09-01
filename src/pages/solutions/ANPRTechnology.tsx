@@ -127,6 +127,7 @@ const ANPRTechnology = () => {
                   <div className="text-center text-white">
                     <div className="text-3xl font-bold">24/7</div>
                     <div className="text-sm opacity-80">Operation</div>
+                    <div className="text-lg">vernal</div>
                   </div>
                   <div className="text-center text-white">
                     <div className="text-3xl font-bold">IP67</div>

@@ -273,5 +273,274 @@ app.post("/api/newsletter/send-test", async (req, res) => {
   }
 });
 
-// Export as a single HTTPS function
+// Export Express API as HTTPS function
 exports.api = functions.https.onRequest(app);
+
+// --- Scheduled digests and event-based emails ---------------------------------
+const admin = require('firebase-admin');
+if (!admin.apps.length) admin.initializeApp();
+const db = admin.firestore();
+
+// Helper: build edX-style newsletter template
+function buildEdxStyleTemplate({ subject, preheader = '', introTitle, introBody, cards = [], ctaText = 'Explore', ctaUrl = '/', footerNote = '' }) {
+  const base = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
+  const logoUrl = `${base}/logo.png`;
+  const nav = `${base}`;
+  const manageUrl = `${base}/api/newsletter/manage`;
+  const unsubscribeUrl = `${base}/api/newsletter/unsubscribe`;
+  return `<!doctype html>
+  <html lang="en"><head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${subject || 'VayAccess Updates'}</title>
+    <style>
+      body{margin:0;background:#f6f9fc;color:#0f172a;font-family:Arial,Helvetica,sans-serif}
+      .container{max-width:680px;margin:0 auto;background:#ffffff}
+      .header{padding:20px 24px;border-bottom:1px solid #eef2f7;display:flex;align-items:center;gap:12px}
+      .brand{font-weight:700;font-size:18px}
+      .nav{margin-left:auto}
+      .nav a{color:#2563eb;text-decoration:none;margin-left:12px}
+      .hero{padding:28px 24px 8px}
+      .title{font-size:22px;margin:0 0 6px}
+      .subtitle{color:#475569;margin:0 0 18px}
+      .card{margin:0 24px 16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}
+      .card-body{padding:16px}
+      .cta{display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 16px;border-radius:8px}
+      .pill{display:inline-block;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 8px;border-radius:999px;font-size:12px}
+      .footer{padding:20px 24px;border-top:1px solid #eef2f7;background:#fafbfc;color:#64748b;font-size:13px}
+      .muted{color:#64748b}
+      img{display:block;max-width:100%;border:0}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="${logoUrl}" alt="VayAccess" width="32" height="32" />
+        <div class="brand">VayAccess</div>
+        <div class="nav">
+          <a href="${nav}/products">Products</a>
+          <a href="${nav}/solutions">Solutions</a>
+          <a href="${nav}/#contact">Contact</a>
+        </div>
+      </div>
+      <div class="hero">
+        <h1 class="title">${introTitle || 'Latest from VayAccess'}</h1>
+        <p class="subtitle">${introBody || preheader || 'Smart parking & access control updates, tailored for you.'}</p>
+      </div>
+      ${cards.map(c => `
+        <div class="card">
+          ${c.image ? `<img src="${c.image}" alt="${c.title}" />` : ''}
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+              <div>
+                <h2 style="margin:0 0 6px;font-size:18px">${c.title}</h2>
+                <p class="muted" style="margin:0 0 12px">${c.description || ''}</p>
+              </div>
+              ${c.tag ? `<span class="pill">${c.tag}</span>` : ''}
+            </div>
+            <a class="cta" href="${c.url || c.ctaUrl || ctaUrl}">${c.ctaText || ctaText}</a>
+          </div>
+        </div>`).join('')}
+      <div class="footer">
+        <div class="nav" style="margin-bottom:8px">
+          <a href="${manageUrl}">Manage Preferences</a>
+          <a href="${unsubscribeUrl}">Unsubscribe</a>
+        </div>
+        <div>
+          You’re receiving this because you subscribed on our website.
+          <br/>
+          ${footerNote || 'VayAccess • Smart Parking Solutions'}
+        </div>
+      </div>
+    </div>
+  </body></html>`;
+}
+
+// Helper: send a message to many recipients with proper headers
+async function sendBulk({ toList, subject, html }) {
+  const results = [];
+  for (const to of toList) {
+    try {
+      await transporter.sendMail({
+        from: `"VayAccess Updates" <${process.env.SMTP_USER || 'no-reply@vayaccess.com'}>`,
+        to,
+        subject,
+        html,
+        headers: buildUnsubscribeHeaders(to),
+      });
+      results.push({ to, ok: true });
+    } catch (e) {
+      results.push({ to, ok: false, error: String(e) });
+    }
+  }
+  return results;
+}
+
+// Hourly digest: gather new updates from Firestore and send once per item (no repeats)
+exports.hourlyDigest = functions.pubsub
+  .schedule('every 60 minutes')
+  .timeZone('Asia/Kolkata')
+  .onRun(async () => {
+    const base = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
+    // 1) Fetch published updates without newsletterSentAt in the last 6 hours (safety window)
+    const since = admin.firestore.Timestamp.fromDate(new Date(Date.now() - 6 * 60 * 60 * 1000));
+    const snap = await db.collection('updates')
+      .where('status', '==', 'published')
+      .where('publishedAt', '>=', since)
+      .get();
+
+    const pending = snap.docs.filter(d => !d.get('newsletterSentAt'));
+    if (pending.length === 0) return null; // nothing to do
+
+    // 2) Build cards from updates
+    const assetBase = process.env.ASSET_BASE_URL || base;
+    const cards = pending.map(d => ({
+      title: d.get('title') || 'Update',
+      description: (d.get('body') || '').slice(0, 180),
+      url: `${base}${d.get('link') || '/'}`,
+      tag: 'New',
+      image: `${assetBase}/assets/featured-image-1.jpg`, // Use a real image; replace per update if you store image path
+      ctaText: 'Read more'
+    }));
+
+    const html = buildEdxStyleTemplate({
+      subject: `VayAccess — ${pending.length} new update${pending.length>1?'s':''}`,
+      introTitle: 'This hour at VayAccess',
+      introBody: 'Here are the latest product and solution updates.',
+      cards,
+    });
+
+    // 3) Fetch active subscribers
+    const subsSnap = await db.collection('subscribers').where('active', '==', true).get();
+    const toList = subsSnap.docs.map(d => d.id).filter(e => /.+@.+\..+/.test(e));
+    if (toList.length === 0) return null;
+
+    // 4) Send bulk & mark sent to avoid repeats
+    await sendBulk({ toList, subject: 'VayAccess — New updates', html });
+
+    const batch = db.batch();
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    pending.forEach(d => batch.update(d.ref, { newsletterSentAt: now }));
+    await batch.commit();
+
+    return null;
+  });
+
+// Event-based emails: process queued events and send category-specific templates
+exports.eventDispatcher = functions.pubsub
+  .schedule('every 5 minutes')
+  .timeZone('Asia/Kolkata')
+  .onRun(async () => {
+    const q = await db.collection('events').where('processed', '==', false).limit(50).get();
+    if (q.empty) return null;
+
+    const base = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
+    const assetBase = process.env.ASSET_BASE_URL || base; // Prefer backend URL that serves /assets from src/assets
+
+    const categoryCard = (category) => {
+      const map = {
+        'barrier-gates': {
+          title: 'Barrier Gates — Control Vehicle Access',
+          description: 'Heavy-duty barriers with LED indicators and 24/7 operation.',
+          url: `${base}/products/barrier-gates`,
+          image: `${assetBase}/assets/barrier-gate-10.jpg`,
+          tag: 'Products',
+        },
+        'pedestrian-gates': {
+          title: 'Pedestrian Gates — Tripod & Flap Turnstiles',
+          description: 'Secure, elegant entry management for buildings and metros.',
+          url: `${base}/products/pedestrian-gates`,
+          image: `${assetBase}/assets/vay-flap-barrier-slim.jpg`,
+          tag: 'Products',
+        },
+        'access-control': {
+          title: 'Access Control — RFID, Biometrics, Mobile',
+          description: 'Multi-modal authentication with cloud management.',
+          url: `${base}/products/access-control/mobile-system`,
+          image: `${assetBase}/assets/mobile-access-control.jpg`,
+          tag: 'Solutions',
+        },
+        'parking-management': {
+          title: 'Parking Management — Ticketless & Guidance',
+          description: 'Real-time monitoring, digital payments, LPR & analytics.',
+          url: `${base}/products/parking-management`,
+          image: `${assetBase}/assets/parking-guidance-23.jpg`,
+          tag: 'Solutions',
+        }
+      };
+      return map[category] || {
+        title: 'VayAccess — Smart Parking & Access',
+        description: 'Explore our products and solutions tailored to your facility.',
+        url: base,
+        image: `${assetBase}/assets/logo.png`,
+        tag: 'Explore',
+      };
+    };
+
+    const batch = db.batch();
+    for (const doc of q.docs) {
+      const ev = doc.data();
+      const toList = ev.email ? [ev.email] : []; // optional per-user, else broadcast to all below
+      let recipients = toList;
+      if (recipients.length === 0) {
+        const subs = await db.collection('subscribers').where('active', '==', true).get();
+        recipients = subs.docs.map(d => d.id).filter(e => /.+@.+\..+/.test(e));
+      }
+
+      const card = categoryCard(ev.category || 'general');
+      const html = buildEdxStyleTemplate({
+        subject: `VayAccess — ${card.title}`,
+        introTitle: card.title,
+        introBody: 'Triggered by your recent activity on our website.',
+        cards: [card],
+        ctaText: 'Learn more',
+        ctaUrl: card.url,
+      });
+
+      await sendBulk({ toList: recipients, subject: `VayAccess — ${card.title}`, html });
+
+      batch.update(doc.ref, { processed: true, sentAt: admin.firestore.FieldValue.serverTimestamp() });
+    }
+    await batch.commit();
+    return null;
+  });
+
+// Minimal event tracking endpoint to enqueue events from the website
+app.post('/api/events/track', async (req, res) => {
+  try {
+    const { type, category, email, meta } = req.body || {};
+    await db.collection('events').add({
+      type: type || 'activity',
+      category: (category || 'general').toString(),
+      email: email || null,
+      meta: meta || {},
+      processed: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to track event' });
+  }
+});
+
+// Test digest builder for a single address
+app.post('/api/newsletter/digest-test', async (req, res) => {
+  try {
+    const { to } = req.body || {};
+    if (!to || !/.+@.+\..+/.test(to)) return res.status(400).json({ success: false, message: 'Valid to required' });
+    const base = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
+    const html = buildEdxStyleTemplate({
+      subject: 'VayAccess — Sample Digest',
+      introTitle: 'Unlock Smart Access & Parking',
+      introBody: 'Here is a sample digest with featured items.',
+      cards: [
+        { title: 'Barrier Gates', description: 'Heavy-duty vehicle access control', url: `${base}/products/barrier-gates`, image: `${base}/barrier-gate-10.jpg`, tag: 'Featured' },
+        { title: 'Parking Guidance', description: 'Real-time indicators & analytics', url: `${base}/products/parking-guidance`, image: `${base}/parking-guidance-23.jpg`, tag: 'New' },
+      ],
+    });
+    await transporter.sendMail({ from: `"VayAccess Updates" <${process.env.SMTP_USER || 'no-reply@vayaccess.com'}>`, to, subject: 'VayAccess — Sample Digest', html, headers: buildUnsubscribeHeaders(to) });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to send test digest' });
+  }
+});

@@ -24,12 +24,61 @@ let mongoDb = null;
   }
 
   // Attempt robust connection strategy for Windows/OpenSSL TLS issues
+  let mongoReconnectTimer = null;
+
+  function setupMongoAutoReconnect() {
+    if (!mongoClient) return;
+    const events = ['topologyClosed', 'serverClosed', 'serverHeartbeatFailed'];
+    events.forEach((ev) => {
+      try { mongoClient.removeAllListeners(ev); } catch {}
+      mongoClient.on(ev, (info) => {
+        if (mongoReconnectTimer) return;
+        const msg = info && info.message ? info.message : '';
+        console.warn(`MongoDB ${ev} - scheduling reconnect in 5s`, msg);
+        mongoReconnectTimer = setTimeout(async () => {
+          mongoReconnectTimer = null;
+          let connected = await tryConnect('reconnect', { ...baseOptions });
+          if (!connected) connected = await tryConnect('reconnect + IPv4', { ...baseOptions, family: 4 });
+          if (!connected) {
+            connected = await tryConnect('reconnect + insecure', {
+              ...baseOptions,
+              tlsAllowInvalidCertificates: true,
+              tlsAllowInvalidHostnames: true,
+              family: 4,
+            });
+          }
+          if (!connected) {
+            console.warn('MongoDB reconnection failed; retrying in 10s');
+            mongoReconnectTimer = setTimeout(async () => {
+              mongoReconnectTimer = null;
+              let ok = await tryConnect('reconnect', { ...baseOptions });
+              if (!ok) ok = await tryConnect('reconnect + IPv4', { ...baseOptions, family: 4 });
+              if (!ok) {
+                await tryConnect('reconnect + insecure', {
+                  ...baseOptions,
+                  tlsAllowInvalidCertificates: true,
+                  tlsAllowInvalidHostnames: true,
+                  family: 4,
+                });
+              }
+            }, 10000);
+          }
+        }, 5000);
+      });
+    });
+  }
+
   async function tryConnect(optionsLabel, options) {
     try {
+      // Close previous client to avoid socket leaks
+      if (mongoClient) {
+        try { await mongoClient.close(); } catch {}
+      }
       mongoClient = new MongoClient(uri, options);
       await mongoClient.connect();
       mongoDb = mongoClient.db(dbName);
       console.log(`Connected to MongoDB Atlas database: ${dbName} (${optionsLabel})`);
+      setupMongoAutoReconnect();
       return true;
     } catch (err) {
       const msg = err?.message || String(err);
@@ -41,6 +90,8 @@ let mongoDb = null;
   const baseOptions = {
     serverApi: { version: '1', strict: true, deprecationErrors: true },
     tls: true,
+    // Note: keepAlive options are not supported by the MongoDB Node.js driver v5.
+    // We rely on the driver's internal keep-alive and our event-based reconnection.
   };
 
   const insecureEnv = process.env.MONGODB_TLS_INSECURE === 'true';
@@ -431,6 +482,13 @@ const DIGEST_TEMPLATES = [
 
 function pickRandomTemplate() {
   return DIGEST_TEMPLATES[Math.floor(Math.random() * DIGEST_TEMPLATES.length)];
+}
+
+function pickRotatingTemplate(offset = 0) {
+  // Deterministic hourly rotation to avoid repetition
+  const hourIndex = Math.floor(Date.now() / (60 * 60 * 1000));
+  const idx = (hourIndex + (offset || 0)) % DIGEST_TEMPLATES.length;
+  return DIGEST_TEMPLATES[idx];
 }
 
 async function sendDigestToEmail(to, snapshot) {
@@ -980,7 +1038,8 @@ async function sendDailyDigest({ force = false } = {}) {
   } catch (_) {}
 
   await sentCol.updateOne({ _id: todayKey }, { $set: { _id: todayKey, sentAt: new Date(), emails: sent, failed } }, { upsert: true });
-  return { success: true, emails: { sent, failed, total: emails.length }, push: { sent: pushOk, failed: pushFail } };
+  // Return counts based on computed values to avoid referencing undefined variables
+  return { success: true, emails: { sent, failed }, push: { sent: pushOk, failed: pushFail } };
 }
 
 // Admin: manual daily digest
@@ -2289,7 +2348,8 @@ async function sendHourlyDigestOnce() {
 
     // Snapshot current site content
     const snapshot = getContentSnapshot();
-    const tpl = pickRandomTemplate();
+    // Rotate templates by hour to guarantee variation across sends
+    const tpl = pickRotatingTemplate();
 
     // Dedupe: prevent re-sending same template within the window (optional)
     const now = new Date();

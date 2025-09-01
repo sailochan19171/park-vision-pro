@@ -95,6 +95,7 @@ const EnhancedChatbot = () => {
   const [pendingProduct, setPendingProduct] = useState<string | null>(null);
   const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
   const [awaitingContact, setAwaitingContact] = useState(false);
+  const [collectedName, setCollectedName] = useState<string | null>(null);
   const [collectedEmail, setCollectedEmail] = useState<string | null>(null);
   const [collectedPhone, setCollectedPhone] = useState<string | null>(null);
 
@@ -721,17 +722,31 @@ const EnhancedChatbot = () => {
     try {
       const lower = textToSend.toLowerCase();
 
-      // If awaiting contact, capture email and phone
+      // If awaiting contact, capture name, email and phone
       if (awaitingContact) {
         const emailMatch = textToSend.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
         const phoneMatch = textToSend.match(/\+?\d[\d\s\-()]{6,}/);
+
         if (emailMatch) setCollectedEmail(emailMatch[0]);
         if (phoneMatch) setCollectedPhone(phoneMatch[0].replace(/\s+/g, ''));
 
-        if (!emailMatch || !phoneMatch) {
+        // Try to extract a name if provided like "Name: John Doe" or plain words
+        const nameMatch = textToSend.match(/name\s*[:\-]\s*([a-zA-Z][a-zA-Z\s]{1,})/i) || textToSend.match(/^[A-Za-z][A-Za-z\s]{1,}$/);
+        if (!collectedName && nameMatch) {
+          const nm = Array.isArray(nameMatch) ? (nameMatch[1] || nameMatch[0]) : (nameMatch as unknown as string);
+          setCollectedName(nm.trim());
+        }
+
+        const hasName = Boolean(collectedName || (Array.isArray(nameMatch) ? (nameMatch[1] || nameMatch[0]) : nameMatch));
+        const missing: string[] = [];
+        if (!hasName) missing.push('name');
+        if (!emailMatch) missing.push('email');
+        if (!phoneMatch) missing.push('phone number');
+
+        if (missing.length > 0) {
           const needMsg: Message = {
             id: (Date.now() + 1).toString(),
-            content: `Thanks! I still need your ${!emailMatch && !phoneMatch ? 'email and phone number' : !emailMatch ? 'email address' : 'phone number'} to proceed. You can paste both together, e.g.: john@company.com, +91 98765 43210`,
+            content: `Thanks! I still need your ${missing.join(' and ')}. You can paste all together, e.g.: Name: John Doe, john@company.com, +91 98765 43210`,
             role: 'assistant',
             timestamp: new Date(),
           };
@@ -740,9 +755,10 @@ const EnhancedChatbot = () => {
           return;
         }
 
+        const nameVal = collectedName || (Array.isArray(nameMatch) ? (nameMatch[1] || nameMatch[0]) : (nameMatch as unknown as string)) || 'there';
         const ok: Message = {
           id: (Date.now() + 2).toString(),
-          content: `Great! We received your details. Email: ${emailMatch[0]}, Phone: ${phoneMatch[0]}. Our representative will contact you shortly regarding ${pendingProduct ?? 'your selected product'}.`,
+          content: `Thanks ${nameVal.toString().trim()}! We received your details. Email: ${emailMatch![0]}, Phone: ${phoneMatch![0]}. Our representative will contact you shortly regarding ${pendingProduct ?? 'your selected product'}.`,
           role: 'assistant',
           timestamp: new Date(),
         };
@@ -750,14 +766,15 @@ const EnhancedChatbot = () => {
         setPendingProduct(null);
         setMessages(prev => [...prev, ok]);
         setIsLoading(false);
+        setConversationState('ending');
         return;
       }
 
       // If awaiting buy confirm
-      if (awaitingBuyConfirm && (/^yes[,\s.!]?/.test(textToSend) || /i want to buy/.test(lower))) {
+      if (awaitingBuyConfirm && (/^\s*yes\b/i.test(textToSend) || /\b(i\s+want\s+to\s+buy|buy\s+now|interested\s+to\s+buy)\b/i.test(lower))) {
         const askContacts: Message = {
           id: (Date.now() + 1).toString(),
-          content: `Ohh, nice to hear you're interested in ${pendingProduct ?? 'this product'}! Our representative will contact you. Please provide your email and phone number.`,
+          content: `Great! You're interested in ${pendingProduct ?? 'this product'}. Please provide your Name, Email, and Phone number.`,
           role: 'assistant',
           timestamp: new Date(),
         };
@@ -767,10 +784,10 @@ const EnhancedChatbot = () => {
         setIsLoading(false);
         return;
       }
-      if (awaitingBuyConfirm && (/^no[,\s.!]?/.test(textToSend) || /not now/.test(lower))) {
+      if (awaitingBuyConfirm && (/^\s*no\b/i.test(textToSend) || /not now/i.test(lower))) {
         const noMsg: Message = {
           id: (Date.now() + 1).toString(),
-          content: 'Ohh, thanks for your valuable time and interest in VayAccess control systems. If you need anything later, feel free to ask or explore more products.',
+          content: 'Thanks for your time and interest in VayAccess. If you need anything later, feel free to ask or explore more products.',
           role: 'assistant',
           timestamp: new Date(),
         };

@@ -61,11 +61,14 @@ const AIExpertModal: React.FC<AIExpertModalProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Purchase intent flow state
-  const [pendingProduct, setPendingProduct] = useState<string | null>(null);
-  const [awaitingContact, setAwaitingContact] = useState(false);
-  const [collectedEmail, setCollectedEmail] = useState<string | null>(null);
-  const [collectedPhone, setCollectedPhone] = useState<string | null>(null);
-  const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
+  // Purchase intent flow state
+const [pendingProduct, setPendingProduct] = useState<string | null>(null);
+const [awaitingContact, setAwaitingContact] = useState(false);
+const [collectedName, setCollectedName] = useState<string | null>(null);
+const [collectedEmail, setCollectedEmail] = useState<string | null>(null);
+const [collectedPhone, setCollectedPhone] = useState<string | null>(null);
+const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
+
   // Callback flow state
   const [awaitingCallback, setAwaitingCallback] = useState(false);
   const [callbackPhone, setCallbackPhone] = useState<string | null>(null);
@@ -248,10 +251,9 @@ const AIExpertModal: React.FC<AIExpertModalProps> = ({ isOpen, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
-
-    const originalUserInput = inputMessage;
+  const handleSendMessage = async (forcedText?: string) => {
+    const originalUserInput = (forcedText ?? inputMessage);
+    if (!originalUserInput.trim()) return;
 
     // If awaiting callback, collect phone number
     if (awaitingCallback) {
@@ -486,7 +488,7 @@ const AIExpertModal: React.FC<AIExpertModalProps> = ({ isOpen, onClose }) => {
 
       // 1.6) Explicit buy intent (no product selected yet)
       const purchaseIntent = /(buy|purchase|interested|want\s+to\s+buy|like\s+to\s+buy|order)\b/i;
-      if (purchaseIntent.test(lowerInput)) {
+      if (!awaitingBuyConfirm && !awaitingBuyConfirm && purchaseIntent.test(lowerInput)) {
         if (!pendingProduct) {
           const promptPick: Message = {
             id: (Date.now() + 2).toString(),
@@ -517,15 +519,17 @@ const AIExpertModal: React.FC<AIExpertModalProps> = ({ isOpen, onClose }) => {
       }
 
       // 1.6) Yes/No follow-up handling (only when awaiting user confirm)
-      if (awaitingBuyConfirm && (/^yes[,\s.!]?/i.test(originalUserInput) || /\bi want to buy\b/i.test(lowerInput))) {
+      if (awaitingBuyConfirm && (/^\s*yes\b/i.test(originalUserInput) || /\b(i\s+want\s+to\s+buy|buy\s+now|interested\s+to\s+buy)\b/i.test(lowerInput))) {
         const positive: Message = {
           id: (Date.now() + 3).toString(),
-          content: `Ohh, nice to hear you're interested in ${pendingProduct ?? 'this product'}! Our representative will contact you. Please provide your email and phone number.`,
+          content: `Great! You're interested in ${pendingProduct ?? 'this product'}. Please provide your Name, Email, and Phone number.`,
           role: 'assistant',
           timestamp: new Date(),
         };
         setAwaitingBuyConfirm(false);
         setAwaitingContact(true);
+        // Clear any options from the last askBuy message by pushing a new assistant message without options
+        // Clear any options from the last askBuy message by pushing a new assistant message without options
         setMessages(prev => [...prev, positive]);
         setIsLoading(false);
         return;
@@ -870,8 +874,8 @@ Guidelines for AI Expert consultation:
                             variant={message.role === 'assistant' ? 'secondary' : 'outline'}
                             onClick={() => {
                               if (opt.action === 'message') {
-                                setInputMessage(opt.value);
-                                handleSendMessage();
+                                handleSendMessage(opt.value);
+                                setInputMessage('');
                               } else if (opt.action === 'phone') {
                                 window.location.href = `tel:${opt.value}`;
                               } else if (opt.action === 'email') {
