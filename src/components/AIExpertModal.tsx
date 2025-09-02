@@ -488,7 +488,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
 
       // 1.6) Explicit buy intent (no product selected yet)
       const purchaseIntent = /(buy|purchase|interested|want\s+to\s+buy|like\s+to\s+buy|order)\b/i;
-      if (!awaitingBuyConfirm && !awaitingBuyConfirm && purchaseIntent.test(lowerInput)) {
+      // Only prompt to buy if we’re not already awaiting a Yes/No
+      if (!awaitingBuyConfirm && purchaseIntent.test(lowerInput)) {
         if (!pendingProduct) {
           const promptPick: Message = {
             id: (Date.now() + 2).toString(),
