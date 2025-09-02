@@ -22,8 +22,8 @@ const Hero = () => {
   const handleDownloadBrochure = () => {
     try {
       const link = document.createElement('a');
-      link.href = '/vay-common-brochure.pdf';
-      link.download = 'VAY-Parking-Solutions-Brochure.pdf';
+      link.href = '/vay-gate-brochure.pdf'; // served from public/
+      link.download = 'VAY-Gate-Brochure.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
