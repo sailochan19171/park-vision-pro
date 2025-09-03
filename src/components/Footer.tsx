@@ -15,7 +15,9 @@ import logo from "../assets/logo.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [frequency, setFrequency] = useState<'hourly'|'daily'|'weekly'>("weekly");
   const [message, setMessage] = useState("");
   const [articles, setArticles] = useState<{ title: string; description?: string; image?: string; type: 'product'|'solution'; }[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -42,12 +44,19 @@ const Footer = () => {
 
   const handleSubscribe = async () => {
     try {
-      const res = await subscribeToNewsletter(email, 'footer');
-      if (res.success) {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, frequency })
+      });
+      const json = await res.json().catch(() => ({ success:false, message:'Invalid response' }));
+      if (res.ok && json.success) {
         setMessage('Subscribed successfully!');
+        setName('');
         setEmail('');
+        setFrequency('weekly');
       } else {
-        setMessage(res.message || 'Subscription failed.');
+        setMessage(json.message || 'Subscription failed.');
       }
     } catch (error) {
       setMessage('Subscription failed. Please try again.');
@@ -224,18 +233,37 @@ const Footer = () => {
                 </div>
               )}
             </div>
-            <div className="flex space-x-4">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
-              />
-              <Button onClick={handleSubscribe} className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
-                Subscribe
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
+                />
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
+                />
+                <div className="flex items-center md:justify-end gap-4 text-sm">
+                  {(['hourly','daily','weekly'] as const).map((f) => (
+                    <label key={f} className="inline-flex items-center gap-1">
+                      <input type="radio" name="frequency" value={f} checked={frequency===f} onChange={() => setFrequency(f)} />
+                      <span className="capitalize">{f}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <Button onClick={handleSubscribe} className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
+                  Subscribe
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
           {message && (

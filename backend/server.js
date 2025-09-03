@@ -207,6 +207,91 @@ app.post('/api/newsletter/unsubscribe', express.urlencoded({ extended: true }), 
   }
 });
 
+// Subscribe endpoint (name, email, frequency)
+app.post('/api/subscribe', async (req, res) => {
+  try {
+    const { name, email, frequency } = req.body || {};
+    const n = String(name || '').trim();
+    const em = String(email || '').trim().toLowerCase();
+    const f = String(frequency || 'weekly').toLowerCase();
+    if (!/.+@.+\..+/.test(em)) return res.status(400).json({ success:false, message:'Invalid email' });
+    const freq = ['hourly','daily','weekly'].includes(f) ? f : 'weekly';
+    if (!mongoDb) return res.status(503).json({ success:false, message:'DB not ready' });
+
+    const now = new Date();
+    await mongoDb.collection('subscribers').updateOne(
+      { email: em },
+      { $setOnInsert: { createdAt: now, subscribedAt: now }, $set: { name: n, frequency: freq, active: true, updatedAt: now } },
+      { upsert: true }
+    );
+
+    // Send welcome email
+    const headers = buildUnsubscribeHeaders(em);
+    const firstName = n ? n.split(' ')[0] : 'there';
+    const html = withFooter(`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <p>Hi ${firstName},</p>
+        <p>Thanks for subscribing to VayAccess updates (${freq}). You'll receive ${freq} digests with our latest articles.</p>
+      </div>
+    `);
+    await emailHelper.sendCategorizedEmail({
+      category: 'newsletter_welcome',
+      to: em,
+      subject: 'Welcome to VayAccess Updates',
+      html,
+      headers
+    });
+
+    return res.json({ success:true, message:'Subscribed' });
+  } catch (e) {
+    const msg = e?.code === 11000 ? 'Already subscribed' : (e?.message || 'Server error');
+    return res.status(500).json({ success:false, message: msg });
+  }
+});
+
+// Preferences update endpoint
+app.post('/api/newsletter/update-preferences', async (req, res) => {
+  try {
+    const { email, token, frequency } = req.body || {};
+    const em = String(email || '').toLowerCase();
+    if (!em || token !== signUnsubToken(em)) return res.status(400).json({ success:false, message:'Invalid token' });
+    if (!mongoDb) return res.status(503).json({ success:false, message:'DB not ready' });
+    const f = String(frequency || '').toLowerCase();
+    const freq = ['hourly','daily','weekly'].includes(f) ? f : 'weekly';
+    await mongoDb.collection('subscribers').updateOne({ email: em }, { $set: { frequency: freq, updatedAt: new Date() } });
+    return res.json({ success:true });
+  } catch (e) {
+    return res.status(500).json({ success:false, message: e?.message || 'Server error' });
+  }
+});
+
+// Articles: create & list
+app.post('/api/articles', async (req, res) => {
+  try {
+    const { title, summary, content, tags } = req.body || {};
+    if (!title || !summary) return res.status(400).json({ success:false, message:'Missing title/summary' });
+    if (!mongoDb) return res.status(503).json({ success:false, message:'DB not ready' });
+    const doc = { title: String(title), summary: String(summary), content: String(content||''), tags: Array.isArray(tags)? tags.map(String):[], createdAt: new Date() };
+    const result = await mongoDb.collection('articles').insertOne(doc);
+    return res.json({ success:true, id: result.insertedId, article: doc });
+  } catch (e) {
+    return res.status(500).json({ success:false, message: e?.message || 'Server error' });
+  }
+});
+
+app.get('/api/articles', async (req, res) => {
+  try {
+    if (!mongoDb) return res.status(503).json({ success:false, message:'DB not ready' });
+    const { tag, limit } = req.query;
+    const q = tag ? { tags: String(tag) } : {};
+    const lim = Math.min(Number(limit)||20, 100);
+    const items = await mongoDb.collection('articles').find(q).sort({ createdAt:-1 }).limit(lim).toArray();
+    return res.json({ success:true, items });
+  } catch (e) {
+    return res.status(500).json({ success:false, message: e?.message || 'Server error' });
+  }
+});
+
 // Connect to Asterisk AMI on server start (optional via ENABLE_AMI)
 if (process.env.ENABLE_AMI === 'true') {
   asteriskService.connect().catch(err => {
@@ -403,7 +488,7 @@ function buildDigestText(snapshot) {
   ].join('\n');
 }
 
-const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
 // Use admin token for signing unsubscribe tokens (fallback to legacy secret if present)
 const NEWSLETTER_SECRET = process.env.NEWSLETTER_ADMIN_TOKEN || process.env.NEWSLETTER_SECRET || 'change-me';
 
@@ -2425,6 +2510,58 @@ if (ENABLE_HOURLY_DIGEST) {
   setTimeout(sendHourlyDigestOnce, 15 * 1000);
   setInterval(sendHourlyDigestOnce, 60 * 60 * 1000);
   console.log('[digest] Hourly digest scheduler enabled');
+}
+
+// --- Frequency-based Article Digest (from articles collection) ---
+async function sendArticleDigestFor(freq, since) {
+  if (!mongoDb) return;
+  const sinceDate = since instanceof Date ? since : new Date(since);
+  const subs = await mongoDb.collection('subscribers').find({ active: { $ne: false }, frequency: freq }).toArray();
+  if (!subs.length) return;
+  const articles = await mongoDb.collection('articles').find({ createdAt: { $gte: sinceDate } }).sort({ createdAt: -1 }).limit(50).toArray();
+  const items = articles.map(a => ({ title: a.title, summary: a.summary, link: a.link || '/news' }));
+
+  for (const s of subs) {
+    const headers = buildUnsubscribeHeaders(s.email);
+    const name = s.name ? s.name.split(' ')[0] : 'there';
+    const list = items.map(i => `<li style="margin-bottom:10px"><div style="font-weight:600">${i.title}</div><div style="color:#4b5563">${i.summary || ''}</div><a href="${PUBLIC_BASE_URL}${i.link}" style="color:#2563eb">Read more</a></li>`).join('');
+    const html = withFooter(`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <p>Hi ${name},</p>
+        <p>Here are the latest articles for you:</p>
+        <ul style="padding-left:16px">${list || '<li>No new articles.</li>'}</ul>
+      </div>
+    `);
+    await emailHelper.send({
+      to: s.email,
+      subject: freq === 'hourly' ? 'Hourly Digest' : freq === 'daily' ? 'Daily Digest' : 'Weekly Newsletter',
+      html,
+      headers
+    });
+  }
+}
+
+const ENABLE_DIGEST_SCHEDULES = (process.env.ENABLE_DIGEST_SCHEDULES || 'true').toLowerCase() === 'true';
+if (ENABLE_DIGEST_SCHEDULES) {
+  setInterval(async () => {
+    const now = new Date();
+    // Hourly at minute 0
+    if (now.getMinutes() === 0) {
+      const since = new Date(now); since.setHours(now.getHours() - 1);
+      await sendArticleDigestFor('hourly', since);
+    }
+    // Daily at 08:00
+    if (now.getHours() === 8 && now.getMinutes() === 0) {
+      const since = new Date(now); since.setDate(now.getDate() - 1);
+      await sendArticleDigestFor('daily', since);
+    }
+    // Weekly Monday at 09:00
+    if (now.getDay() === 1 && now.getHours() === 9 && now.getMinutes() === 0) {
+      const since = new Date(now); since.setDate(now.getDate() - 7);
+      await sendArticleDigestFor('weekly', since);
+    }
+  }, 60 * 1000);
+  console.log('[digest] Frequency-based article digests enabled');
 }
 
 // Start the HTTP server (guard to avoid double-listen when imported or re-evaluated)

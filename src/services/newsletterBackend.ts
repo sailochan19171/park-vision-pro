@@ -15,19 +15,16 @@ const API_BASE_URL = RAW_API_BASE
 
 export const subscribeToNewsletter = async (email: string, source: string = 'footer'): Promise<ApiResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/newsletter/subscribe`, {
+    // Backward compatibility: keep old call working by mapping to new /api/subscribe
+    const response = await fetch(`${API_BASE_URL.replace(/\/api$/, '')}/api/subscribe`, {
       method: 'POST',
-      headers: getDefaultHeaders({
-        'Content-Type': 'application/json',
-      }),
-      body: JSON.stringify({ email, source }),
+      headers: getDefaultHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ email, source, name: '', frequency: 'weekly' }),
     });
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
-
     return await response.json();
   } catch (error) {
     console.error('❌ Newsletter subscribe API error:', error);
