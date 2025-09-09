@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VayAccess Newsletter Admin</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        .btn.success {
+            background: #059669;
+        }
+        .btn.danger {
+            background: #dc2626;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📧 VayAccess Newsletter Admin</h1>
+        <p>Manage and test the automated newsletter system</p>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="stats" id="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="totalSubs">-</div>
+            <div class="stat-label">Total Subscribers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="hourlySubs">-</div>
+            <div class="stat-label">Hourly Subscribers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="dailySubs">-</div>
+            <div class="stat-label">Daily Subscribers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="weeklySubs">-</div>
+            <div class="stat-label">Weekly Subscribers</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🚀 Quick Actions</h3>
+        <button class="btn" onclick="sendTestNewsletter('hourly')">Send Hourly Digest Now</button>
+        <button class="btn" onclick="sendTestNewsletter('daily')">Send Daily Digest Now</button>
+        <button class="btn" onclick="sendTestNewsletter('weekly')">Send Weekly Newsletter Now</button>
+        <button class="btn success" onclick="loadStats()">Refresh Stats</button>
+    </div>
+
+    <div class="card">
+        <h3>📊 System Status</h3>
+        <div id="systemStatus">
+            <p>Loading system status...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📧 Recent Email Activity</h3>
+        <div id="recentEmails">
+            <p>Loading recent emails...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🔧 Test Newsletter</h3>
+        <div class="form-group">
+            <label for="testEmail">Test Email Address:</label>
+            <input type="email" id="testEmail" placeholder="your-email@example.com">
+        </div>
+        <div class="form-group">
+            <label for="testFrequency">Newsletter Type:</label>
+            <select id="testFrequency">
+                <option value="hourly">Hourly Digest</option>
+                <option value="daily">Daily Digest</option>
+                <option value="weekly">Weekly Newsletter</option>
+            </select>
+        </div>
+        <button class="btn" onclick="sendTestToEmail()">Send Test Email</button>
+    </div>
+
+    <div class="card">
+        <h3>📝 Activity Log</h3>
+        <div class="log" id="activityLog">
+            System ready. Click "Refresh Stats" to load data.
+        </div>
+    </div>
+
+    <script>
+        window.API_BASE = window.API_BASE || window.location.origin;
+        window.ADMIN_TOKEN = window.ADMIN_TOKEN || 'vay-admin-2024-secure-token'; // Should match .env file
+        var API_BASE = window.API_BASE;
+        var ADMIN_TOKEN = window.ADMIN_TOKEN;
+
+        function showAlert(message, type = 'success') {
+            const alertsDiv = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alertsDiv.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function log(message) {
+            const logDiv = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': ADMIN_TOKEN,
+                        ...options.headers
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP ${response.status}`);
+                }
+                
+                return data;
+            } catch (error) {
+                log(`API Error: ${error.message}`);
+                showAlert(`Error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                log('Loading newsletter statistics...');
+                const data = await apiCall('/api/admin/newsletter/stats');
+                
+                document.getElementById('totalSubs').textContent = data.stats.totalSubscribers;
+                document.getElementById('hourlySubs').textContent = data.stats.byFrequency.hourly;
+                document.getElementById('dailySubs').textContent = data.stats.byFrequency.daily;
+                document.getElementById('weeklySubs').textContent = data.stats.byFrequency.weekly;
+                
+                // Update recent emails
+                const recentEmailsDiv = document.getElementById('recentEmails');
+                if (data.stats.lastEmails.length > 0) {
+                    recentEmailsDiv.innerHTML = data.stats.lastEmails.map(email => `
+                        <div style="border-bottom: 1px solid #e5e7eb; padding: 10px 0;">
+                            <strong>${email.subject}</strong><br>
+                            <small>To: ${email.to} | ${email.result} | ${new Date(email.createdAt).toLocaleString()}</small>
+                        </div>
+                    `).join('');
+                } else {
+                    recentEmailsDiv.innerHTML = '<p>No recent emails found.</p>';
+                }
+                
+                log(`Stats loaded: ${data.stats.totalSubscribers} total subscribers`);
+                showAlert('Statistics refreshed successfully');
+            } catch (error) {
+                document.getElementById('recentEmails').innerHTML = '<p>Error loading recent emails.</p>';
+            }
+        }
+
+        async function sendTestNewsletter(frequency) {
+            try {
+                log(`Sending ${frequency} newsletter to all subscribers...`);
+                const data = await apiCall('/api/admin/newsletter/send-test', {
+                    method: 'POST',
+                    body: JSON.stringify({ frequency })
+                });
+                
+                log(`Newsletter sent successfully: ${data.message}`);
+                showAlert(data.message);
+                
+                // Refresh stats after sending
+                setTimeout(loadStats, 2000);
+            } catch (error) {
+                // Error already logged in apiCall
+            }
+        }
+
+        async function sendTestToEmail() {
+            const testEmail = document.getElementById('testEmail').value;
+            const frequency = document.getElementById('testFrequency').value;
+            
+            if (!testEmail) {
+                showAlert('Please enter a test email address', 'error');
+                return;
+            }
+            
+            try {
+                log(`Sending test ${frequency} newsletter to ${testEmail}...`);
+                const data = await apiCall('/api/admin/newsletter/send-test', {
+                    method: 'POST',
+                    body: JSON.stringify({ frequency, testEmail })
+                });
+                
+                log(`Test email sent: ${data.message}`);
+                showAlert(`Test email sent to ${testEmail}`);
+            } catch (error) {
+                // Error already logged in apiCall
+            }
+        }
+
+        async function checkSystemStatus() {
+            try {
+                const healthData = await apiCall('/api/health');
+                const smtpData = await apiCall('/api/admin/smtp-status');
+                
+                const statusDiv = document.getElementById('systemStatus');
+                statusDiv.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        <div>
+                            <strong>Server Health:</strong><br>
+                            <span style="color: ${healthData.ok ? '#059669' : '#dc2626'}">
+                                ${healthData.ok ? '✅ Healthy' : '❌ Unhealthy'}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>MongoDB:</strong><br>
+                            <span style="color: ${healthData.mongo ? '#059669' : '#dc2626'}">
+                                ${healthData.mongo ? '✅ Connected' : '❌ Disconnected'}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>SMTP Email:</strong><br>
+                            <span style="color: ${smtpData.ready ? '#059669' : '#dc2626'}">
+                                ${smtpData.ready ? '✅ Ready' : '❌ Not Ready'}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>Email From:</strong><br>
+                            <span>${smtpData.user || 'Not configured'}</span>
+                        </div>
+                    </div>
+                `;
+                
+                if (!smtpData.ready && smtpData.error) {
+                    statusDiv.innerHTML += `<div style="margin-top: 10px; color: #dc2626; font-size: 12px;">SMTP Error: ${smtpData.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('systemStatus').innerHTML = '<p style="color: #dc2626;">Error loading system status</p>';
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Newsletter Admin Panel initialized');
+            loadStats();
+            checkSystemStatus();
+            
+            // Auto-refresh stats every 30 seconds
+            setInterval(loadStats, 30000);
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VayAccess Newsletter Admin</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        .btn.success {
+            background: #059669;
+        }
+        .btn.danger {
+            background: #dc2626;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .log {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📧 VayAccess Newsletter Admin</h1>
+        <p>Manage and test the automated newsletter system</p>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="stats" id="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="totalSubs">-</div>
+            <div class="stat-label">Total Subscribers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="hourlySubs">-</div>
+            <div class="stat-label">Hourly Subscribers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="dailySubs">-</div>
+            <div class="stat-label">Daily Subscribers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="weeklySubs">-</div>
+            <div class="stat-label">Weekly Subscribers</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🚀 Quick Actions</h3>
+        <button class="btn" onclick="sendTestNewsletter('hourly')">Send Hourly Digest Now</button>
+        <button class="btn" onclick="sendTestNewsletter('daily')">Send Daily Digest Now</button>
+        <button class="btn" onclick="sendTestNewsletter('weekly')">Send Weekly Newsletter Now</button>
+        <button class="btn success" onclick="loadStats()">Refresh Stats</button>
+    </div>
+
+    <div class="card">
+        <h3>📊 System Status</h3>
+        <div id="systemStatus">
+            <p>Loading system status...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📧 Recent Email Activity</h3>
+        <div id="recentEmails">
+            <p>Loading recent emails...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🔧 Test Newsletter</h3>
+        <div class="form-group">
+            <label for="testEmail">Test Email Address:</label>
+            <input type="email" id="testEmail" placeholder="your-email@example.com">
+        </div>
+        <div class="form-group">
+            <label for="testFrequency">Newsletter Type:</label>
+            <select id="testFrequency">
+                <option value="hourly">Hourly Digest</option>
+                <option value="daily">Daily Digest</option>
+                <option value="weekly">Weekly Newsletter</option>
+            </select>
+        </div>
+        <button class="btn" onclick="sendTestToEmail()">Send Test Email</button>
+    </div>
+
+    <div class="card">
+        <h3>📝 Activity Log</h3>
+        <div class="log" id="activityLog">
+            System ready. Click "Refresh Stats" to load data.
+        </div>
+    </div>
+
+    <script>
+        window.API_BASE = window.API_BASE || window.location.origin;
+        window.ADMIN_TOKEN = window.ADMIN_TOKEN || 'vay-admin-2024-secure-token'; // Should match .env file
+        var API_BASE = window.API_BASE;
+        var ADMIN_TOKEN = window.ADMIN_TOKEN;
+
+        function showAlert(message, type = 'success') {
+            const alertsDiv = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alertsDiv.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function log(message) {
+            const logDiv = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': ADMIN_TOKEN,
+                        ...options.headers
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP ${response.status}`);
+                }
+                
+                return data;
+            } catch (error) {
+                log(`API Error: ${error.message}`);
+                showAlert(`Error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                log('Loading newsletter statistics...');
+                const data = await apiCall('/api/admin/newsletter/stats');
+                
+                document.getElementById('totalSubs').textContent = data.stats.totalSubscribers;
+                document.getElementById('hourlySubs').textContent = data.stats.byFrequency.hourly;
+                document.getElementById('dailySubs').textContent = data.stats.byFrequency.daily;
+                document.getElementById('weeklySubs').textContent = data.stats.byFrequency.weekly;
+                
+                // Update recent emails
+                const recentEmailsDiv = document.getElementById('recentEmails');
+                if (data.stats.lastEmails.length > 0) {
+                    recentEmailsDiv.innerHTML = data.stats.lastEmails.map(email => `
+                        <div style="border-bottom: 1px solid #e5e7eb; padding: 10px 0;">
+                            <strong>${email.subject}</strong><br>
+                            <small>To: ${email.to} | ${email.result} | ${new Date(email.createdAt).toLocaleString()}</small>
+                        </div>
+                    `).join('');
+                } else {
+                    recentEmailsDiv.innerHTML = '<p>No recent emails found.</p>';
+                }
+                
+                log(`Stats loaded: ${data.stats.totalSubscribers} total subscribers`);
+                showAlert('Statistics refreshed successfully');
+            } catch (error) {
+                document.getElementById('recentEmails').innerHTML = '<p>Error loading recent emails.</p>';
+            }
+        }
+
+        async function sendTestNewsletter(frequency) {
+            try {
+                log(`Sending ${frequency} newsletter to all subscribers...`);
+                const data = await apiCall('/api/admin/newsletter/send-test', {
+                    method: 'POST',
+                    body: JSON.stringify({ frequency })
+                });
+                
+                log(`Newsletter sent successfully: ${data.message}`);
+                showAlert(data.message);
+                
+                // Refresh stats after sending
+                setTimeout(loadStats, 2000);
+            } catch (error) {
+                // Error already logged in apiCall
+            }
+        }
+
+        async function sendTestToEmail() {
+            const testEmail = document.getElementById('testEmail').value;
+            const frequency = document.getElementById('testFrequency').value;
+            
+            if (!testEmail) {
+                showAlert('Please enter a test email address', 'error');
+                return;
+            }
+            
+            try {
+                log(`Sending test ${frequency} newsletter to ${testEmail}...`);
+                const data = await apiCall('/api/admin/newsletter/send-test', {
+                    method: 'POST',
+                    body: JSON.stringify({ frequency, testEmail })
+                });
+                
+                log(`Test email sent: ${data.message}`);
+                showAlert(`Test email sent to ${testEmail}`);
+            } catch (error) {
+                // Error already logged in apiCall
+            }
+        }
+
+        async function checkSystemStatus() {
+            try {
+                const healthData = await apiCall('/api/health');
+                const smtpData = await apiCall('/api/admin/smtp-status');
+                
+                const statusDiv = document.getElementById('systemStatus');
+                statusDiv.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                        <div>
+                            <strong>Server Health:</strong><br>
+                            <span style="color: ${healthData.ok ? '#059669' : '#dc2626'}">
+                                ${healthData.ok ? '✅ Healthy' : '❌ Unhealthy'}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>MongoDB:</strong><br>
+                            <span style="color: ${healthData.mongo ? '#059669' : '#dc2626'}">
+                                ${healthData.mongo ? '✅ Connected' : '❌ Disconnected'}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>SMTP Email:</strong><br>
+                            <span style="color: ${smtpData.ready ? '#059669' : '#dc2626'}">
+                                ${smtpData.ready ? '✅ Ready' : '❌ Not Ready'}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>Email From:</strong><br>
+                            <span>${smtpData.user || 'Not configured'}</span>
+                        </div>
+                    </div>
+                `;
+                
+                if (!smtpData.ready && smtpData.error) {
+                    statusDiv.innerHTML += `<div style="margin-top: 10px; color: #dc2626; font-size: 12px;">SMTP Error: ${smtpData.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('systemStatus').innerHTML = '<p style="color: #dc2626;">Error loading system status</p>';
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Newsletter Admin Panel initialized');
+            loadStats();
+            checkSystemStatus();
+            
+            // Auto-refresh stats every 30 seconds
+            setInterval(loadStats, 30000);
+        });
+    </script>
+</body>
+</html>
