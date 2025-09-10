@@ -1,9 +1,9 @@
-// Optional nodemailer import - system will work without email functionality
+﻿// Optional nodemailer import - system will work without email functionality
 let nodemailer;
 try {
   nodemailer = require('nodemailer');
 } catch (error) {
-  console.log('ℹ️  Nodemailer not installed - email functionality disabled');
+  console.log('ℹ  Nodemailer not installed - email functionality disabled');
   nodemailer = null;
 }
 const fs = require('fs');
@@ -25,7 +25,7 @@ class EmailService {
   initialize() {
     try {
       if (!nodemailer) {
-        console.log('📧 Email service disabled - nodemailer not available');
+        console.log(' Email service disabled - nodemailer not available');
         this.isConfigured = false;
         return;
       }
@@ -47,9 +47,9 @@ class EmailService {
       // Load email templates
       this.loadTemplates();
 
-      console.log('✅ Email service initialized successfully');
+      console.log(' Email service initialized successfully');
     } catch (error) {
-      console.error('❌ Email service initialization failed:', error);
+      console.error(' Email service initialization failed:', error);
     }
   }
 
@@ -248,7 +248,7 @@ class EmailService {
 
       const result = await this.transporter.sendMail(mailOptions);
       
-      console.log(`✅ Email sent to ${to}: ${subject}`);
+      console.log(` Email sent to ${to}: ${subject}`);
       return {
         success: true,
         messageId: result.messageId,
@@ -256,7 +256,7 @@ class EmailService {
       };
 
     } catch (error) {
-      console.error(`❌ Failed to send email to ${to}:`, error);
+      console.error(` Failed to send email to ${to}:`, error);
       return {
         success: false,
         error: error.message
@@ -333,10 +333,10 @@ class EmailService {
       }
 
       await this.transporter.verify();
-      console.log('✅ Email service connection test successful');
+      console.log(' Email service connection test successful');
       return { success: true };
     } catch (error) {
-      console.error('❌ Email service connection test failed:', error);
+      console.error(' Email service connection test failed:', error);
       return { success: false, error: error.message };
     }
   }

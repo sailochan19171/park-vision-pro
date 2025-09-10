@@ -1,4 +1,4 @@
-// Email Service Configuration for VayAccess Newsletter
+﻿// Email Service Configuration for VayAccess Newsletter
 // This file contains the structure for implementing real email functionality
 
 export interface NewsletterSubscription {
@@ -94,7 +94,7 @@ export const sendNewsletterWelcomeEmail = async (subscription: NewsletterSubscri
   // - Postmark: https://postmarkapp.com/
   
   try {
-    console.log('📧 Sending newsletter welcome email...');
+    console.log(' Sending newsletter welcome email...');
     console.log('From:', EMAIL_CONFIG.fromEmail);
     console.log('To:', subscription.email);
     console.log('Subject:', EMAIL_CONFIG.templates.welcome.subject);
@@ -103,11 +103,11 @@ export const sendNewsletterWelcomeEmail = async (subscription: NewsletterSubscri
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    console.log('✅ Email sent successfully!');
+    console.log(' Email sent successfully!');
     return true;
     
   } catch (error) {
-    console.error('❌ Failed to send email:', error);
+    console.error(' Failed to send email:', error);
     return false;
   }
 };
@@ -122,7 +122,7 @@ export const subscribeToNewsletter = async (email: string): Promise<boolean> => 
 
   try {
     // Step 1: Save to database (would be implemented in backend)
-    console.log('💾 Saving subscription to database...');
+    console.log(' Saving subscription to database...');
     
     // Step 2: Send welcome email
     const emailSent = await sendNewsletterWelcomeEmail(subscription);

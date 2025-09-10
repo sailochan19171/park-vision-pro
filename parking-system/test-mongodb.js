@@ -1,17 +1,17 @@
-// Minimal MongoDB connection test
+﻿// Minimal MongoDB connection test
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-console.log('🔍 Testing MongoDB connection...');
+console.log(' Testing MongoDB connection...');
 console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
 
 async function testConnection() {
   try {
-    console.log('⏱️ Connecting to MongoDB...');
+    console.log(' Connecting to MongoDB...');
     
     // Set a timeout
     const timeoutId = setTimeout(() => {
-      console.log('⏰ Connection timeout after 10 seconds');
+      console.log(' Connection timeout after 10 seconds');
       process.exit(1);
     }, 10000);
     
@@ -20,17 +20,17 @@ async function testConnection() {
     });
     
     clearTimeout(timeoutId);
-    console.log('✅ MongoDB connected successfully');
+    console.log(' MongoDB connected successfully');
     
     // Test a simple query
     const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log(`📊 Found ${collections.length} collections`);
+    console.log(` Found ${collections.length} collections`);
     
     await mongoose.disconnect();
-    console.log('👋 Disconnected from MongoDB');
+    console.log(' Disconnected from MongoDB');
     
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
+    console.error(' MongoDB connection failed:', error.message);
     process.exit(1);
   }
 }

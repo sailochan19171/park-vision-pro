@@ -1,4 +1,4 @@
-// Admin Dashboard Server - Fixed Version
+﻿// Admin Dashboard Server - Fixed Version
 // Port: 3001
 // Serves admin dashboard with authentication
 
@@ -196,7 +196,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Admin Server running on http://localhost:${PORT}`);
-  console.log('🔗 Admin Login: http://localhost:' + PORT + '/admin/login');
-  console.log('📊 Admin Dashboard: http://localhost:' + PORT + '/admin/dashboard');
+  console.log(` Admin Server running on http://localhost:${PORT}`);
+  console.log(' Admin Login: http://localhost:' + PORT + '/admin/login');
+  console.log(' Admin Dashboard: http://localhost:' + PORT + '/admin/dashboard');
 });

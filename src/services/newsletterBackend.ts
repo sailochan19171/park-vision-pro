@@ -1,4 +1,4 @@
-// Newsletter Backend Service - separated from contact service
+﻿// Newsletter Backend Service - separated from contact service
 import { getDefaultHeaders } from './http';
 
 export interface ApiResponse {
@@ -27,7 +27,7 @@ export const subscribeToNewsletter = async (email: string, source: string = 'foo
     }
     return await response.json();
   } catch (error) {
-    console.error('❌ Newsletter subscribe API error:', error);
+    console.error(' Newsletter subscribe API error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Failed to subscribe' };
   }
 };
@@ -46,7 +46,7 @@ export const registerPushToken = async (token: string, email?: string): Promise<
     if (!response.ok) throw new Error(json.message || `HTTP ${response.status}`);
     return json;
   } catch (error) {
-    console.error('❌ Register push token error:', error);
+    console.error(' Register push token error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Failed to register push token' };
   }
 };
@@ -67,7 +67,7 @@ export const autoPublishUpdate = async (version: string, title: string, body: st
     if (!response.ok) throw new Error(json.message || `HTTP ${response.status}`);
     return json;
   } catch (error) {
-    console.error('❌ Auto-publish API error:', error);
+    console.error(' Auto-publish API error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Failed to auto-publish' };
   }
 };
@@ -84,7 +84,7 @@ export const trackEvent = async (data: { type?: string; category?: string; email
     if (!response.ok) throw new Error(json.message || `HTTP ${response.status}`);
     return json;
   } catch (error) {
-    console.error('❌ trackEvent API error:', error);
+    console.error(' trackEvent API error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Failed to track event' };
   }
 };

@@ -1,8 +1,8 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function testAdminCRUD() {
   try {
-    console.log('🧪 Testing Admin CRUD Operations...');
+    console.log(' Testing Admin CRUD Operations...');
     
     // Step 1: Login to get session cookie
     console.log('\n1. Logging in as admin...');
@@ -20,7 +20,7 @@ async function testAdminCRUD() {
     const cookies = loginResponse.headers['set-cookie'];
     const cookieHeader = cookies ? cookies.join('; ') : '';
     
-    console.log('✅ Admin login successful');
+    console.log(' Admin login successful');
     
     // Step 2: Test creating a new user via admin API
     console.log('\n2. Testing user creation via admin API...');
@@ -37,11 +37,11 @@ async function testAdminCRUD() {
     });
     
     if (userResponse.data.success) {
-      console.log('✅ User created successfully via admin panel');
+      console.log(' User created successfully via admin panel');
       console.log('   User ID:', userResponse.data.user.id);
       console.log('   User Name:', userResponse.data.user.name);
     } else {
-      console.log('❌ User creation failed:', userResponse.data.message);
+      console.log(' User creation failed:', userResponse.data.message);
     }
     
     // Step 3: Test creating a parking spot via admin API
@@ -62,11 +62,11 @@ async function testAdminCRUD() {
     });
     
     if (spotResponse.data.success) {
-      console.log('✅ Parking spot created successfully via admin panel');
+      console.log(' Parking spot created successfully via admin panel');
       console.log('   Spot ID:', spotResponse.data.spot.id);
       console.log('   Spot Number:', spotResponse.data.spot.spotNumber);
     } else {
-      console.log('❌ Parking spot creation failed:', spotResponse.data.message);
+      console.log(' Parking spot creation failed:', spotResponse.data.message);
     }
     
     // Step 4: Test creating a vehicle via admin API
@@ -88,28 +88,28 @@ async function testAdminCRUD() {
     });
     
     if (vehicleResponse.data.success) {
-      console.log('✅ Vehicle created successfully via admin panel');
+      console.log(' Vehicle created successfully via admin panel');
       console.log('   Vehicle ID:', vehicleResponse.data.vehicle.id);
       console.log('   License Plate:', vehicleResponse.data.vehicle.licensePlate);
     } else {
-      console.log('❌ Vehicle creation failed:', vehicleResponse.data.message);
+      console.log(' Vehicle creation failed:', vehicleResponse.data.message);
     }
     
-    console.log('\n🎉 Admin CRUD Test Results:');
+    console.log('\n Admin CRUD Test Results:');
     console.log('============================');
-    console.log('✅ Admin login: WORKING');
-    console.log('✅ User creation via admin: WORKING');
-    console.log('✅ Parking spot creation via admin: WORKING');
-    console.log('✅ Vehicle creation via admin: WORKING');
-    console.log('✅ All data is being saved to MongoDB');
+    console.log(' Admin login: WORKING');
+    console.log(' User creation via admin: WORKING');
+    console.log(' Parking spot creation via admin: WORKING');
+    console.log(' Vehicle creation via admin: WORKING');
+    console.log(' All data is being saved to MongoDB');
     
-    console.log('\n🌐 Access the admin panel at:');
+    console.log('\n Access the admin panel at:');
     console.log('http://localhost:8080/admin/login');
     console.log('Email: john.manager@vayaccess.com');
     console.log('Password: Manager@123');
     
   } catch (error) {
-    console.error('❌ Admin CRUD test failed:', error.response?.data || error.message);
+    console.error(' Admin CRUD test failed:', error.response?.data || error.message);
   }
 }
 

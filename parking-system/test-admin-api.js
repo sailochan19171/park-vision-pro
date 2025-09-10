@@ -1,11 +1,11 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const axios = require('axios');
 
 const BASE_URL = 'http://localhost:8080';
 
 async function testAdminAPI() {
   try {
-    console.log('🧪 Testing Admin API Endpoints...');
+    console.log(' Testing Admin API Endpoints...');
     
     // Test 1: Login first to get session
     console.log('\n1. Testing Admin Login...');
@@ -31,7 +31,7 @@ async function testAdminAPI() {
       throw new Error('No session cookie received');
     }
     
-    console.log('✅ Login successful, session cookie:', sessionCookie.split(';')[0]);
+    console.log(' Login successful, session cookie:', sessionCookie.split(';')[0]);
     
     // Test 2: Get Users API
     console.log('\n2. Testing Get Users API...');
@@ -111,10 +111,10 @@ async function testAdminAPI() {
     console.log('Create Parking Spot Status:', createSpotResponse.status);
     console.log('Create Parking Spot Response:', JSON.stringify(createSpotResponse.data, null, 2));
     
-    console.log('\n✅ All API tests completed successfully!');
+    console.log('\n All API tests completed successfully!');
     
   } catch (error) {
-    console.error('\n❌ API Test Error:', error.message);
+    console.error('\n API Test Error:', error.message);
     if (error.response) {
       console.error('Response Status:', error.response.status);
       console.error('Response Data:', error.response.data);

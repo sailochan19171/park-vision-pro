@@ -1,4 +1,4 @@
-// MongoDB-Connected Admin Dashboard Server
+﻿// MongoDB-Connected Admin Dashboard Server
 // Port: 8080
 // Serves admin dashboard with real MongoDB data
 
@@ -20,15 +20,15 @@ const Booking = require('./models/Booking');
 const app = express();
 const PORT = process.env.ADMIN_PORT || 8080;
 
-console.log('🚀 Starting MongoDB-Connected Admin Server on port:', PORT);
+console.log(' Starting MongoDB-Connected Admin Server on port:', PORT);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+.then(() => console.log(' MongoDB connected successfully'))
+.catch(err => console.error(' MongoDB connection error:', err));
 
 // Handlebars setup
 app.engine('handlebars', engine({
@@ -562,9 +562,9 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ MongoDB-Connected Admin Server running on http://localhost:${PORT}/admin/`);
-  console.log(`📊 Dashboard: http://localhost:${PORT}/admin/dashboard`);
-  console.log(`🔐 Login: http://localhost:${PORT}/admin/login`);
+  console.log(` MongoDB-Connected Admin Server running on http://localhost:${PORT}/admin/`);
+  console.log(` Dashboard: http://localhost:${PORT}/admin/dashboard`);
+  console.log(` Login: http://localhost:${PORT}/admin/login`);
 });
 
 module.exports = app;

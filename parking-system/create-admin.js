@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Create Admin User Script
  * This script creates an admin user directly in the database
  */
@@ -9,14 +9,14 @@ const User = require('./models/User');
 
 async function createAdminUser() {
   try {
-    console.log('🔧 Creating Admin User...\n');
+    console.log(' Creating Admin User...\n');
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({ 
@@ -25,11 +25,11 @@ async function createAdminUser() {
     });
 
     if (existingAdmin) {
-      console.log('⚠️  Admin user already exists:');
+      console.log('  Admin user already exists:');
       console.log(`   Email: ${existingAdmin.email}`);
       console.log(`   Name: ${existingAdmin.name}`);
       console.log(`   Role: ${existingAdmin.role}`);
-      console.log('\n🔐 Use these credentials to login:');
+      console.log('\n Use these credentials to login:');
       console.log('   Email: admin@vayaccess.com');
       console.log('   Password: Admin@123');
       return;
@@ -53,19 +53,19 @@ async function createAdminUser() {
 
     await adminUser.save();
 
-    console.log('✅ Admin user created successfully!');
-    console.log('\n👤 Admin Details:');
+    console.log(' Admin user created successfully!');
+    console.log('\n Admin Details:');
     console.log(`   Name: ${adminUser.name}`);
     console.log(`   Email: ${adminUser.email}`);
     console.log(`   Phone: ${adminUser.phone}`);
     console.log(`   Role: ${adminUser.role}`);
     console.log(`   Status: ${adminUser.status}`);
 
-    console.log('\n🔐 Login Credentials:');
+    console.log('\n Login Credentials:');
     console.log('   Email: admin@vayaccess.com');
     console.log('   Password: Admin@123');
 
-    console.log('\n🌐 Access Admin Dashboard:');
+    console.log('\n Access Admin Dashboard:');
     console.log('   URL: http://localhost:8080/admin/login');
 
     // Create a second admin for testing
@@ -86,26 +86,26 @@ async function createAdminUser() {
 
     await managerUser.save();
 
-    console.log('\n✅ Manager user created successfully!');
-    console.log('\n👤 Manager Details:');
+    console.log('\n Manager user created successfully!');
+    console.log('\n Manager Details:');
     console.log(`   Name: ${managerUser.name}`);
     console.log(`   Email: ${managerUser.email}`);
     console.log(`   Role: ${managerUser.role}`);
 
-    console.log('\n🔐 Manager Login Credentials:');
+    console.log('\n Manager Login Credentials:');
     console.log('   Email: john.manager@vayaccess.com');
     console.log('   Password: Manager@123');
 
-    console.log('\n🎉 Admin setup completed successfully!');
+    console.log('\n Admin setup completed successfully!');
 
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    console.error(' Error creating admin user:', error);
     if (error.code === 11000) {
-      console.log('💡 Admin user might already exist. Try logging in with existing credentials.');
+      console.log(' Admin user might already exist. Try logging in with existing credentials.');
     }
   } finally {
     await mongoose.disconnect();
-    console.log('\n👋 Disconnected from MongoDB');
+    console.log('\n Disconnected from MongoDB');
   }
 }
 

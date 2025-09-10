@@ -1,11 +1,11 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const axios = require('axios');
 
 const BASE_URL = 'http://localhost:8080';
 
 async function testAdminPanel() {
   try {
-    console.log('🧪 Testing Admin Panel Endpoints...');
+    console.log(' Testing Admin Panel Endpoints...');
     
     // Login first
     const loginResponse = await axios.post(`${BASE_URL}/admin/login`, {
@@ -22,7 +22,7 @@ async function testAdminPanel() {
     const cookies = loginResponse.headers['set-cookie'];
     const sessionCookie = cookies ? cookies.find(cookie => cookie.startsWith('connect.sid')) : null;
     
-    console.log('✅ Login successful');
+    console.log(' Login successful');
     
     // Test all the endpoints that were failing
     const endpoints = [
@@ -39,12 +39,12 @@ async function testAdminPanel() {
         const response = await axios.get(`${BASE_URL}${endpoint}`, {
           headers: { 'Cookie': sessionCookie }
         });
-        console.log(`✅ ${endpoint}: ${response.status} - ${response.data.success ? 'SUCCESS' : 'FAILED'}`);
+        console.log(` ${endpoint}: ${response.status} - ${response.data.success ? 'SUCCESS' : 'FAILED'}`);
         if (endpoint === '/api/admin/parking') {
           console.log(`   Data: ${JSON.stringify(response.data.data)}`);
         }
       } catch (error) {
-        console.log(`❌ ${endpoint}: ${error.response?.status || 'ERROR'} - ${error.message}`);
+        console.log(` ${endpoint}: ${error.response?.status || 'ERROR'} - ${error.message}`);
       }
     }
     
@@ -59,22 +59,22 @@ async function testAdminPanel() {
       '/admin/logs'
     ];
     
-    console.log('\n📄 Testing Page Routes:');
+    console.log('\n Testing Page Routes:');
     for (const route of pageRoutes) {
       try {
         const response = await axios.get(`${BASE_URL}${route}`, {
           headers: { 'Cookie': sessionCookie }
         });
-        console.log(`✅ ${route}: ${response.status}`);
+        console.log(` ${route}: ${response.status}`);
       } catch (error) {
-        console.log(`❌ ${route}: ${error.response?.status || 'ERROR'}`);
+        console.log(` ${route}: ${error.response?.status || 'ERROR'}`);
       }
     }
     
-    console.log('\n✅ Admin panel endpoint tests completed!');
+    console.log('\n Admin panel endpoint tests completed!');
     
   } catch (error) {
-    console.error('\n❌ Admin Panel Test Error:', error.message);
+    console.error('\n Admin Panel Test Error:', error.message);
     if (error.response) {
       console.error('Response Status:', error.response.status);
       console.error('Response Data:', error.response.data);

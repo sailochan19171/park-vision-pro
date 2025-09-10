@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Button } from './ui/button';
 import { ArrowRight, Phone, Mail, Calendar } from 'lucide-react';
 
@@ -140,7 +140,7 @@ const CTASection = () => {
             {/* <div className="mt-12 inline-flex items-center gap-3 bg-green-500/10 border border-green-400/30 px-6 py-3 rounded-full"> */}
               {/* <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div> */}
               {/* <span className="text-green-300 font-medium"> */}
-                {/* ✓ Free Consultation • ✓ Custom Design • ✓ 2-Year Warranty */}
+                {/*  Free Consultation •  Custom Design •  2-Year Warranty */}
               {/* </span> */}
             {/* </div> */}
           </div>

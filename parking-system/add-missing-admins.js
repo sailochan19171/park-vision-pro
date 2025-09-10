@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Script to add missing admin users
  */
 
@@ -26,14 +26,14 @@ const User = mongoose.model('User', userSchema);
 
 async function addMissingAdmins() {
   try {
-    console.log('🔗 Connecting to MongoDB...');
+    console.log(' Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Create Super Admin if not exists
     let superAdmin = await User.findOne({ email: 'admin@vayaccess.com' });
     if (!superAdmin) {
-      console.log('🔧 Creating Super Admin...');
+      console.log(' Creating Super Admin...');
       const superAdminPassword = await bcrypt.hash('Admin@123', 10);
       superAdmin = new User({
         name: 'Super Admin',
@@ -47,15 +47,15 @@ async function addMissingAdmins() {
         updatedAt: new Date()
       });
       await superAdmin.save();
-      console.log('✅ Super Admin created: admin@vayaccess.com / Admin@123');
+      console.log(' Super Admin created: admin@vayaccess.com / Admin@123');
     } else {
-      console.log('ℹ️  Super Admin already exists');
+      console.log('ℹ  Super Admin already exists');
     }
     
     // Create Manager if not exists
     let manager = await User.findOne({ email: 'john.manager@vayaccess.com' });
     if (!manager) {
-      console.log('🔧 Creating Manager...');
+      console.log(' Creating Manager...');
       const managerPassword = await bcrypt.hash('User@123', 10);
       manager = new User({
         name: 'John Manager',
@@ -69,20 +69,20 @@ async function addMissingAdmins() {
         updatedAt: new Date()
       });
       await manager.save();
-      console.log('✅ Manager created: john.manager@vayaccess.com / User@123');
+      console.log(' Manager created: john.manager@vayaccess.com / User@123');
     } else {
-      console.log('ℹ️  Manager already exists');
+      console.log('ℹ  Manager already exists');
     }
 
     // List all admin users
-    console.log('\n📋 All admin users:');
+    console.log('\n All admin users:');
     const admins = await User.find({ role: 'admin' }, 'name email isActive');
     admins.forEach(admin => {
       console.log(`   - ${admin.name} (${admin.email}) - ${admin.isActive ? 'Active' : 'Inactive'}`);
     });
 
     // Test login for each admin
-    console.log('\n🧪 Testing admin logins...');
+    console.log('\n Testing admin logins...');
     
     const testCases = [
       { email: 'admin@vayaccess.com', password: 'Admin@123', name: 'Super Admin' },
@@ -94,17 +94,17 @@ async function addMissingAdmins() {
       const user = await User.findOne({ email: testCase.email });
       if (user) {
         const passwordMatch = await bcrypt.compare(testCase.password, user.password);
-        console.log(`${passwordMatch ? '✅' : '❌'} ${testCase.name}: ${testCase.email} / ${testCase.password} - ${passwordMatch ? 'VALID' : 'INVALID'}`);
+        console.log(`${passwordMatch ? '' : ''} ${testCase.name}: ${testCase.email} / ${testCase.password} - ${passwordMatch ? 'VALID' : 'INVALID'}`);
       } else {
-        console.log(`❌ ${testCase.name}: User not found`);
+        console.log(` ${testCase.name}: User not found`);
       }
     }
 
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error(' Error:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('\n🔌 Disconnected from MongoDB');
+    console.log('\n Disconnected from MongoDB');
   }
 }
 

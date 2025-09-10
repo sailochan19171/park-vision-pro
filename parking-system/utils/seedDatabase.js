@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Database Seeding Script
  * Run with: node utils/seedDatabase.js
  */
@@ -15,30 +15,30 @@ const Booking = require('../models/Booking');
 
 const seedDatabase = async () => {
   try {
-    console.log('🚀 Starting database seeding...');
+    console.log(' Starting database seeding...');
 
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Clear existing data
     const clearData = process.argv.includes('--clear');
     if (clearData) {
-      console.log('🗑️ Clearing existing data...');
+      console.log(' Clearing existing data...');
       await User.deleteMany({});
       await ParkingSpot.deleteMany({});
       await Vehicle.deleteMany({});
       await Booking.deleteMany({});
-      console.log('✅ Existing data cleared');
+      console.log(' Existing data cleared');
     }
 
     // Create Super Admin
     const existingSuperAdmin = await User.findOne({ role: 'super_admin' });
     if (!existingSuperAdmin) {
-      console.log('👤 Creating super admin...');
+      console.log(' Creating super admin...');
       const superAdmin = new User({
         name: 'Super Admin',
         email: 'admin@vayaccess.com',
@@ -48,7 +48,7 @@ const seedDatabase = async () => {
         status: 'active'
       });
       await superAdmin.save();
-      console.log('✅ Super admin created');
+      console.log(' Super admin created');
     }
 
     // Create Admin Users
@@ -74,7 +74,7 @@ const seedDatabase = async () => {
       if (!existingAdmin) {
         const admin = new User(adminData);
         await admin.save();
-        console.log(`✅ Admin user created: ${adminData.email}`);
+        console.log(` Admin user created: ${adminData.email}`);
       }
     }
 
@@ -125,7 +125,7 @@ const seedDatabase = async () => {
         const user = new User(userData);
         await user.save();
         createdUsers.push(user);
-        console.log(`✅ User created: ${userData.email}`);
+        console.log(` User created: ${userData.email}`);
       } else {
         createdUsers.push(existingUser);
       }
@@ -245,7 +245,7 @@ const seedDatabase = async () => {
         const spot = new ParkingSpot(spotData);
         await spot.save();
         createdSpots.push(spot);
-        console.log(`✅ Parking spot created: ${spotData.spotNumber}`);
+        console.log(` Parking spot created: ${spotData.spotNumber}`);
       } else {
         createdSpots.push(existingSpot);
       }
@@ -338,7 +338,7 @@ const seedDatabase = async () => {
           { $push: { vehicles: vehicle._id } }
         );
         
-        console.log(`✅ Vehicle created: ${vehicleData.licensePlate}`);
+        console.log(` Vehicle created: ${vehicleData.licensePlate}`);
       } else {
         createdVehicles.push(existingVehicle);
       }
@@ -383,11 +383,11 @@ const seedDatabase = async () => {
         { $push: { bookings: booking._id } }
       );
       
-      console.log(`✅ Sample booking created: ${booking.bookingId}`);
+      console.log(` Sample booking created: ${booking.bookingId}`);
     }
 
-    console.log('🎉 Database seeding completed successfully!');
-    console.log('\n📋 Summary:');
+    console.log(' Database seeding completed successfully!');
+    console.log('\n Summary:');
     console.log('- Super Admin: admin@vayaccess.com (Admin@123)');
     console.log('- Admin Users: john.manager@vayaccess.com, sarah.admin@vayaccess.com');
     console.log('- Regular Users: alice@example.com, bob@example.com, carol@example.com');
@@ -397,11 +397,11 @@ const seedDatabase = async () => {
     console.log('- Sample bookings and logs created');
 
   } catch (error) {
-    console.error('❌ Database seeding failed:', error);
+    console.error(' Database seeding failed:', error);
     process.exit(1);
   } finally {
     await mongoose.disconnect();
-    console.log('📦 Database connection closed');
+    console.log(' Database connection closed');
     process.exit(0);
   }
 };
@@ -409,7 +409,7 @@ const seedDatabase = async () => {
 // Check command line arguments
 if (process.argv.includes('--help')) {
   console.log(`
-🌱 Database Seeding Script
+ Database Seeding Script
 
 Usage: node utils/seedDatabase.js [options]
 

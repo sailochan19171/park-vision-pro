@@ -1,8 +1,8 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function quickApiTest() {
   try {
-    console.log('🔍 QUICK API TEST');
+    console.log(' QUICK API TEST');
     console.log('=================');
     
     // Login
@@ -32,20 +32,20 @@ async function quickApiTest() {
         });
         
         if (response.status === 200 && response.data.success) {
-          console.log(`✅ ${endpoint}: Working`);
+          console.log(` ${endpoint}: Working`);
         } else {
-          console.log(`❌ ${endpoint}: Failed`);
+          console.log(` ${endpoint}: Failed`);
         }
       } catch (error) {
-        console.log(`❌ ${endpoint}: Error - ${error.response?.status || error.message}`);
+        console.log(` ${endpoint}: Error - ${error.response?.status || error.message}`);
       }
     }
     
-    console.log('\n🎉 All API endpoints are ready!');
+    console.log('\n All API endpoints are ready!');
     console.log('Your admin panel should now work without 404 errors.');
     
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
+    console.error(' Test failed:', error.message);
   }
 }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Button } from './ui/button';
 import { Settings, Cookie, RefreshCw } from 'lucide-react';
 import { useCookieConsent, cookieUtils } from '../hooks/use-cookie-consent';
@@ -22,25 +22,25 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({ onOpenConsent }) => {
       case 'accepted_all':
         return (
           <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-            ✅ All Cookies Accepted
+             All Cookies Accepted
           </span>
         );
       case 'necessary_only':
         return (
           <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-            ⚠️ Necessary Only
+             Necessary Only
           </span>
         );
       case 'rejected':
         return (
           <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-            ❌ Cookies Rejected
+             Cookies Rejected
           </span>
         );
       default:
         return (
           <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium">
-            ❓ No Preference Set
+             No Preference Set
           </span>
         );
     }
@@ -132,7 +132,7 @@ const CookieSettings: React.FC<CookieSettingsProps> = ({ onOpenConsent }) => {
 
         {/* Information */}
         <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded-lg">
-          <p className="font-medium text-blue-900 mb-1">ℹ️ About Cookies</p>
+          <p className="font-medium text-blue-900 mb-1">ℹ About Cookies</p>
           <p>
             Cookies help us provide you with a better experience by remembering your preferences, 
             analyzing site usage, and delivering relevant content. You can change these settings 

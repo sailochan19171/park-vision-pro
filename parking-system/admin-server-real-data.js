@@ -1,4 +1,4 @@
-// Complete Admin Dashboard Server with REAL DATA STORE
+﻿// Complete Admin Dashboard Server with REAL DATA STORE
 // Port: 8080
 // This version uses actual admin-created data instead of mock data
 
@@ -12,7 +12,7 @@ const { engine } = require('express-handlebars');
 const app = express();
 const PORT = process.env.ADMIN_PORT || 8080;
 
-console.log('🚀 Starting Complete Admin Server with REAL DATA STORE on port:', PORT);
+console.log(' Starting Complete Admin Server with REAL DATA STORE on port:', PORT);
 
 // ===== REAL IN-MEMORY DATA STORE =====
 // This holds all the actual data created by admins and gets updated dynamically
@@ -341,7 +341,7 @@ function addActivity(type, message, status = 'info', userId = null, createdBy = 
     dataStore.recentActivity = dataStore.recentActivity.slice(0, 50);
   }
   
-  console.log('📝 New activity added:', activity.message);
+  console.log(' New activity added:', activity.message);
   return activity;
 }
 
@@ -385,8 +385,8 @@ function calculateStats() {
   };
 }
 
-console.log('✅ REAL Data store initialized with live data');
-console.log('📊 Current stats:', calculateStats());
+console.log(' REAL Data store initialized with live data');
+console.log(' Current stats:', calculateStats());
 
 // Handlebars configuration
 app.engine('handlebars', engine({
@@ -452,7 +452,7 @@ function requireAdminAuth(req, res, next) {
   if (req.session && req.session.admin) {
     return next();
   } else {
-    console.log('❌ Unauthorized access attempt to:', req.path);
+    console.log(' Unauthorized access attempt to:', req.path);
     if (req.path.startsWith('/api/')) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     } else {
@@ -492,11 +492,11 @@ app.post('/admin/login', (req, res) => {
         role: admin.role
       };
       
-      console.log('✅ Admin login successful:', normalizedEmail);
+      console.log(' Admin login successful:', normalizedEmail);
       addActivity('login', `Admin ${admin.name} logged in`, 'success', null, admin.email);
       return res.redirect('/admin/dashboard');
     } else {
-      console.log('❌ Invalid credentials for:', normalizedEmail);
+      console.log(' Invalid credentials for:', normalizedEmail);
       return res.render('login', {
         title: 'Admin Login - VayAccess',
         layout: 'auth',
@@ -505,7 +505,7 @@ app.post('/admin/login', (req, res) => {
       });
     }
   } catch (error) {
-    console.error('🚨 Admin login error:', error);
+    console.error(' Admin login error:', error);
     return res.render('login', {
       title: 'Admin Login - VayAccess',
       layout: 'auth',
@@ -521,7 +521,7 @@ app.post('/admin/logout', (req, res) => {
     if (err) {
       console.error('Logout error:', err);
     }
-    console.log('🔓 Admin logged out:', adminName);
+    console.log(' Admin logged out:', adminName);
     res.redirect('/admin/login');
   });
 });
@@ -556,7 +556,7 @@ adminPages.forEach(page => {
 // Dashboard API - returns real calculated stats
 app.get('/api/admin/dashboard', requireAdminAuth, (req, res) => {
   try {
-    console.log('📊 Dashboard API called by:', req.session.admin.email);
+    console.log(' Dashboard API called by:', req.session.admin.email);
     
     const stats = calculateStats();
     
@@ -581,10 +581,10 @@ app.get('/api/admin/dashboard', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('📊 Returning REAL dashboard stats:', stats);
+    console.log(' Returning REAL dashboard stats:', stats);
     res.json(dashboardData);
   } catch (error) {
-    console.error('🚨 Dashboard API error:', error);
+    console.error(' Dashboard API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error loading dashboard data',
@@ -596,7 +596,7 @@ app.get('/api/admin/dashboard', requireAdminAuth, (req, res) => {
 // Users API - returns real user data
 app.get('/api/admin/users', requireAdminAuth, (req, res) => {
   try {
-    console.log('👥 Users API called by:', req.session.admin.email);
+    console.log(' Users API called by:', req.session.admin.email);
     
     const usersData = {
       success: true,
@@ -606,10 +606,10 @@ app.get('/api/admin/users', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('👥 Returning real users data:', dataStore.users.length, 'users');
+    console.log(' Returning real users data:', dataStore.users.length, 'users');
     res.json(usersData);
   } catch (error) {
-    console.error('❌ Users API error:', error);
+    console.error(' Users API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error loading users data',
@@ -621,7 +621,7 @@ app.get('/api/admin/users', requireAdminAuth, (req, res) => {
 // Parking API - returns real parking data
 app.get('/api/admin/parking', requireAdminAuth, (req, res) => {
   try {
-    console.log('🅿️ Parking API called by:', req.session.admin.email);
+    console.log(' Parking API called by:', req.session.admin.email);
     
     const parkingData = {
       success: true,
@@ -635,10 +635,10 @@ app.get('/api/admin/parking', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('🅿️ Returning real parking data:', dataStore.parkingSpots.length, 'spots');
+    console.log(' Returning real parking data:', dataStore.parkingSpots.length, 'spots');
     res.json(parkingData);
   } catch (error) {
-    console.error('❌ Parking API error:', error);
+    console.error(' Parking API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error loading parking data',
@@ -650,7 +650,7 @@ app.get('/api/admin/parking', requireAdminAuth, (req, res) => {
 // Parking spots specific API
 app.get('/api/admin/parking/spots', requireAdminAuth, (req, res) => {
   try {
-    console.log('🅿️ Parking spots API called by:', req.session.admin.email);
+    console.log(' Parking spots API called by:', req.session.admin.email);
     
     const spotsData = {
       success: true,
@@ -666,10 +666,10 @@ app.get('/api/admin/parking/spots', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('🅿️ Returning real parking spots:', dataStore.parkingSpots.length, 'spots');
+    console.log(' Returning real parking spots:', dataStore.parkingSpots.length, 'spots');
     res.json(spotsData);
   } catch (error) {
-    console.error('❌ Parking spots API error:', error);
+    console.error(' Parking spots API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error loading parking spots data',
@@ -684,7 +684,7 @@ app.post('/api/admin/parking/spots', requireAdminAuth, (req, res) => {
     const { level, section, number, rate } = req.body;
     const adminEmail = req.session.admin.email;
     
-    console.log('🅿️ Creating new parking spot:', req.body, 'by:', adminEmail);
+    console.log(' Creating new parking spot:', req.body, 'by:', adminEmail);
     
     // Validate input
     if (!level || !section || !number) {
@@ -727,7 +727,7 @@ app.post('/api/admin/parking/spots', requireAdminAuth, (req, res) => {
     // Add activity
     addActivity('admin', `New parking spot ${spotId} created by admin`, 'success', null, adminEmail);
     
-    console.log('✅ Parking spot created successfully:', spotId);
+    console.log(' Parking spot created successfully:', spotId);
     
     res.json({
       success: true,
@@ -735,7 +735,7 @@ app.post('/api/admin/parking/spots', requireAdminAuth, (req, res) => {
       data: newSpot
     });
   } catch (error) {
-    console.error('❌ Create parking spot API error:', error);
+    console.error(' Create parking spot API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error creating parking spot',
@@ -751,7 +751,7 @@ app.put('/api/admin/parking/spots/:spotId', requireAdminAuth, (req, res) => {
     const { status, vehicle, customer, rate } = req.body;
     const adminEmail = req.session.admin.email;
     
-    console.log('🅿️ Updating parking spot:', spotId, 'data:', req.body, 'by:', adminEmail);
+    console.log(' Updating parking spot:', spotId, 'data:', req.body, 'by:', adminEmail);
     
     // Find the spot
     const spotIndex = dataStore.parkingSpots.findIndex(s => s.id === spotId);
@@ -783,9 +783,9 @@ app.put('/api/admin/parking/spots/:spotId', requireAdminAuth, (req, res) => {
     spot.updatedBy = adminEmail;
     
     // Add activity
-    addActivity('admin', `Parking spot ${spotId} updated: ${oldStatus} → ${status} by admin`, 'info', null, adminEmail);
+    addActivity('admin', `Parking spot ${spotId} updated: ${oldStatus}  ${status} by admin`, 'info', null, adminEmail);
     
-    console.log('✅ Parking spot updated successfully:', spotId);
+    console.log(' Parking spot updated successfully:', spotId);
     
     res.json({
       success: true,
@@ -793,7 +793,7 @@ app.put('/api/admin/parking/spots/:spotId', requireAdminAuth, (req, res) => {
       data: spot
     });
   } catch (error) {
-    console.error('❌ Update parking spot API error:', error);
+    console.error(' Update parking spot API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error updating parking spot',
@@ -827,10 +827,10 @@ app.get('/api/admin/bookings', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('📅 Returning real bookings data:', dataStore.bookings.length, 'bookings');
+    console.log(' Returning real bookings data:', dataStore.bookings.length, 'bookings');
     res.json(bookingsData);
   } catch (error) {
-    console.error('❌ Bookings API error:', error);
+    console.error(' Bookings API error:', error);
     res.status(500).json({ success: false, message: 'Error loading bookings data', error: error.message });
   }
 });
@@ -883,8 +883,8 @@ app.post('/api/admin/bookings', requireAdminAuth, (req, res) => {
       ip: req.ip || 'unknown'
     });
     
-    console.log('✅ Booking created successfully:', newBooking.id);
-    console.log('📊 Total bookings now:', dataStore.bookings.length);
+    console.log(' Booking created successfully:', newBooking.id);
+    console.log(' Total bookings now:', dataStore.bookings.length);
     
     res.json({ 
       success: true, 
@@ -892,7 +892,7 @@ app.post('/api/admin/bookings', requireAdminAuth, (req, res) => {
       data: newBooking 
     });
   } catch (error) {
-    console.error('❌ Create booking error:', error);
+    console.error(' Create booking error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error creating booking', 
@@ -918,7 +918,7 @@ app.put('/api/admin/bookings/:id', requireAdminAuth, (req, res) => {
     dataStore.bookings[bookingIndex].status = status;
     dataStore.bookings[bookingIndex].updatedAt = new Date().toISOString();
     
-    console.log('✅ Booking updated:', id, 'status:', status);
+    console.log(' Booking updated:', id, 'status:', status);
     
     res.json({
       success: true,
@@ -926,7 +926,7 @@ app.put('/api/admin/bookings/:id', requireAdminAuth, (req, res) => {
       data: dataStore.bookings[bookingIndex]
     });
   } catch (error) {
-    console.error('❌ Update booking error:', error);
+    console.error(' Update booking error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error updating booking', 
@@ -950,7 +950,7 @@ app.delete('/api/admin/bookings/:id', requireAdminAuth, (req, res) => {
     
     const deletedBooking = dataStore.bookings.splice(bookingIndex, 1)[0];
     
-    console.log('✅ Booking deleted:', id);
+    console.log(' Booking deleted:', id);
     
     res.json({
       success: true,
@@ -958,7 +958,7 @@ app.delete('/api/admin/bookings/:id', requireAdminAuth, (req, res) => {
       data: deletedBooking
     });
   } catch (error) {
-    console.error('❌ Delete booking error:', error);
+    console.error(' Delete booking error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error deleting booking', 
@@ -978,10 +978,10 @@ app.get('/api/admin/vehicles', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('🚗 Returning real vehicles data:', dataStore.vehicles.length, 'vehicles');
+    console.log(' Returning real vehicles data:', dataStore.vehicles.length, 'vehicles');
     res.json(vehiclesData);
   } catch (error) {
-    console.error('❌ Vehicles API error:', error);
+    console.error(' Vehicles API error:', error);
     res.status(500).json({ success: false, message: 'Error loading vehicles data', error: error.message });
   }
 });
@@ -1038,8 +1038,8 @@ app.post('/api/admin/vehicles', requireAdminAuth, (req, res) => {
       ip: req.ip || 'unknown'
     });
     
-    console.log('✅ Vehicle created successfully:', newVehicle.licensePlate);
-    console.log('📊 Total vehicles now:', dataStore.vehicles.length);
+    console.log(' Vehicle created successfully:', newVehicle.licensePlate);
+    console.log(' Total vehicles now:', dataStore.vehicles.length);
     
     res.json({ 
       success: true, 
@@ -1047,7 +1047,7 @@ app.post('/api/admin/vehicles', requireAdminAuth, (req, res) => {
       data: newVehicle 
     });
   } catch (error) {
-    console.error('❌ Create vehicle error:', error);
+    console.error(' Create vehicle error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error creating vehicle', 
@@ -1077,10 +1077,10 @@ app.get('/api/admin/payments', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('💳 Returning real payments data: ₹' + totalRevenue + ' total revenue');
+    console.log(' Returning real payments data: ₹' + totalRevenue + ' total revenue');
     res.json(paymentsData);
   } catch (error) {
-    console.error('❌ Payments API error:', error);
+    console.error(' Payments API error:', error);
     res.status(500).json({ success: false, message: 'Error loading payments data', error: error.message });
   }
 });
@@ -1106,17 +1106,17 @@ app.get('/api/admin/ai-call-recordings', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('🤖 Returning real AI call data:', dataStore.aiCalls.length, 'calls');
+    console.log(' Returning real AI call data:', dataStore.aiCalls.length, 'calls');
     res.json(aiCallData);
   } catch (error) {
-    console.error('❌ AI Call Recordings API error:', error);
+    console.error(' AI Call Recordings API error:', error);
     res.status(500).json({ success: false, message: 'Error loading AI call recordings', error: error.message });
   }
 });
 
 // Error handlers
 app.use((req, res) => {
-  console.log('❌ Page not found:', req.path);
+  console.log(' Page not found:', req.path);
   res.status(404).render('404', {
     title: '404 - Page Not Found',
     admin: req.session ? req.session.admin : null,
@@ -1125,7 +1125,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error('🚨 Server error:', err.stack);
+  console.error(' Server error:', err.stack);
   
   if (req.path.startsWith('/api/')) {
     res.status(500).json({
@@ -1145,9 +1145,9 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ Complete Admin Server with REAL DATA STORE running on http://localhost:${PORT}`);
+  console.log(` Complete Admin Server with REAL DATA STORE running on http://localhost:${PORT}`);
   console.log('');
-  console.log('🔗 Admin Pages Available:');
+  console.log(' Admin Pages Available:');
   console.log('   Login: http://localhost:' + PORT + '/admin/login');
   console.log('   Dashboard: http://localhost:' + PORT + '/admin/dashboard');
   console.log('   Users: http://localhost:' + PORT + '/admin/users');
@@ -1162,12 +1162,12 @@ app.listen(PORT, () => {
   console.log('   Logs: http://localhost:' + PORT + '/admin/logs');
   console.log('   Manage Admins: http://localhost:' + PORT + '/admin/manage-admins');
   console.log('');
-  console.log('🔐 Demo Credentials:');
+  console.log(' Demo Credentials:');
   console.log('   admin@vayaccess.com / Admin@123');
   console.log('   john.manager@vayaccess.com / User@123');
   console.log('   demo@vayaccess.com / Demo@123');
   console.log('');
-  console.log('🚀 API Endpoints with REAL DATA:');
+  console.log(' API Endpoints with REAL DATA:');
   console.log('   GET /api/admin/dashboard - Live stats');
   console.log('   GET /api/admin/users - Real user data');
   console.log('   GET /api/admin/parking - Real parking data');
@@ -1179,7 +1179,7 @@ app.listen(PORT, () => {
   console.log('   GET /api/admin/payments - Real payment data');
   console.log('   GET /api/admin/ai-call-recordings - Real AI call data');
   console.log('');
-  console.log('📊 Current System Stats:');
+  console.log(' Current System Stats:');
   const currentStats = calculateStats();
   console.log('   Users:', currentStats.totalUsers);
   console.log('   Parking Spots:', currentStats.totalSpots);

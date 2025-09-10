@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useToast } from "../hooks/use-toast";
@@ -32,7 +32,7 @@ const Products: React.FC<ProductsProps> = ({ showPrices = true }) => {
       setScrollY(window.scrollY);
       // Debug log to confirm parallax is working
       if (window.scrollY % 100 === 0) {
-        console.log('🎯 Parallax Active - Scroll Y:', window.scrollY);
+        console.log(' Parallax Active - Scroll Y:', window.scrollY);
       }
     };
 

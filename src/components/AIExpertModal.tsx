@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Input } from './ui/input';
@@ -45,15 +45,15 @@ const AIExpertModal: React.FC<AIExpertModalProps> = ({ isOpen, onClose }) => {
       role: 'assistant',
       timestamp: new Date(),
       options: [
-        { id: 'quote', label: '📝 Get a Quote', action: 'message', value: 'I need a quote' },
-        { id: 'products', label: '📦 Products', action: 'message', value: 'Show me your products' },
-        { id: 'solutions', label: '🧭 Solutions', action: 'message', value: 'Show me your solutions' },
-        { id: 'compare', label: '⚖️ Compare', action: 'message', value: 'Compare barrier gates and turnstiles' },
-        { id: 'demo', label: '🎥 Request Demo', action: 'message', value: 'I want a product demo' },
-        { id: 'install', label: '🛠️ Installation timeline', action: 'message', value: 'What is the installation timeline?' },
-        { id: 'integration', label: '🔗 Integrations', action: 'message', value: 'Do you integrate with existing systems?' },
-        { id: 'callback', label: '📞 Request a Callback', action: 'message', value: 'Request a callback' },
-        { id: 'locations', label: '📍 Locations', action: 'message', value: 'Where do you operate?' }
+        { id: 'quote', label: ' Get a Quote', action: 'message', value: 'I need a quote' },
+        { id: 'products', label: ' Products', action: 'message', value: 'Show me your products' },
+        { id: 'solutions', label: ' Solutions', action: 'message', value: 'Show me your solutions' },
+        { id: 'compare', label: ' Compare', action: 'message', value: 'Compare barrier gates and turnstiles' },
+        { id: 'demo', label: ' Request Demo', action: 'message', value: 'I want a product demo' },
+        { id: 'install', label: ' Installation timeline', action: 'message', value: 'What is the installation timeline?' },
+        { id: 'integration', label: ' Integrations', action: 'message', value: 'Do you integrate with existing systems?' },
+        { id: 'callback', label: ' Request a Callback', action: 'message', value: 'Request a callback' },
+        { id: 'locations', label: ' Locations', action: 'message', value: 'Where do you operate?' }
       ]
     }
   ]);
@@ -278,8 +278,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
         role: 'assistant',
         timestamp: new Date(),
         options: [
-          { id: 'share-email', label: '✉️ Share email', action: 'message', value: 'My email is ' },
-          { id: 'browse-products', label: '📦 Browse products', action: 'message', value: 'Show me your products' },
+          { id: 'share-email', label: ' Share email', action: 'message', value: 'My email is ' },
+          { id: 'browse-products', label: ' Browse products', action: 'message', value: 'Show me your products' },
         ]
       };
       setMessages(prev => [...prev, confirmCb]);
@@ -320,8 +320,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
         role: 'assistant',
         timestamp: new Date(),
         options: [
-          { id: 'view-products', label: '📦 View more products', action: 'message', value: 'Show me your products' },
-          { id: 'ask-more', label: '❓ Ask another question', action: 'message', value: 'I have another question' },
+          { id: 'view-products', label: ' View more products', action: 'message', value: 'Show me your products' },
+          { id: 'ask-more', label: ' Ask another question', action: 'message', value: 'I have another question' },
         ],
       };
       setAwaitingContact(false);
@@ -356,9 +356,9 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'products', label: '📦 View Products', action: 'message', value: 'Show me your products' },
-            { id: 'contact-phone', label: '📞 Call Sales', action: 'phone', value: '+91 720 724 4344' },
-            { id: 'contact-email', label: '✉️ Email Sales', action: 'email', value: 'info@vayaccess.com' }
+            { id: 'products', label: ' View Products', action: 'message', value: 'Show me your products' },
+            { id: 'contact-phone', label: ' Call Sales', action: 'phone', value: '+91 720 724 4344' },
+            { id: 'contact-email', label: ' Email Sales', action: 'email', value: 'info@vayaccess.com' }
           ],
           cards: getCardsForQuery(originalUserInput)
         };
@@ -377,8 +377,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           timestamp: new Date(),
           cards,
           options: [
-            { id: 'solutions', label: '🧭 Solutions', action: 'message', value: 'Show me your solutions' },
-            { id: 'compare', label: '⚖️ Compare', action: 'message', value: 'Compare barrier gates and turnstiles' },
+            { id: 'solutions', label: ' Solutions', action: 'message', value: 'Show me your solutions' },
+            { id: 'compare', label: ' Compare', action: 'message', value: 'Compare barrier gates and turnstiles' },
           ]
         };
         setMessages(prev => [...prev, msg]);
@@ -476,8 +476,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
             role: 'assistant',
             timestamp: new Date(),
             options: [
-              { id: 'buy-yes', label: '✅ Yes', action: 'message', value: 'Yes, I want to buy' },
-              { id: 'buy-no', label: '❌ No', action: 'message', value: 'No, not now' },
+              { id: 'buy-yes', label: ' Yes', action: 'message', value: 'Yes, I want to buy' },
+              { id: 'buy-no', label: ' No', action: 'message', value: 'No, not now' },
             ],
           };
           setMessages(prev => [...prev, askBuy]);
@@ -509,8 +509,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
             role: 'assistant',
             timestamp: new Date(),
             options: [
-              { id: 'buy-yes', label: '✅ Yes', action: 'message', value: 'Yes, I want to buy' },
-              { id: 'buy-no', label: '❌ No', action: 'message', value: 'No, not now' },
+              { id: 'buy-yes', label: ' Yes', action: 'message', value: 'Yes, I want to buy' },
+              { id: 'buy-no', label: ' No', action: 'message', value: 'No, not now' },
             ],
           };
           setMessages(prev => [...prev, askBuy]);
@@ -543,9 +543,9 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'explore-solutions', label: '🧭 Explore solutions', action: 'message', value: 'Show me your solutions' },
-            { id: 'compare-products', label: '⚖️ Compare products', action: 'message', value: 'Compare barrier gates and turnstiles' },
-            { id: 'subscribe', label: '🔔 Get updates', action: 'message', value: 'Subscribe me to updates' },
+            { id: 'explore-solutions', label: ' Explore solutions', action: 'message', value: 'Show me your solutions' },
+            { id: 'compare-products', label: ' Compare products', action: 'message', value: 'Compare barrier gates and turnstiles' },
+            { id: 'subscribe', label: ' Get updates', action: 'message', value: 'Subscribe me to updates' },
           ]
         };
         setAwaitingBuyConfirm(false);
@@ -563,9 +563,9 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'barrier-gates', label: '🚗 Barrier Gates', action: 'message', value: 'Show me barrier gates' },
-            { id: 'turnstiles', label: '🚶 Turnstiles', action: 'message', value: 'Show me turnstiles' },
-            { id: 'access-control', label: '🔐 Access Control', action: 'message', value: 'Tell me about access control' },
+            { id: 'barrier-gates', label: ' Barrier Gates', action: 'message', value: 'Show me barrier gates' },
+            { id: 'turnstiles', label: ' Turnstiles', action: 'message', value: 'Show me turnstiles' },
+            { id: 'access-control', label: ' Access Control', action: 'message', value: 'Tell me about access control' },
           ],
           cards: getCardsForQuery('barrier gates')
         };
@@ -581,8 +581,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'give-contacts', label: '📩 Share contacts', action: 'message', value: 'Here are my email and phone' },
-            { id: 'browse-products', label: '📦 Browse products', action: 'message', value: 'Show me your products' },
+            { id: 'give-contacts', label: ' Share contacts', action: 'message', value: 'Here are my email and phone' },
+            { id: 'browse-products', label: ' Browse products', action: 'message', value: 'Show me your products' },
           ],
         };
         setMessages(prev => [...prev, msg]);
@@ -597,8 +597,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'site-assessment', label: '📍 Request site assessment', action: 'message', value: 'I want a site assessment' },
-            { id: 'contact-sales', label: '📞 Contact sales', action: 'phone', value: '+91 720 724 4344' },
+            { id: 'site-assessment', label: ' Request site assessment', action: 'message', value: 'I want a site assessment' },
+            { id: 'contact-sales', label: ' Contact sales', action: 'phone', value: '+91 720 724 4344' },
           ],
         };
         setMessages(prev => [...prev, msg]);
@@ -613,9 +613,9 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'lpr', label: '📸 LPR Cameras', action: 'message', value: 'Integration with LPR cameras' },
-            { id: 'bms', label: '🏢 Building Mgmt', action: 'message', value: 'Integration with BMS' },
-            { id: 'payments', label: '💳 Payments', action: 'message', value: 'Integration with payment gateways' },
+            { id: 'lpr', label: ' LPR Cameras', action: 'message', value: 'Integration with LPR cameras' },
+            { id: 'bms', label: ' Building Mgmt', action: 'message', value: 'Integration with BMS' },
+            { id: 'payments', label: ' Payments', action: 'message', value: 'Integration with payment gateways' },
           ],
         };
         setMessages(prev => [...prev, msg]);
@@ -631,8 +631,8 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
           timestamp: new Date(),
           cards: expertSolutions,
           options: [
-            { id: 'request-demo', label: '🎥 Request demo', action: 'message', value: 'I want a product demo' },
-            { id: 'compare', label: '⚖️ Compare', action: 'message', value: 'Compare barrier gates and turnstiles' },
+            { id: 'request-demo', label: ' Request demo', action: 'message', value: 'I want a product demo' },
+            { id: 'compare', label: ' Compare', action: 'message', value: 'Compare barrier gates and turnstiles' },
           ]
         };
         setMessages(prev => [...prev, msg]);
@@ -681,14 +681,14 @@ const [awaitingBuyConfirm, setAwaitingBuyConfirm] = useState(false);
       if (containsPricingQuery) {
         const pricingResponse: Message = {
           id: (Date.now() + 1).toString(),
-          content: "I understand you're interested in pricing information. Our product prices and installation costs are not fixed as they vary significantly based on project requirements, site conditions, quantity needed, and customization requirements.\n\nFor accurate pricing and a customized quote, please contact our sales team:\n📞 Phone: +91 720 724 4344\n✉️ Email: info@vayaccess.com\n\nWe offer free site assessments and consultations to provide you with the most accurate pricing for your specific needs. What other technical specifications or product features would you like to know about?",
+          content: "I understand you're interested in pricing information. Our product prices and installation costs are not fixed as they vary significantly based on project requirements, site conditions, quantity needed, and customization requirements.\n\nFor accurate pricing and a customized quote, please contact our sales team:\n Phone: +91 720 724 4344\n Email: info@vayaccess.com\n\nWe offer free site assessments and consultations to provide you with the most accurate pricing for your specific needs. What other technical specifications or product features would you like to know about?",
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'contact-phone', label: '📞 Call Sales', action: 'phone', value: '+91 720 724 4344' },
-            { id: 'contact-email', label: '✉️ Email Sales', action: 'email', value: 'info@vayaccess.com' },
-            { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'Where do you operate?' },
-            { id: 'products', label: '📦 View Products', action: 'message', value: 'Show me your products' }
+            { id: 'contact-phone', label: ' Call Sales', action: 'phone', value: '+91 720 724 4344' },
+            { id: 'contact-email', label: ' Email Sales', action: 'email', value: 'info@vayaccess.com' },
+            { id: 'locations', label: ' Service Locations', action: 'message', value: 'Where do you operate?' },
+            { id: 'products', label: ' View Products', action: 'message', value: 'Show me your products' }
           ],
           cards: getCardsForQuery(originalUserInput)
         };
@@ -755,7 +755,7 @@ Guidelines for AI Expert consultation:
             temperature: 0.7,
             max_tokens: 1000
           });
-          console.log(`✅ AI Expert responded using Groq model: ${model}`);
+          console.log(` AI Expert responded using Groq model: ${model}`);
           break; // Success, exit the loop
         } catch (modelError: any) {
           console.log(`Model ${model} failed, trying next...`, modelError.message);
@@ -772,11 +772,11 @@ Guidelines for AI Expert consultation:
         role: 'assistant',
         timestamp: new Date(),
         options: [
-          { id: 'view-products', label: '📦 View Products', action: 'message', value: 'Show me your products' },
-          { id: 'ask-buy', label: '🛒 Interested to buy?', action: 'message', value: 'I want to buy' },
-          { id: 'service-locations', label: '📍 Service Locations', action: 'message', value: 'Where do you operate?' },
-          { id: 'call-sales', label: '📞 Call Sales', action: 'phone', value: '+91 720 724 4344' },
-          { id: 'email-sales', label: '✉️ Email Sales', action: 'email', value: 'info@vayaccess.com' }
+          { id: 'view-products', label: ' View Products', action: 'message', value: 'Show me your products' },
+          { id: 'ask-buy', label: ' Interested to buy?', action: 'message', value: 'I want to buy' },
+          { id: 'service-locations', label: ' Service Locations', action: 'message', value: 'Where do you operate?' },
+          { id: 'call-sales', label: ' Call Sales', action: 'phone', value: '+91 720 724 4344' },
+          { id: 'email-sales', label: ' Email Sales', action: 'email', value: 'info@vayaccess.com' }
         ],
         cards: getCardsForQuery(originalUserInput)
       };
@@ -816,7 +816,7 @@ Guidelines for AI Expert consultation:
               <PhoneCall className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">🤖 AI Expert Consultation</h2>
+              <h2 className="text-xl font-semibold"> AI Expert Consultation</h2>
               <div className="flex items-center gap-2 text-sm opacity-90">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span>Live AI Expert - Session: {sessionId.slice(-8)}</span>
@@ -861,7 +861,7 @@ Guidelines for AI Expert consultation:
                     }`}
                   >
                     <div className="text-xs opacity-70 mb-1">
-                      {message.role === 'user' ? 'You' : '🤖 AI Expert'} • {message.timestamp.toLocaleTimeString()}
+                      {message.role === 'user' ? 'You' : ' AI Expert'} • {message.timestamp.toLocaleTimeString()}
                     </div>
                     <div className="whitespace-pre-line text-sm leading-relaxed">
                       {message.content}
@@ -931,7 +931,7 @@ Guidelines for AI Expert consultation:
                     </AvatarFallback>
                   </Avatar>
                   <div className="bg-gray-100 rounded-lg p-3">
-                    <div className="text-xs opacity-70 mb-1">🤖 AI Expert • Analyzing...</div>
+                    <div className="text-xs opacity-70 mb-1"> AI Expert • Analyzing...</div>
                     <div className="flex items-center space-x-1">
                       <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -972,8 +972,8 @@ Guidelines for AI Expert consultation:
               <span>AI Expert Online • Powered by Groq</span>
             </div>
             <div className="hidden sm:flex items-center gap-4">
-              <span>📱 +91 720 724 4344</span>
-              <span>✉️ info@vayaccess.com</span>
+              <span> +91 720 724 4344</span>
+              <span> info@vayaccess.com</span>
             </div>
           </div>
         </div>

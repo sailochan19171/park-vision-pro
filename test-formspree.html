@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>Test Formspree Email</title>
@@ -23,19 +23,19 @@
                 body: JSON.stringify({
                     email: 'info@vayaccess.com',
                     name: 'Test User',
-                    subject: '🤖 Test Chatbot Email - ' + new Date().toLocaleString(),
-                    message: `🤖 TEST CHATBOT CONVERSATION
+                    subject: ' Test Chatbot Email - ' + new Date().toLocaleString(),
+                    message: ` TEST CHATBOT CONVERSATION
 
 This is a test email to verify the chatbot email system is working.
 
-📊 Test Details:
+ Test Details:
 • Timestamp: ${new Date().toLocaleString()}
 • Source: Manual Test
 
-❓ USER QUESTION:
+ USER QUESTION:
 "What are your barrier gate prices?"
 
-🤖 BOT RESPONSE:
+ BOT RESPONSE:
 "Our barrier gates range from $3,500-8,500 depending on features..."
 
 ---
@@ -50,16 +50,16 @@ This is a test email from the VayBot Assistant.`,
             
             if (response.ok) {
                 const data = await response.text();
-                resultDiv.textContent = '✅ SUCCESS! Email sent to info@vayaccess.com\n\nResponse: ' + data;
-                console.log('✅ Success:', data);
+                resultDiv.textContent = ' SUCCESS! Email sent to info@vayaccess.com\n\nResponse: ' + data;
+                console.log(' Success:', data);
             } else {
                 const errorText = await response.text();
-                resultDiv.textContent = '❌ FAILED!\n\nStatus: ' + response.status + '\nError: ' + errorText;
-                console.error('❌ Failed:', response.status, errorText);
+                resultDiv.textContent = ' FAILED!\n\nStatus: ' + response.status + '\nError: ' + errorText;
+                console.error(' Failed:', response.status, errorText);
             }
         } catch (error) {
-            resultDiv.textContent = '❌ NETWORK ERROR: ' + error.message;
-            console.error('❌ Network error:', error);
+            resultDiv.textContent = ' NETWORK ERROR: ' + error.message;
+            console.error(' Network error:', error);
         }
     }
     </script>

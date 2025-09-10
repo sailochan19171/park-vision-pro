@@ -1,8 +1,8 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function quickAdminTest() {
   try {
-    console.log('🧪 QUICK ADMIN PANEL TEST');
+    console.log(' QUICK ADMIN PANEL TEST');
     console.log('=========================');
     
     // Test login
@@ -19,7 +19,7 @@ async function quickAdminTest() {
     
     const cookies = loginResponse.headers['set-cookie'];
     const cookieHeader = cookies ? cookies.join('; ') : '';
-    console.log('✅ Admin login successful');
+    console.log(' Admin login successful');
     
     // Test dashboard
     console.log('2. Testing dashboard access...');
@@ -28,7 +28,7 @@ async function quickAdminTest() {
     });
     
     if (dashboardResponse.status === 200) {
-      console.log('✅ Dashboard accessible with MongoDB data');
+      console.log(' Dashboard accessible with MongoDB data');
     }
     
     // Test all admin pages
@@ -43,29 +43,29 @@ async function quickAdminTest() {
         });
         
         if (response.status === 200) {
-          console.log(`✅ ${page.charAt(0).toUpperCase() + page.slice(1)} page working`);
+          console.log(` ${page.charAt(0).toUpperCase() + page.slice(1)} page working`);
         }
       } catch (error) {
-        console.log(`❌ ${page} page failed`);
+        console.log(` ${page} page failed`);
       }
     }
     
-    console.log('\n🎉 ADMIN PANEL STATUS:');
+    console.log('\n ADMIN PANEL STATUS:');
     console.log('======================');
-    console.log('✅ Server running on http://localhost:8080');
-    console.log('✅ MongoDB connection working');
-    console.log('✅ Admin authentication working');
-    console.log('✅ All pages accessible with real data');
-    console.log('✅ Ready for use!');
+    console.log(' Server running on http://localhost:8080');
+    console.log(' MongoDB connection working');
+    console.log(' Admin authentication working');
+    console.log(' All pages accessible with real data');
+    console.log(' Ready for use!');
     
-    console.log('\n🌐 ACCESS YOUR ADMIN PANEL:');
+    console.log('\n ACCESS YOUR ADMIN PANEL:');
     console.log('============================');
     console.log('URL: http://localhost:8080/admin/login');
     console.log('Email: john.manager@vayaccess.com');
     console.log('Password: Manager@123');
     
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
+    console.error(' Test failed:', error.message);
   }
 }
 

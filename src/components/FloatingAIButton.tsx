@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button } from './ui/button';
 import { useToast } from '../hooks/use-toast';
 import AICallModal from './AICallModal';
@@ -17,7 +17,7 @@ const FloatingAIButton = () => {
     
     // Track engagement
     toast({
-      title: "🤖 Chat Started!",
+      title: " Chat Started!",
       description: "Ask me about access control systems",
       duration: 2000
     });

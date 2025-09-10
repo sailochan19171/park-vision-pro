@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Seed Database with Sample Data
  * Run this script to populate the database with sample data for testing
  */
@@ -77,17 +77,17 @@ const Payment = mongoose.model('Payment', paymentSchema);
 
 async function seedDatabase() {
   try {
-    console.log('🌱 Connecting to MongoDB...');
+    console.log(' Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Clear existing data
-    console.log('🧹 Clearing existing data...');
+    console.log(' Clearing existing data...');
     await mongoose.connection.db.dropDatabase();
-    console.log('✅ Database cleared');
+    console.log(' Database cleared');
 
     // Create Users
-    console.log('👥 Creating users...');
+    console.log(' Creating users...');
     const hashedPassword = await bcrypt.hash('User@123', 10);
     
     const users = await User.insertMany([
@@ -114,10 +114,10 @@ async function seedDatabase() {
       }
     ]);
 
-    console.log(`✅ Created ${users.length} users`);
+    console.log(` Created ${users.length} users`);
 
     // Create Parking Spots
-    console.log('🅿️ Creating parking spots...');
+    console.log(' Creating parking spots...');
     const parkingSpots = await ParkingSpot.insertMany([
       {
         spotNumber: 'A001',
@@ -156,10 +156,10 @@ async function seedDatabase() {
       }
     ]);
 
-    console.log(`✅ Created ${parkingSpots.length} parking spots`);
+    console.log(` Created ${parkingSpots.length} parking spots`);
 
     // Create Vehicles
-    console.log('🚗 Creating vehicles...');
+    console.log(' Creating vehicles...');
     const vehicles = await Vehicle.insertMany([
       {
         licensePlate: 'KA-01-AB-1234',
@@ -195,10 +195,10 @@ async function seedDatabase() {
       }
     ]);
 
-    console.log(`✅ Created ${vehicles.length} vehicles`);
+    console.log(` Created ${vehicles.length} vehicles`);
 
     // Create Bookings
-    console.log('📅 Creating bookings...');
+    console.log(' Creating bookings...');
     const now = new Date();
     const bookings = await Booking.insertMany([
       {
@@ -236,10 +236,10 @@ async function seedDatabase() {
       }
     ]);
 
-    console.log(`✅ Created ${bookings.length} bookings`);
+    console.log(` Created ${bookings.length} bookings`);
 
     // Create Payments
-    console.log('💳 Creating payments...');
+    console.log(' Creating payments...');
     const payments = await Payment.insertMany([
       {
         bookingId: bookings[0]._id,
@@ -270,26 +270,26 @@ async function seedDatabase() {
       }
     ]);
 
-    console.log(`✅ Created ${payments.length} payments`);
+    console.log(` Created ${payments.length} payments`);
 
-    console.log('🎉 Database seeded successfully!');
-    console.log('\n📊 Summary:');
-    console.log(`👥 Users: ${users.length}`);
-    console.log(`🚗 Vehicles: ${vehicles.length}`);
-    console.log(`🅿️ Parking Spots: ${parkingSpots.length}`);
-    console.log(`📅 Bookings: ${bookings.length}`);
-    console.log(`💳 Payments: ${payments.length}`);
+    console.log(' Database seeded successfully!');
+    console.log('\n Summary:');
+    console.log(` Users: ${users.length}`);
+    console.log(` Vehicles: ${vehicles.length}`);
+    console.log(` Parking Spots: ${parkingSpots.length}`);
+    console.log(` Bookings: ${bookings.length}`);
+    console.log(` Payments: ${payments.length}`);
 
-    console.log('\n🔐 Test Login Credentials:');
+    console.log('\n Test Login Credentials:');
     console.log('Email: alice@example.com | Password: User@123');
     console.log('Email: bob@example.com | Password: User@123');
     console.log('Email: john@example.com | Password: User@123');
 
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error(' Error seeding database:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('👋 Disconnected from MongoDB');
+    console.log(' Disconnected from MongoDB');
     process.exit(0);
   }
 }

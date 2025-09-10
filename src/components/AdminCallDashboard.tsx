@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -113,7 +113,7 @@ const CallDetailsModal = ({ recording, isOpen, onClose }: CallDetailsModalProps)
           {/* Call summary */}
           {recording.summary && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h3 className="font-semibold text-blue-900 mb-2">📋 Call Summary</h3>
+              <h3 className="font-semibold text-blue-900 mb-2"> Call Summary</h3>
               <p className="text-blue-800 leading-relaxed">{recording.summary}</p>
             </div>
           )}
@@ -248,7 +248,7 @@ const AdminCallDashboard = () => {
   const handleNewCall = (data: any) => {
     console.log('New call initialized:', data);
     toast({
-      title: "New Call Started 📞",
+      title: "New Call Started ",
       description: `Customer ${data.customerPhone} started an AI call session`,
       duration: 5000
     });
@@ -257,7 +257,7 @@ const AdminCallDashboard = () => {
   const handleCallEnded = (data: any) => {
     console.log('Call ended:', data);
     toast({
-      title: "Call Completed ✅",
+      title: "Call Completed ",
       description: `Call session ${data.sessionId.split('_')[1]} has ended`,
       duration: 5000
     });
@@ -328,7 +328,7 @@ const AdminCallDashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">📞 AI Call Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900"> AI Call Dashboard</h1>
           <p className="text-gray-600">Monitor and manage AI call agent interactions</p>
         </div>
         <Button onClick={handleRefresh} variant="outline">

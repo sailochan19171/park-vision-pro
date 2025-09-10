@@ -1,4 +1,4 @@
-<div class="container-fluid py-4">
+﻿<div class="container-fluid py-4">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Dashboard Overview</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
@@ -199,7 +199,7 @@
         <div class="col-12 mb-4">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">🤖 AI Call Agent Recordings</h6>
+                    <h6 class="m-0 font-weight-bold text-primary"> AI Call Agent Recordings</h6>
                     <div class="d-flex align-items-center">
                         <span class="badge bg-info me-2" id="aiCallCount">0 Calls</span>
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshAICallRecordings()">
@@ -1082,7 +1082,7 @@ async function refreshAICallRecordings() {
         alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
         alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
         alert.innerHTML = `
-            ✅ AI call recordings synced successfully!
+             AI call recordings synced successfully!
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         document.body.appendChild(alert);
@@ -1115,7 +1115,7 @@ function viewCallTranscript(sessionId) {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
-                            🤖 AI Call Transcript - ${recording.customerName || 'Anonymous'}
+                             AI Call Transcript - ${recording.customerName || 'Anonymous'}
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>

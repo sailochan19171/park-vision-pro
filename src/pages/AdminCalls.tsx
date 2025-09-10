@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCallDashboard from '../components/AdminCallDashboard';
 import Header from '../components/Header';
@@ -36,7 +36,7 @@ const AdminCalls = () => {
       setIsAuthenticated(true);
       sessionStorage.setItem('vayaccess_admin_auth', 'authenticated');
       toast({
-        title: "Access Granted 🎉",
+        title: "Access Granted ",
         description: "Welcome to VayAccess AI Call Dashboard",
         duration: 3000
       });
@@ -137,7 +137,7 @@ const AdminCalls = () => {
                   onClick={() => navigate('/')}
                   className="text-blue-600 hover:text-blue-500 text-sm"
                 >
-                  ← Back to Homepage
+                   Back to Homepage
                 </button>
               </div>
             </form>
@@ -207,19 +207,19 @@ const AdminCalls = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">AI Call Service</span>
-                <span className="text-sm text-green-600 font-medium">🟢 Online</span>
+                <span className="text-sm text-green-600 font-medium"> Online</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Voice Recognition</span>
-                <span className="text-sm text-green-600 font-medium">🟢 Active</span>
+                <span className="text-sm text-green-600 font-medium"> Active</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Recording System</span>
-                <span className="text-sm text-green-600 font-medium">🟢 Recording</span>
+                <span className="text-sm text-green-600 font-medium"> Recording</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Database</span>
-                <span className="text-sm text-green-600 font-medium">🟢 Connected</span>
+                <span className="text-sm text-green-600 font-medium"> Connected</span>
               </div>
             </div>
           </div>
@@ -232,7 +232,7 @@ const AdminCalls = () => {
                 className="w-full justify-start"
                 onClick={() => window.location.reload()}
               >
-                🔄 Refresh Dashboard
+                 Refresh Dashboard
               </Button>
               <Button 
                 variant="outline" 
@@ -243,14 +243,14 @@ const AdminCalls = () => {
                   duration: 3000
                 })}
               >
-                📊 Export Call Data
+                 Export Call Data
               </Button>
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
                 onClick={() => navigate('/admin/settings')}
               >
-                ⚙️ System Settings
+                 System Settings
               </Button>
             </div>
           </div>

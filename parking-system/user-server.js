@@ -1,4 +1,4 @@
-/**
+﻿/**
  * User Dashboard Server
  * Port: 3002
  * Serves user dashboard with authentication
@@ -25,10 +25,10 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/parkin
 
 mongoose.connect(MONGODB_URI)
   .then(() => {
-    console.log('✅ MongoDB connected successfully to User Server');
+    console.log(' MongoDB connected successfully to User Server');
   })
   .catch((error) => {
-    console.error('❌ MongoDB connection error:', error);
+    console.error(' MongoDB connection error:', error);
     process.exit(1);
   });
 
@@ -1645,7 +1645,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`👤 User Dashboard running on http://localhost:${PORT}`);
+  console.log(` User Dashboard running on http://localhost:${PORT}`);
 });
 
 module.exports = app;

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Comprehensive Activity Logging Test
  * Tests all admin and user dashboard operations to ensure they're logged in MongoDB
  */
@@ -25,9 +25,9 @@ let testSpotId = '';
 async function connectToMongoDB() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+    console.error(' MongoDB connection failed:', error);
     process.exit(1);
   }
 }
@@ -37,15 +37,15 @@ async function clearPreviousLogs() {
     const result = await ActivityLog.deleteMany({
       timestamp: { $gte: new Date(Date.now() - 60000) } // Last minute
     });
-    console.log(`🧹 Cleared ${result.deletedCount} previous test logs`);
+    console.log(` Cleared ${result.deletedCount} previous test logs`);
   } catch (error) {
-    console.error('❌ Error clearing logs:', error);
+    console.error(' Error clearing logs:', error);
   }
 }
 
 async function loginAsAdmin() {
   try {
-    console.log('\n🔐 Testing Admin Login...');
+    console.log('\n Testing Admin Login...');
     
     const response = await axios.post(`${ADMIN_BASE_URL}/api/admin/login`, {
       email: 'admin@vayaccess.com',
@@ -54,7 +54,7 @@ async function loginAsAdmin() {
     
     if (response.data.success) {
       adminSessionCookie = response.headers['set-cookie']?.[0] || '';
-      console.log('✅ Admin login successful');
+      console.log(' Admin login successful');
       
       // Check if login was logged
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for logging
@@ -64,20 +64,20 @@ async function loginAsAdmin() {
       });
       
       if (loginLog) {
-        console.log('✅ Admin login activity logged to MongoDB');
+        console.log(' Admin login activity logged to MongoDB');
       } else {
-        console.log('❌ Admin login activity NOT logged');
+        console.log(' Admin login activity NOT logged');
       }
     } else {
       throw new Error('Admin login failed');
     }
   } catch (error) {
-    console.error('❌ Admin login error:', error.message);
+    console.error(' Admin login error:', error.message);
   }
 }
 
 async function testAdminOperations() {
-  console.log('\n📊 Testing Admin Dashboard Operations...');
+  console.log('\n Testing Admin Dashboard Operations...');
   
   const adminAxios = axios.create({
     baseURL: ADMIN_BASE_URL,
@@ -151,7 +151,7 @@ async function testAdminOperations() {
   
   for (const operation of operations) {
     try {
-      console.log(`\n🔄 Testing: ${operation.name}`);
+      console.log(`\n Testing: ${operation.name}`);
       
       let response;
       if (operation.method === 'GET') {
@@ -163,7 +163,7 @@ async function testAdminOperations() {
       }
       
       if (response.data.success !== false) {
-        console.log(`✅ ${operation.name} API call successful`);
+        console.log(` ${operation.name} API call successful`);
         
         // Store IDs for later operations
         if (operation.name === 'Create User' && response.data.user) {
@@ -178,23 +178,23 @@ async function testAdminOperations() {
         });
         
         if (activityLog) {
-          console.log(`✅ ${operation.name} activity logged to MongoDB`);
-          console.log(`   📝 Action: ${activityLog.action}, Status: ${activityLog.responseStatus}, Duration: ${activityLog.duration}ms`);
+          console.log(` ${operation.name} activity logged to MongoDB`);
+          console.log(`    Action: ${activityLog.action}, Status: ${activityLog.responseStatus}, Duration: ${activityLog.duration}ms`);
         } else {
-          console.log(`❌ ${operation.name} activity NOT logged`);
+          console.log(` ${operation.name} activity NOT logged`);
         }
       } else {
-        console.log(`⚠️ ${operation.name} API call failed:`, response.data.message);
+        console.log(` ${operation.name} API call failed:`, response.data.message);
       }
     } catch (error) {
-      console.log(`❌ ${operation.name} error:`, error.response?.data?.message || error.message);
+      console.log(` ${operation.name} error:`, error.response?.data?.message || error.message);
     }
   }
 }
 
 async function registerTestUser() {
   try {
-    console.log('\n👤 Testing User Registration...');
+    console.log('\n Testing User Registration...');
     
     const userData = {
       name: 'Test User Activity',
@@ -207,7 +207,7 @@ async function registerTestUser() {
     const response = await axios.post(`${USER_BASE_URL}/api/user/register`, userData);
     
     if (response.data.success) {
-      console.log('✅ User registration successful');
+      console.log(' User registration successful');
       
       // Check if registration was logged
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -217,9 +217,9 @@ async function registerTestUser() {
       });
       
       if (regLog) {
-        console.log('✅ User registration activity logged to MongoDB');
+        console.log(' User registration activity logged to MongoDB');
       } else {
-        console.log('❌ User registration activity NOT logged');
+        console.log(' User registration activity NOT logged');
       }
       
       return userData;
@@ -227,14 +227,14 @@ async function registerTestUser() {
       throw new Error('User registration failed');
     }
   } catch (error) {
-    console.error('❌ User registration error:', error.response?.data?.message || error.message);
+    console.error(' User registration error:', error.response?.data?.message || error.message);
     return null;
   }
 }
 
 async function loginAsUser(userData) {
   try {
-    console.log('\n🔐 Testing User Login...');
+    console.log('\n Testing User Login...');
     
     const response = await axios.post(`${USER_BASE_URL}/api/user/login`, {
       email: userData.email,
@@ -243,7 +243,7 @@ async function loginAsUser(userData) {
     
     if (response.data.success) {
       userSessionCookie = response.headers['set-cookie']?.[0] || '';
-      console.log('✅ User login successful');
+      console.log(' User login successful');
       
       // Check if login was logged
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -253,20 +253,20 @@ async function loginAsUser(userData) {
       });
       
       if (loginLog) {
-        console.log('✅ User login activity logged to MongoDB');
+        console.log(' User login activity logged to MongoDB');
       } else {
-        console.log('❌ User login activity NOT logged');
+        console.log(' User login activity NOT logged');
       }
     } else {
       throw new Error('User login failed');
     }
   } catch (error) {
-    console.error('❌ User login error:', error.response?.data?.message || error.message);
+    console.error(' User login error:', error.response?.data?.message || error.message);
   }
 }
 
 async function testUserOperations() {
-  console.log('\n👤 Testing User Dashboard Operations...');
+  console.log('\n Testing User Dashboard Operations...');
   
   const userAxios = axios.create({
     baseURL: USER_BASE_URL,
@@ -328,7 +328,7 @@ async function testUserOperations() {
   
   for (const operation of operations) {
     try {
-      console.log(`\n🔄 Testing: ${operation.name}`);
+      console.log(`\n Testing: ${operation.name}`);
       
       let response;
       if (operation.method === 'GET') {
@@ -338,7 +338,7 @@ async function testUserOperations() {
       }
       
       if (response.data.success !== false) {
-        console.log(`✅ ${operation.name} API call successful`);
+        console.log(` ${operation.name} API call successful`);
         
         // Wait and check if logged
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -348,22 +348,22 @@ async function testUserOperations() {
         });
         
         if (activityLog) {
-          console.log(`✅ ${operation.name} activity logged to MongoDB`);
-          console.log(`   📝 Action: ${activityLog.action}, Status: ${activityLog.responseStatus}, Duration: ${activityLog.duration}ms`);
+          console.log(` ${operation.name} activity logged to MongoDB`);
+          console.log(`    Action: ${activityLog.action}, Status: ${activityLog.responseStatus}, Duration: ${activityLog.duration}ms`);
         } else {
-          console.log(`❌ ${operation.name} activity NOT logged`);
+          console.log(` ${operation.name} activity NOT logged`);
         }
       } else {
-        console.log(`⚠️ ${operation.name} API call failed:`, response.data.message);
+        console.log(` ${operation.name} API call failed:`, response.data.message);
       }
     } catch (error) {
-      console.log(`❌ ${operation.name} error:`, error.response?.data?.message || error.message);
+      console.log(` ${operation.name} error:`, error.response?.data?.message || error.message);
     }
   }
 }
 
 async function generateActivityReport() {
-  console.log('\n📊 Generating Activity Report...');
+  console.log('\n Generating Activity Report...');
   
   try {
     const totalLogs = await ActivityLog.countDocuments({
@@ -390,14 +390,14 @@ async function generateActivityReport() {
       timestamp: { $gte: new Date(Date.now() - 300000) }
     });
     
-    console.log('\n📈 ACTIVITY LOGGING REPORT:');
+    console.log('\n ACTIVITY LOGGING REPORT:');
     console.log('================================');
-    console.log(`📊 Total Activities Logged: ${totalLogs}`);
-    console.log(`👨‍💼 Admin Activities: ${adminLogs}`);
-    console.log(`👤 User Activities: ${userLogs}`);
-    console.log(`✅ Successful Operations: ${successfulLogs}`);
-    console.log(`❌ Failed Operations: ${failedLogs}`);
-    console.log(`📈 Success Rate: ${totalLogs > 0 ? ((successfulLogs / totalLogs) * 100).toFixed(2) : 0}%`);
+    console.log(` Total Activities Logged: ${totalLogs}`);
+    console.log(` Admin Activities: ${adminLogs}`);
+    console.log(` User Activities: ${userLogs}`);
+    console.log(` Successful Operations: ${successfulLogs}`);
+    console.log(` Failed Operations: ${failedLogs}`);
+    console.log(` Success Rate: ${totalLogs > 0 ? ((successfulLogs / totalLogs) * 100).toFixed(2) : 0}%`);
     
     // Show recent activities
     const recentActivities = await ActivityLog.find({
@@ -407,23 +407,23 @@ async function generateActivityReport() {
     .sort({ timestamp: -1 })
     .limit(10);
     
-    console.log('\n🕒 Recent Activities:');
+    console.log('\n Recent Activities:');
     console.log('====================');
     recentActivities.forEach((activity, index) => {
       console.log(`${index + 1}. ${activity.action} - ${activity.userRole} - ${activity.responseStatus} - ${activity.duration}ms`);
-      console.log(`   📧 User: ${activity.userEmail}`);
-      console.log(`   🌐 Endpoint: ${activity.method} ${activity.endpoint}`);
-      console.log(`   ⏰ Time: ${activity.timestamp.toLocaleString()}`);
+      console.log(`    User: ${activity.userEmail}`);
+      console.log(`    Endpoint: ${activity.method} ${activity.endpoint}`);
+      console.log(`    Time: ${activity.timestamp.toLocaleString()}`);
       console.log('');
     });
     
   } catch (error) {
-    console.error('❌ Error generating report:', error);
+    console.error(' Error generating report:', error);
   }
 }
 
 async function testActivityLogAPIs() {
-  console.log('\n🔍 Testing Activity Log APIs...');
+  console.log('\n Testing Activity Log APIs...');
   
   const adminAxios = axios.create({
     baseURL: ADMIN_BASE_URL,
@@ -436,29 +436,29 @@ async function testActivityLogAPIs() {
     // Test activity logs endpoint
     const logsResponse = await adminAxios.get('/api/admin/activity-logs?limit=10');
     if (logsResponse.data.success) {
-      console.log(`✅ Activity Logs API working - Found ${logsResponse.data.data.logs.length} logs`);
+      console.log(` Activity Logs API working - Found ${logsResponse.data.data.logs.length} logs`);
     }
     
     // Test activity stats endpoint
     const statsResponse = await adminAxios.get('/api/admin/activity-stats');
     if (statsResponse.data.success) {
-      console.log('✅ Activity Stats API working');
-      console.log(`   📊 Total Activities: ${statsResponse.data.data.summary.totalActivities}`);
+      console.log(' Activity Stats API working');
+      console.log(`    Total Activities: ${statsResponse.data.data.summary.totalActivities}`);
     }
     
     // Test export endpoint
     const exportResponse = await adminAxios.get('/api/admin/export-activity-logs?format=json&limit=5');
     if (exportResponse.data.success) {
-      console.log(`✅ Export Activity Logs API working - Exported ${exportResponse.data.data.length} records`);
+      console.log(` Export Activity Logs API working - Exported ${exportResponse.data.data.length} records`);
     }
     
   } catch (error) {
-    console.error('❌ Activity Log APIs error:', error.response?.data?.message || error.message);
+    console.error(' Activity Log APIs error:', error.response?.data?.message || error.message);
   }
 }
 
 async function runTests() {
-  console.log('🚀 Starting Comprehensive Activity Logging Test');
+  console.log(' Starting Comprehensive Activity Logging Test');
   console.log('===============================================');
   
   await connectToMongoDB();
@@ -481,11 +481,11 @@ async function runTests() {
   // Generate Report
   await generateActivityReport();
   
-  console.log('\n✅ Activity Logging Test Completed!');
+  console.log('\n Activity Logging Test Completed!');
   console.log('=====================================');
-  console.log('🔍 Check your MongoDB vay_parking_system database');
-  console.log('📊 Collection: activitylogs');
-  console.log('💡 All admin and user dashboard operations should be logged');
+  console.log(' Check your MongoDB vay_parking_system database');
+  console.log(' Collection: activitylogs');
+  console.log(' All admin and user dashboard operations should be logged');
   
   await mongoose.disconnect();
   process.exit(0);
@@ -493,7 +493,7 @@ async function runTests() {
 
 // Handle errors
 process.on('unhandledRejection', (error) => {
-  console.error('❌ Unhandled rejection:', error);
+  console.error(' Unhandled rejection:', error);
   process.exit(1);
 });
 

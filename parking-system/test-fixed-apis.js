@@ -1,8 +1,8 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function testFixedApis() {
   try {
-    console.log('🔧 TESTING FIXED API ENDPOINTS');
+    console.log(' TESTING FIXED API ENDPOINTS');
     console.log('===============================');
     
     // Login
@@ -18,7 +18,7 @@ async function testFixedApis() {
     
     const cookies = loginResponse.headers['set-cookie'];
     const cookieHeader = cookies ? cookies.join('; ') : '';
-    console.log('✅ Login successful');
+    console.log(' Login successful');
     
     // Test the specific endpoints that were failing
     const testEndpoints = [
@@ -29,7 +29,7 @@ async function testFixedApis() {
       { name: 'Dashboard', url: '/api/admin/dashboard' }
     ];
     
-    console.log('\n🔍 Testing previously failing endpoints...');
+    console.log('\n Testing previously failing endpoints...');
     
     for (const endpoint of testEndpoints) {
       try {
@@ -40,20 +40,20 @@ async function testFixedApis() {
         
         if (response.status === 200 && response.data.success) {
           if (response.data.data) {
-            console.log(`   ✅ ${endpoint.name}: Working (has data property)`);
+            console.log(`    ${endpoint.name}: Working (has data property)`);
           } else {
-            console.log(`   ✅ ${endpoint.name}: Working (direct response)`);
+            console.log(`    ${endpoint.name}: Working (direct response)`);
           }
         } else {
-          console.log(`   ❌ ${endpoint.name}: Failed - ${response.status}`);
+          console.log(`    ${endpoint.name}: Failed - ${response.status}`);
         }
       } catch (error) {
-        console.log(`   ❌ ${endpoint.name}: Error - ${error.response?.status || error.message}`);
+        console.log(`    ${endpoint.name}: Error - ${error.response?.status || error.message}`);
       }
     }
     
     // Test parking spot creation
-    console.log('\n🏗️ Testing parking spot creation...');
+    console.log('\n Testing parking spot creation...');
     try {
       const createResponse = await axios.post('http://localhost:8080/api/admin/parking/spots', {
         spotNumber: `TEST${Date.now()}`,
@@ -65,27 +65,27 @@ async function testFixedApis() {
       });
       
       if (createResponse.data.success) {
-        console.log('   ✅ Parking spot creation: Working');
+        console.log('    Parking spot creation: Working');
         
         // Clean up
         const spotId = createResponse.data.spot.id;
         await axios.delete(`http://localhost:8080/api/admin/parking/spots/${spotId}`, {
           headers: { 'Cookie': cookieHeader }
         });
-        console.log('   ✅ Parking spot deletion: Working');
+        console.log('    Parking spot deletion: Working');
       }
     } catch (error) {
-      console.log(`   ❌ Parking spot CRUD: Error - ${error.message}`);
+      console.log(`    Parking spot CRUD: Error - ${error.message}`);
     }
     
-    console.log('\n🎉 API FIXES COMPLETE!');
+    console.log('\n API FIXES COMPLETE!');
     console.log('======================');
-    console.log('✅ All API endpoints now match frontend expectations');
-    console.log('✅ Response formats corrected');
-    console.log('✅ Missing endpoints added');
-    console.log('✅ Frontend should work without errors');
+    console.log(' All API endpoints now match frontend expectations');
+    console.log(' Response formats corrected');
+    console.log(' Missing endpoints added');
+    console.log(' Frontend should work without errors');
     
-    console.log('\n🌐 ADMIN PANEL READY:');
+    console.log('\n ADMIN PANEL READY:');
     console.log('=====================');
     console.log('URL: http://localhost:8080/admin/login');
     console.log('Email: john.manager@vayaccess.com');
@@ -101,7 +101,7 @@ async function testFixedApis() {
     console.log('• Logs - Activity monitoring');
     
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
+    console.error(' Test failed:', error.message);
   }
 }
 

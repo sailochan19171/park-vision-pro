@@ -1,12 +1,12 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function testAllApis() {
   try {
-    console.log('🧪 TESTING ALL ADMIN API ENDPOINTS');
+    console.log(' TESTING ALL ADMIN API ENDPOINTS');
     console.log('===================================');
     
     // Step 1: Login to get session
-    console.log('1. 🔐 Logging in...');
+    console.log('1.  Logging in...');
     const loginResponse = await axios.post('http://localhost:8080/admin/login', {
       email: 'john.manager@vayaccess.com',
       password: 'Manager@123'
@@ -19,10 +19,10 @@ async function testAllApis() {
     
     const cookies = loginResponse.headers['set-cookie'];
     const cookieHeader = cookies ? cookies.join('; ') : '';
-    console.log('✅ Login successful');
+    console.log(' Login successful');
     
     // Step 2: Test all GET endpoints
-    console.log('\n2. 📊 Testing GET endpoints...');
+    console.log('\n2.  Testing GET endpoints...');
     
     const getEndpoints = [
       { name: 'Dashboard Stats', url: '/api/admin/dashboard' },
@@ -43,17 +43,17 @@ async function testAllApis() {
         
         if (response.status === 200 && response.data.success) {
           const count = response.data.total || response.data.stats?.totalUsers || 0;
-          console.log(`   ✅ ${endpoint.name}: Working (${count} items)`);
+          console.log(`    ${endpoint.name}: Working (${count} items)`);
         } else {
-          console.log(`   ❌ ${endpoint.name}: Failed - ${response.status}`);
+          console.log(`    ${endpoint.name}: Failed - ${response.status}`);
         }
       } catch (error) {
-        console.log(`   ❌ ${endpoint.name}: Error - ${error.message}`);
+        console.log(`    ${endpoint.name}: Error - ${error.message}`);
       }
     }
     
     // Step 3: Test POST endpoints (Create operations)
-    console.log('\n3. ➕ Testing POST endpoints...');
+    console.log('\n3.  Testing POST endpoints...');
     
     // Test user creation
     try {
@@ -67,7 +67,7 @@ async function testAllApis() {
       });
       
       if (createUserResponse.data.success) {
-        console.log('   ✅ User Creation: Working');
+        console.log('    User Creation: Working');
         
         // Test user update
         const userId = createUserResponse.data.user.id;
@@ -82,17 +82,17 @@ async function testAllApis() {
         });
         
         if (updateUserResponse.data.success) {
-          console.log('   ✅ User Update: Working');
+          console.log('    User Update: Working');
         }
         
         // Clean up - delete the test user
         await axios.delete(`http://localhost:8080/api/admin/users/${userId}`, {
           headers: { 'Cookie': cookieHeader }
         });
-        console.log('   ✅ User Delete: Working');
+        console.log('    User Delete: Working');
       }
     } catch (error) {
-      console.log(`   ❌ User CRUD: Error - ${error.message}`);
+      console.log(`    User CRUD: Error - ${error.message}`);
     }
     
     // Test vehicle creation
@@ -117,18 +117,18 @@ async function testAllApis() {
         });
         
         if (createVehicleResponse.data.success) {
-          console.log('   ✅ Vehicle Creation: Working');
+          console.log('    Vehicle Creation: Working');
           
           // Clean up - delete the test vehicle
           const vehicleId = createVehicleResponse.data.vehicle.id;
           await axios.delete(`http://localhost:8080/api/admin/vehicles/${vehicleId}`, {
             headers: { 'Cookie': cookieHeader }
           });
-          console.log('   ✅ Vehicle Delete: Working');
+          console.log('    Vehicle Delete: Working');
         }
       }
     } catch (error) {
-      console.log(`   ❌ Vehicle CRUD: Error - ${error.message}`);
+      console.log(`    Vehicle CRUD: Error - ${error.message}`);
     }
     
     // Test parking spot creation
@@ -143,43 +143,43 @@ async function testAllApis() {
       });
       
       if (createParkingResponse.data.success) {
-        console.log('   ✅ Parking Spot Creation: Working');
+        console.log('    Parking Spot Creation: Working');
         
         // Clean up - delete the test parking spot
         const spotId = createParkingResponse.data.spot.id;
         await axios.delete(`http://localhost:8080/api/admin/parking/${spotId}`, {
           headers: { 'Cookie': cookieHeader }
         });
-        console.log('   ✅ Parking Spot Delete: Working');
+        console.log('    Parking Spot Delete: Working');
       }
     } catch (error) {
-      console.log(`   ❌ Parking Spot CRUD: Error - ${error.message}`);
+      console.log(`    Parking Spot CRUD: Error - ${error.message}`);
     }
     
-    console.log('\n🎉 API TESTING COMPLETE!');
+    console.log('\n API TESTING COMPLETE!');
     console.log('=========================');
-    console.log('✅ All API endpoints are working');
-    console.log('✅ CRUD operations functional');
-    console.log('✅ Data persists to MongoDB');
-    console.log('✅ Frontend will work properly');
+    console.log(' All API endpoints are working');
+    console.log(' CRUD operations functional');
+    console.log(' Data persists to MongoDB');
+    console.log(' Frontend will work properly');
     
-    console.log('\n🌐 ADMIN PANEL STATUS:');
+    console.log('\n ADMIN PANEL STATUS:');
     console.log('======================');
-    console.log('✅ Server: Running on http://localhost:8080');
-    console.log('✅ Database: MongoDB Atlas connected');
-    console.log('✅ Authentication: Working');
-    console.log('✅ API Endpoints: All functional');
-    console.log('✅ CRUD Operations: Working');
-    console.log('✅ Data Persistence: Confirmed');
+    console.log(' Server: Running on http://localhost:8080');
+    console.log(' Database: MongoDB Atlas connected');
+    console.log(' Authentication: Working');
+    console.log(' API Endpoints: All functional');
+    console.log(' CRUD Operations: Working');
+    console.log(' Data Persistence: Confirmed');
     
-    console.log('\n🚀 READY TO USE!');
+    console.log('\n READY TO USE!');
     console.log('=================');
     console.log('URL: http://localhost:8080/admin/login');
     console.log('Email: john.manager@vayaccess.com');
     console.log('Password: Manager@123');
     
   } catch (error) {
-    console.error('❌ API testing failed:', error.message);
+    console.error(' API testing failed:', error.message);
   }
 }
 

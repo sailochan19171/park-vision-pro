@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Simple Database Seeding Script
  * This script populates the database with basic sample data
  */
@@ -77,11 +77,11 @@ const Payment = mongoose.model('Payment', paymentSchema);
 
 async function seedDatabase() {
   try {
-    console.log('🌱 Starting simple database seeding...');
+    console.log(' Starting simple database seeding...');
     
     // Connect to MongoDB
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Clear existing data
     await Promise.all([
@@ -91,7 +91,7 @@ async function seedDatabase() {
       Booking.deleteMany({}),
       Payment.deleteMany({})
     ]);
-    console.log('🗑️ Cleared existing data');
+    console.log(' Cleared existing data');
 
     // Create Users
     const hashedPassword = await bcrypt.hash('User@123', 10);
@@ -118,7 +118,7 @@ async function seedDatabase() {
         isActive: true
       }
     ]);
-    console.log(`👥 Created ${users.length} users`);
+    console.log(` Created ${users.length} users`);
 
     // Create Vehicles
     const vehicles = await Vehicle.insertMany([
@@ -155,7 +155,7 @@ async function seedDatabase() {
         status: 'active'
       }
     ]);
-    console.log(`🚗 Created ${vehicles.length} vehicles`);
+    console.log(` Created ${vehicles.length} vehicles`);
 
     // Create Parking Spots
     const parkingSpots = [];
@@ -200,7 +200,7 @@ async function seedDatabase() {
     }
 
     const createdSpots = await ParkingSpot.insertMany(parkingSpots);
-    console.log(`🅿️ Created ${createdSpots.length} parking spots`);
+    console.log(` Created ${createdSpots.length} parking spots`);
 
     // Create some bookings
     const now = new Date();
@@ -265,7 +265,7 @@ async function seedDatabase() {
     }
 
     const createdBookings = await Booking.insertMany(bookings);
-    console.log(`📅 Created ${createdBookings.length} bookings`);
+    console.log(` Created ${createdBookings.length} bookings`);
 
     // Create Payments
     const payments = [];
@@ -282,26 +282,26 @@ async function seedDatabase() {
     });
 
     const createdPayments = await Payment.insertMany(payments);
-    console.log(`💳 Created ${createdPayments.length} payments`);
+    console.log(` Created ${createdPayments.length} payments`);
 
-    console.log('\n🎉 Database seeding completed successfully!');
-    console.log('\n📊 Summary:');
+    console.log('\n Database seeding completed successfully!');
+    console.log('\n Summary:');
     console.log(`   Users: ${users.length}`);
     console.log(`   Vehicles: ${vehicles.length}`);
     console.log(`   Parking Spots: ${createdSpots.length}`);
     console.log(`   Bookings: ${createdBookings.length}`);
     console.log(`   Payments: ${createdPayments.length}`);
     
-    console.log('\n🔐 Test Login Credentials:');
+    console.log('\n Test Login Credentials:');
     console.log('   Email: alice@example.com | Password: User@123');
     console.log('   Email: bob@example.com | Password: User@123');
     console.log('   Email: john@example.com | Password: User@123');
 
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error(' Error seeding database:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('🔌 Disconnected from MongoDB');
+    console.log(' Disconnected from MongoDB');
     process.exit(0);
   }
 }

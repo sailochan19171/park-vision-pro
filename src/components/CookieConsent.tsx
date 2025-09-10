@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { X, Cookie, Shield, Settings } from 'lucide-react';
 
@@ -160,7 +160,7 @@ const CookieConsent = () => {
             {/* Branding */}
             <div className="mt-6 pt-4 border-t border-gray-200 text-center">
               <p className="text-xs text-gray-500">
-                🔒 Your privacy is important to us at{' '}
+                 Your privacy is important to us at{' '}
                 <span className="font-medium text-tech-blue">VayAccess</span>
               </p>
             </div>
@@ -172,3 +172,4 @@ const CookieConsent = () => {
 };
 
 export default CookieConsent;
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Debug User Creation Issue
  * Step-by-step debugging to identify the exact problem
  */
@@ -8,35 +8,35 @@ const mongoose = require('mongoose');
 
 async function debugUserCreation() {
   try {
-    console.log('🔍 Debugging User Creation Issue...\n');
+    console.log(' Debugging User Creation Issue...\n');
     
     // Step 1: Test MongoDB connection
     console.log('Step 1: Testing MongoDB connection...');
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ MongoDB connected successfully');
+    console.log(' MongoDB connected successfully');
     console.log('Connection state:', mongoose.connection.readyState);
     
     // Step 2: Test bcryptjs import
     console.log('\nStep 2: Testing bcryptjs...');
     try {
       const bcrypt = require('bcryptjs');
-      console.log('✅ bcryptjs imported successfully');
+      console.log(' bcryptjs imported successfully');
       
       const testHash = await bcrypt.hash('testpassword', 12);
-      console.log('✅ bcryptjs hash function works');
+      console.log(' bcryptjs hash function works');
       console.log('Test hash length:', testHash.length);
     } catch (bcryptError) {
-      console.error('❌ bcryptjs error:', bcryptError);
+      console.error(' bcryptjs error:', bcryptError);
     }
     
     // Step 3: Test User model import
     console.log('\nStep 3: Testing User model import...');
     try {
       const User = require('./models/User');
-      console.log('✅ User model imported successfully');
+      console.log(' User model imported successfully');
       console.log('User model schema paths:', Object.keys(User.schema.paths));
     } catch (modelError) {
-      console.error('❌ User model import error:', modelError);
+      console.error(' User model import error:', modelError);
       return;
     }
     
@@ -60,25 +60,25 @@ async function debugUserCreation() {
       console.log('Creating user with data:', testUserData);
       
       const newUser = new User(testUserData);
-      console.log('✅ User instance created');
+      console.log(' User instance created');
       
       // Test validation without saving
       const validationError = newUser.validateSync();
       if (validationError) {
-        console.error('❌ Validation error:', validationError.errors);
+        console.error(' Validation error:', validationError.errors);
         return;
       }
-      console.log('✅ User validation passed');
+      console.log(' User validation passed');
       
       // Test saving
       console.log('Attempting to save user...');
       await newUser.save();
-      console.log('✅ User saved successfully');
+      console.log(' User saved successfully');
       console.log('Saved user ID:', newUser._id);
       console.log('Saved user role:', newUser.role);
       
     } catch (saveError) {
-      console.error('❌ User save error:', saveError);
+      console.error(' User save error:', saveError);
       console.error('Error name:', saveError.name);
       console.error('Error message:', saveError.message);
       
@@ -104,12 +104,12 @@ async function debugUserCreation() {
       
       const minimalUser = new User(minimalUserData);
       await minimalUser.save();
-      console.log('✅ Minimal user created successfully');
+      console.log(' Minimal user created successfully');
       console.log('Default role:', minimalUser.role);
       console.log('Default status:', minimalUser.status);
       
     } catch (minimalError) {
-      console.error('❌ Minimal user creation error:', minimalError);
+      console.error(' Minimal user creation error:', minimalError);
     }
     
     // Step 6: Test password hashing specifically
@@ -127,16 +127,16 @@ async function debugUserCreation() {
       console.log('Password before save:', testUser.password);
       await testUser.save();
       console.log('Password after save (should be hashed):', testUser.password.substring(0, 20) + '...');
-      console.log('✅ Password hashing works');
+      console.log(' Password hashing works');
       
     } catch (hashError) {
-      console.error('❌ Password hashing error:', hashError);
+      console.error(' Password hashing error:', hashError);
     }
     
-    console.log('\n✅ Debug Complete!');
+    console.log('\n Debug Complete!');
     
   } catch (error) {
-    console.error('❌ Debug failed:', error);
+    console.error(' Debug failed:', error);
   } finally {
     await mongoose.disconnect();
   }

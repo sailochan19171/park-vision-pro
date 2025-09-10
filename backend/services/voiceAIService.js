@@ -1,4 +1,4 @@
-const twilio = require('twilio');
+﻿const twilio = require('twilio');
 const OpenAI = require('openai');
 const fs = require('fs').promises;
 const path = require('path');
@@ -98,7 +98,7 @@ class VoiceAIService {
   // Initialize a new call session and make actual phone call
   async initializeCall(customerPhone, customerName = null) {
     try {
-      console.log(`📞 Making AI call to ${customerPhone}`);
+      console.log(` Making AI call to ${customerPhone}`);
       
       // Create a unique call session ID
       const callSessionId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -128,7 +128,7 @@ class VoiceAIService {
       };
 
       // MAKE ACTUAL PHONE CALL USING TWILIO
-      console.log(`📱 Making actual phone call to ${customerPhone}...`);
+      console.log(` Making actual phone call to ${customerPhone}...`);
       
       const call = await twilioClient.calls.create({
         to: customerPhone,
@@ -141,7 +141,7 @@ class VoiceAIService {
         record: true
       });
 
-      console.log(`✅ Twilio call initiated with SID: ${call.sid}`);
+      console.log(` Twilio call initiated with SID: ${call.sid}`);
       
       // Update call with Twilio SID
       this.activeCall.twilioCallSid = call.sid;
@@ -155,7 +155,7 @@ class VoiceAIService {
       };
 
     } catch (error) {
-      console.error('❌ Error initializing call:', error);
+      console.error(' Error initializing call:', error);
       return {
         success: false,
         error: error.message
@@ -166,8 +166,8 @@ class VoiceAIService {
   // Generate AI response to customer input
   async generateAIResponse(customerMessage, sessionId) {
     try {
-      console.log(`🤖 Generating AI response for session ${sessionId}`);
-      console.log(`👤 Customer said: "${customerMessage}"`);
+      console.log(` Generating AI response for session ${sessionId}`);
+      console.log(` Customer said: "${customerMessage}"`);
 
       // Add customer message to conversation history
       this.conversationHistory.push({
@@ -207,7 +207,7 @@ class VoiceAIService {
         });
       }
 
-      console.log(`🤖 AI Response: "${aiResponse}"`);
+      console.log(` AI Response: "${aiResponse}"`);
 
       return {
         success: true,
@@ -216,7 +216,7 @@ class VoiceAIService {
       };
 
     } catch (error) {
-      console.error('❌ Error generating AI response:', error);
+      console.error(' Error generating AI response:', error);
       return {
         success: false,
         error: error.message,
@@ -228,8 +228,8 @@ class VoiceAIService {
   // Convert text to speech for AI responses
   async textToSpeech(text, sessionId) {
     try {
-      console.log(`🔊 Converting text to speech for session ${sessionId}`);
-      console.log(`🔊 Text to convert: "${text}"`);
+      console.log(` Converting text to speech for session ${sessionId}`);
+      console.log(` Text to convert: "${text}"`);
       
       // Use OpenAI's TTS API
       const mp3 = await openai.audio.speech.create({
@@ -250,7 +250,7 @@ class VoiceAIService {
       const buffer = Buffer.from(await mp3.arrayBuffer());
       await fs.writeFile(audioPath, buffer);
 
-      console.log(`🔊 AI agent voice saved: ${audioPath}`);
+      console.log(` AI agent voice saved: ${audioPath}`);
 
       // Track AI agent audio in call session
       if (this.activeCall && this.activeCall.sessionId === sessionId) {
@@ -274,7 +274,7 @@ class VoiceAIService {
       };
 
     } catch (error) {
-      console.error('❌ Error in text-to-speech:', error);
+      console.error(' Error in text-to-speech:', error);
       return {
         success: false,
         error: error.message,
@@ -286,15 +286,15 @@ class VoiceAIService {
   // Convert speech to text for customer input  
   async speechToText(audioBuffer, sessionId) {
     try {
-      console.log(`🎤 Converting speech to text for session ${sessionId}`);
-      console.log(`🎤 Audio buffer size: ${audioBuffer.length} bytes`);
+      console.log(` Converting speech to text for session ${sessionId}`);
+      console.log(` Audio buffer size: ${audioBuffer.length} bytes`);
       
       // Save temporary audio file with proper format
       const tempAudioFile = path.join(__dirname, `../temp/stt_${sessionId}_${Date.now()}.webm`);
       await fs.mkdir(path.dirname(tempAudioFile), { recursive: true });
       await fs.writeFile(tempAudioFile, audioBuffer);
 
-      console.log(`🎤 Audio saved to: ${tempAudioFile}`);
+      console.log(` Audio saved to: ${tempAudioFile}`);
 
       try {
         // Use OpenAI's Whisper API for speech-to-text
@@ -307,7 +307,7 @@ class VoiceAIService {
           response_format: "text"
         });
 
-        console.log(`🎤 Transcription successful: "${transcript}"`);
+        console.log(` Transcription successful: "${transcript}"`);
 
         // Store the customer audio recording with timestamp
         const timestamp = Date.now();
@@ -316,7 +316,7 @@ class VoiceAIService {
         await fs.mkdir(path.dirname(customerRecording), { recursive: true });
         await fs.copyFile(tempAudioFile, customerRecording);
 
-        console.log(`🎤 Customer audio saved: ${customerRecording}`);
+        console.log(` Customer audio saved: ${customerRecording}`);
 
         // Track customer audio in call session
         if (this.activeCall && this.activeCall.sessionId === sessionId) {
@@ -343,13 +343,13 @@ class VoiceAIService {
         };
 
       } catch (whisperError) {
-        console.error('❌ Whisper API error:', whisperError);
+        console.error(' Whisper API error:', whisperError);
         
         // Clean up temporary file
         try {
           await fs.unlink(tempAudioFile);
         } catch (unlinkError) {
-          console.error('❌ Error cleaning up temp file:', unlinkError);
+          console.error(' Error cleaning up temp file:', unlinkError);
         }
 
         return {
@@ -360,7 +360,7 @@ class VoiceAIService {
       }
 
     } catch (error) {
-      console.error('❌ Error in speech-to-text:', error);
+      console.error(' Error in speech-to-text:', error);
       return {
         success: false,
         error: error.message,
@@ -372,7 +372,7 @@ class VoiceAIService {
   // End call and save recording with conversation log
   async endCall(sessionId, callDuration) {
     try {
-      console.log(`📞 Ending call session ${sessionId}`);
+      console.log(` Ending call session ${sessionId}`);
 
       if (!this.activeCall || this.activeCall.sessionId !== sessionId) {
         throw new Error('No active call session found');
@@ -399,7 +399,7 @@ class VoiceAIService {
       this.activeCall = null;
       this.conversationHistory = [];
 
-      console.log(`✅ Call ${sessionId} ended and saved successfully`);
+      console.log(` Call ${sessionId} ended and saved successfully`);
 
       return {
         success: true,
@@ -408,7 +408,7 @@ class VoiceAIService {
       };
 
     } catch (error) {
-      console.error('❌ Error ending call:', error);
+      console.error(' Error ending call:', error);
       return {
         success: false,
         error: error.message
@@ -445,7 +445,7 @@ class VoiceAIService {
       return completion.choices[0].message.content;
 
     } catch (error) {
-      console.error('❌ Error generating call summary:', error);
+      console.error(' Error generating call summary:', error);
       return "Error generating summary - please review call transcript";
     }
   }
@@ -484,7 +484,7 @@ class VoiceAIService {
       }
 
     } catch (error) {
-      console.error('❌ Error fetching call recordings:', error);
+      console.error(' Error fetching call recordings:', error);
       return {
         success: false,
         error: error.message
@@ -504,7 +504,7 @@ class VoiceAIService {
       };
 
     } catch (error) {
-      console.error('❌ Error fetching call recording:', error);
+      console.error(' Error fetching call recording:', error);
       return {
         success: false,
         error: error.message
@@ -515,10 +515,10 @@ class VoiceAIService {
   // Save call recording and generate summary (called when call ends)
   async saveCallRecording(sessionId, callStatus) {
     try {
-      console.log(`💾 Saving call recording for session ${sessionId} with status ${callStatus}`);
+      console.log(` Saving call recording for session ${sessionId} with status ${callStatus}`);
       
       if (!this.activeCall || this.activeCall.sessionId !== sessionId) {
-        console.log('⚠️ No active call found for session:', sessionId);
+        console.log(' No active call found for session:', sessionId);
         return { success: false, error: 'No active call found' };
       }
       
@@ -540,7 +540,7 @@ class VoiceAIService {
           
           summary = summaryResponse.choices[0].message.content;
         } catch (error) {
-          console.error('❌ Error generating call summary:', error);
+          console.error(' Error generating call summary:', error);
           summary = 'Summary generation failed';
         }
       } else {
@@ -568,7 +568,7 @@ class VoiceAIService {
       // Save to file
       const callLogPath = path.join(recordingsDir, `call_log_${sessionId}.json`);
       await fs.writeFile(callLogPath, JSON.stringify(callRecord, null, 2));
-      console.log(`✅ Call record saved: ${callLogPath}`);
+      console.log(` Call record saved: ${callLogPath}`);
       
       // Clear active call
       this.activeCall = null;
@@ -577,7 +577,7 @@ class VoiceAIService {
       return { success: true, callRecord };
       
     } catch (error) {
-      console.error('❌ Error saving call recording:', error);
+      console.error(' Error saving call recording:', error);
       return { success: false, error: error.message };
     }
   }

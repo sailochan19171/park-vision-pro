@@ -1,8 +1,8 @@
-// Test Contact Form Email System
+﻿// Test Contact Form Email System
 // Run this in browser console to test the automated email functionality
 
 async function testContactFormEmailSystem() {
-  console.log('🧪 Testing Contact Form Email System...');
+  console.log(' Testing Contact Form Email System...');
   
   try {
     // Import the email service (only works if running in the app context)
@@ -14,22 +14,22 @@ async function testContactFormEmailSystem() {
       message: 'This is a test message to verify the automated email system is working correctly. Please ignore this test submission.'
     };
     
-    console.log('📝 Submitting test contact form...', testData);
+    console.log(' Submitting test contact form...', testData);
     
     const result = await submitContactForm(testData);
     
     if (result.success) {
-      console.log('✅ Test PASSED! Email system working correctly');
-      console.log('📧 Check your inbox for:');
+      console.log(' Test PASSED! Email system working correctly');
+      console.log(' Check your inbox for:');
       console.log('   1. Notification email to info@vayaccess.com');
       console.log('   2. Auto-reply email to', testData.email);
     } else {
-      console.log('❌ Test FAILED:', result.message);
+      console.log(' Test FAILED:', result.message);
     }
     
   } catch (error) {
-    console.error('❌ Test ERROR:', error);
-    console.log('💡 Make sure you\'re running this in the browser console while on the website');
+    console.error(' Test ERROR:', error);
+    console.log(' Make sure you\'re running this in the browser console while on the website');
   }
 }
 
@@ -45,10 +45,10 @@ async function testEmailNotification() {
     };
     
     const result = await sendContactNotificationEmail(testData);
-    console.log(result ? '✅ Notification email sent' : '❌ Notification email failed');
+    console.log(result ? ' Notification email sent' : ' Notification email failed');
     
   } catch (error) {
-    console.error('❌ Notification test error:', error);
+    console.error(' Notification test error:', error);
   }
 }
 
@@ -63,16 +63,16 @@ async function testAutoReply() {
     };
     
     const result = await sendContactAutoReply(testData);
-    console.log(result ? '✅ Auto-reply email sent' : '❌ Auto-reply email failed');
+    console.log(result ? ' Auto-reply email sent' : ' Auto-reply email failed');
     
   } catch (error) {
-    console.error('❌ Auto-reply test error:', error);
+    console.error(' Auto-reply test error:', error);
   }
 }
 
 // Instructions for manual testing
 console.log(`
-🧪 CONTACT FORM EMAIL TESTING
+ CONTACT FORM EMAIL TESTING
 
 To test the automated email system:
 
@@ -91,13 +91,13 @@ To test the automated email system:
    - Submit the form
    - Check both info@vayaccess.com and your email for messages
 
-📧 Expected Results:
-✅ Notification email to info@vayaccess.com
-✅ Auto-reply confirmation to your email
-✅ Success toast notification on website
-✅ Form resets after submission
+ Expected Results:
+ Notification email to info@vayaccess.com
+ Auto-reply confirmation to your email
+ Success toast notification on website
+ Form resets after submission
 
-⚠️ Note: Make sure EmailJS service is configured correctly
+ Note: Make sure EmailJS service is configured correctly
 `);
 
 // Make functions available globally for testing

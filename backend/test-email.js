@@ -1,4 +1,4 @@
-// Email Backend Test Script
+﻿// Email Backend Test Script
 // Run with: node test-email.js
 
 require('dotenv').config();
@@ -74,7 +74,7 @@ async function testEmailSending() {
               </ul>
             </div>
             
-            <p style="color: #059669; font-weight: bold;">🎉 Your contact form emails will now work perfectly!</p>
+            <p style="color: #059669; font-weight: bold;"> Your contact form emails will now work perfectly!</p>
             
             <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; text-align: center; color: #6b7280; font-size: 14px;">
               <p>VayAccess Email Backend Test | ${new Date().toLocaleString()}</p>

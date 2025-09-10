@@ -1,8 +1,8 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function verifyAllEndpoints() {
   try {
-    console.log('🔍 VERIFYING ALL API ENDPOINTS');
+    console.log(' VERIFYING ALL API ENDPOINTS');
     console.log('===============================');
     
     // Login first
@@ -31,7 +31,7 @@ async function verifyAllEndpoints() {
       { method: 'GET', url: '/api/admin/logs', name: 'Get Logs' }
     ];
     
-    console.log('\n📊 Testing all GET endpoints:');
+    console.log('\n Testing all GET endpoints:');
     console.log('==============================');
     
     for (const endpoint of endpoints) {
@@ -47,30 +47,30 @@ async function verifyAllEndpoints() {
           const data = response.data;
           if (data.success) {
             const count = data.total || data.stats?.totalUsers || Object.keys(data).length;
-            console.log(`✅ ${endpoint.name}: Working (${count} items)`);
+            console.log(` ${endpoint.name}: Working (${count} items)`);
           } else {
-            console.log(`❌ ${endpoint.name}: Success=false`);
+            console.log(` ${endpoint.name}: Success=false`);
           }
         } else {
-          console.log(`❌ ${endpoint.name}: Status ${response.status}`);
+          console.log(` ${endpoint.name}: Status ${response.status}`);
         }
       } catch (error) {
         if (error.response) {
-          console.log(`❌ ${endpoint.name}: ${error.response.status} - ${error.response.statusText}`);
+          console.log(` ${endpoint.name}: ${error.response.status} - ${error.response.statusText}`);
         } else {
-          console.log(`❌ ${endpoint.name}: ${error.message}`);
+          console.log(` ${endpoint.name}: ${error.message}`);
         }
       }
     }
     
-    console.log('\n🎯 ENDPOINT VERIFICATION COMPLETE!');
+    console.log('\n ENDPOINT VERIFICATION COMPLETE!');
     console.log('===================================');
-    console.log('✅ All major GET endpoints are working');
-    console.log('✅ Frontend can fetch data from all pages');
-    console.log('✅ MongoDB integration confirmed');
-    console.log('✅ Authentication working properly');
+    console.log(' All major GET endpoints are working');
+    console.log(' Frontend can fetch data from all pages');
+    console.log(' MongoDB integration confirmed');
+    console.log(' Authentication working properly');
     
-    console.log('\n📋 AVAILABLE API ENDPOINTS:');
+    console.log('\n AVAILABLE API ENDPOINTS:');
     console.log('============================');
     console.log('GET  /api/admin/dashboard   - Dashboard statistics');
     console.log('GET  /api/admin/users       - List all users');
@@ -98,7 +98,7 @@ async function verifyAllEndpoints() {
     console.log('');
     console.log('GET  /api/admin/logs        - List activity logs');
     
-    console.log('\n🌐 YOUR ADMIN PANEL IS READY!');
+    console.log('\n YOUR ADMIN PANEL IS READY!');
     console.log('==============================');
     console.log('URL: http://localhost:8080/admin/login');
     console.log('Email: john.manager@vayaccess.com');
@@ -113,7 +113,7 @@ async function verifyAllEndpoints() {
     console.log('• Persist all changes to database');
     
   } catch (error) {
-    console.error('❌ Verification failed:', error.message);
+    console.error(' Verification failed:', error.message);
   }
 }
 

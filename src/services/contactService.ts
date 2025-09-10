@@ -1,4 +1,4 @@
-// Contact Service - separates contact form logic from newsletter
+﻿// Contact Service - separates contact form logic from newsletter
 import { getDefaultHeaders } from './http';
 
 export interface ContactFormData {
@@ -36,7 +36,7 @@ export const submitContactForm = async (formData: ContactFormData): Promise<ApiR
     return result;
 
   } catch (error) {
-    console.error('❌ Contact form API error:', error);
+    console.error(' Contact form API error:', error);
     return {
       success: false,
       message: 'Sorry, there was an error sending your message. Please try again or contact us directly at info@vayaccess.com or +91 720 724 4344.'

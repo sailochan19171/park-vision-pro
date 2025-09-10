@@ -1,4 +1,4 @@
-// Debug authentication issue
+﻿// Debug authentication issue
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
@@ -10,18 +10,18 @@ async function debugAuth() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ MongoDB connected');
+    console.log(' MongoDB connected');
 
     // Find all admin users
     const admins = await User.find({ role: 'admin' }).select('+password');
-    console.log('\n📋 Found admin users:');
+    console.log('\n Found admin users:');
     
     for (const admin of admins) {
-      console.log(`\n👤 Admin: ${admin.name}`);
-      console.log(`📧 Email: ${admin.email}`);
-      console.log(`🔒 Password hash exists: ${!!admin.password}`);
-      console.log(`🔒 Password hash length: ${admin.password ? admin.password.length : 0}`);
-      console.log(`📅 Created: ${admin.createdAt}`);
+      console.log(`\n Admin: ${admin.name}`);
+      console.log(` Email: ${admin.email}`);
+      console.log(` Password hash exists: ${!!admin.password}`);
+      console.log(` Password hash length: ${admin.password ? admin.password.length : 0}`);
+      console.log(` Created: ${admin.createdAt}`);
       
       // Test password comparison with a common password
       if (admin.password) {
@@ -30,17 +30,17 @@ async function debugAuth() {
           for (const testPass of testPasswords) {
             const isValid = await admin.comparePassword(testPass);
             if (isValid) {
-              console.log(`✅ Password "${testPass}" works for ${admin.email}`);
+              console.log(` Password "${testPass}" works for ${admin.email}`);
             }
           }
         } catch (error) {
-          console.log(`❌ Error testing passwords: ${error.message}`);
+          console.log(` Error testing passwords: ${error.message}`);
         }
       }
     }
 
     // Test creating a new admin user
-    console.log('\n🧪 Testing new admin creation...');
+    console.log('\n Testing new admin creation...');
     
     // Delete test user if exists
     await User.deleteOne({ email: 'test@admin.com' });
@@ -55,7 +55,7 @@ async function debugAuth() {
     });
     
     await testAdmin.save();
-    console.log('✅ Test admin created');
+    console.log(' Test admin created');
     
     // Try to find and authenticate the test admin
     const foundTestAdmin = await User.findOne({ 
@@ -64,26 +64,26 @@ async function debugAuth() {
     }).select('+password');
     
     if (foundTestAdmin) {
-      console.log('✅ Test admin found');
+      console.log(' Test admin found');
       const isValidPassword = await foundTestAdmin.comparePassword('test123');
-      console.log(`🔐 Password validation result: ${isValidPassword}`);
+      console.log(` Password validation result: ${isValidPassword}`);
       
       if (isValidPassword) {
-        console.log('✅ Authentication test PASSED');
+        console.log(' Authentication test PASSED');
       } else {
-        console.log('❌ Authentication test FAILED');
+        console.log(' Authentication test FAILED');
       }
     }
     
     // Clean up
     await User.deleteOne({ email: 'test@admin.com' });
-    console.log('🧹 Test admin cleaned up');
+    console.log(' Test admin cleaned up');
     
   } catch (error) {
-    console.error('❌ Debug error:', error);
+    console.error(' Debug error:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('🔌 MongoDB disconnected');
+    console.log(' MongoDB disconnected');
   }
 }
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * User Schema Migration Script
  * Migrates old user records to match the new User model schema
  */
@@ -8,11 +8,11 @@ const mongoose = require('mongoose');
 
 async function migrateUserSchema() {
   try {
-    console.log('🔄 Starting User Schema Migration...\n');
+    console.log(' Starting User Schema Migration...\n');
     
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
     
     // Get the users collection directly
     const db = mongoose.connection.db;
@@ -29,10 +29,10 @@ async function migrateUserSchema() {
       ]
     }).toArray();
     
-    console.log(`📊 Found ${oldUsers.length} users that need migration`);
+    console.log(` Found ${oldUsers.length} users that need migration`);
     
     if (oldUsers.length === 0) {
-      console.log('✅ All users are already up to date!');
+      console.log(' All users are already up to date!');
       return;
     }
     
@@ -41,7 +41,7 @@ async function migrateUserSchema() {
     
     for (const user of oldUsers) {
       try {
-        console.log(`\n🔄 Migrating user: ${user.email}`);
+        console.log(`\n Migrating user: ${user.email}`);
         
         const updateData = {};
         
@@ -53,7 +53,7 @@ async function migrateUserSchema() {
           } else {
             updateData.role = 'user';
           }
-          console.log(`   ➕ Adding role: ${updateData.role}`);
+          console.log(`    Adding role: ${updateData.role}`);
         }
         
         // 2. Add status field if missing (convert from isActive)
@@ -63,7 +63,7 @@ async function migrateUserSchema() {
           } else {
             updateData.status = 'active';
           }
-          console.log(`   ➕ Adding status: ${updateData.status}`);
+          console.log(`    Adding status: ${updateData.status}`);
         }
         
         // 3. Add profile object if missing
@@ -75,19 +75,19 @@ async function migrateUserSchema() {
             state: '',
             pincode: ''
           };
-          console.log('   ➕ Adding profile object');
+          console.log('    Adding profile object');
         }
         
         // 4. Add vehicles array if missing
         if (!user.vehicles) {
           updateData.vehicles = [];
-          console.log('   ➕ Adding vehicles array');
+          console.log('    Adding vehicles array');
         }
         
         // 5. Add bookings array if missing
         if (!user.bookings) {
           updateData.bookings = [];
-          console.log('   ➕ Adding bookings array');
+          console.log('    Adding bookings array');
         }
         
         // 6. Add wallet object if missing
@@ -96,7 +96,7 @@ async function migrateUserSchema() {
             balance: 0,
             transactions: []
           };
-          console.log('   ➕ Adding wallet object');
+          console.log('    Adding wallet object');
         }
         
         // 7. Add preferences object if missing
@@ -110,20 +110,20 @@ async function migrateUserSchema() {
             language: 'en',
             theme: 'light'
           };
-          console.log('   ➕ Adding preferences object');
+          console.log('    Adding preferences object');
         }
         
         // 8. Add refreshTokens array if missing
         if (!user.refreshTokens) {
           updateData.refreshTokens = [];
-          console.log('   ➕ Adding refreshTokens array');
+          console.log('    Adding refreshTokens array');
         }
         
         // 9. Remove isActive field if it exists
         const unsetData = {};
         if (user.isActive !== undefined) {
           unsetData.isActive = '';
-          console.log('   ➖ Removing isActive field');
+          console.log('    Removing isActive field');
         }
         
         // Apply the migration
@@ -140,27 +140,27 @@ async function migrateUserSchema() {
         
         if (Object.keys(updateOperation).length > 0) {
           await usersCollection.updateOne(updateQuery, updateOperation);
-          console.log('   ✅ Migration completed');
+          console.log('    Migration completed');
           migratedCount++;
         } else {
-          console.log('   ⏭️ No changes needed');
+          console.log('    No changes needed');
         }
         
       } catch (error) {
-        console.error(`   ❌ Failed to migrate user ${user.email}:`, error.message);
+        console.error(`    Failed to migrate user ${user.email}:`, error.message);
       }
     }
     
-    console.log(`\n📊 Migration Summary:`);
+    console.log(`\n Migration Summary:`);
     console.log(`   Total users found: ${oldUsers.length}`);
     console.log(`   Successfully migrated: ${migratedCount}`);
     console.log(`   Failed: ${oldUsers.length - migratedCount}`);
     
     // Verify migration
-    console.log('\n🔍 Verifying migration...');
+    console.log('\n Verifying migration...');
     const verifyUsers = await usersCollection.find({}).limit(3).toArray();
     
-    console.log('\n📋 Sample migrated users:');
+    console.log('\n Sample migrated users:');
     verifyUsers.forEach((user, index) => {
       console.log(`\n${index + 1}. ${user.email}:`);
       console.log(`   Role: ${user.role || 'MISSING'}`);
@@ -171,13 +171,13 @@ async function migrateUserSchema() {
       console.log(`   isActive: ${user.isActive !== undefined ? 'STILL EXISTS (BAD)' : 'Removed (GOOD)'}`);
     });
     
-    console.log('\n✅ User Schema Migration Complete!');
+    console.log('\n User Schema Migration Complete!');
     console.log('==========================================');
-    console.log('🎉 All users should now be compatible with the new User model');
-    console.log('🚀 Try creating a new user in the admin dashboard now');
+    console.log(' All users should now be compatible with the new User model');
+    console.log(' Try creating a new user in the admin dashboard now');
     
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error(' Migration failed:', error);
   } finally {
     await mongoose.disconnect();
   }

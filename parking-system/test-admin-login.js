@@ -1,8 +1,8 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function testAdminLogin() {
   try {
-    console.log('🧪 Testing Admin Login...');
+    console.log(' Testing Admin Login...');
     
     // Test login with John Manager
     console.log('\n1. Testing with John Manager credentials...');
@@ -17,9 +17,9 @@ async function testAdminLogin() {
     });
     
     if (response1.status === 302) {
-      console.log('✅ John Manager login successful (redirected)');
+      console.log(' John Manager login successful (redirected)');
     } else {
-      console.log('❌ John Manager login failed');
+      console.log(' John Manager login failed');
     }
     
     // Test login with Sarah Admin
@@ -35,17 +35,17 @@ async function testAdminLogin() {
     });
     
     if (response2.status === 302) {
-      console.log('✅ Sarah Admin login successful (redirected)');
+      console.log(' Sarah Admin login successful (redirected)');
     } else {
-      console.log('❌ Sarah Admin login failed');
+      console.log(' Sarah Admin login failed');
     }
     
-    console.log('\n🎉 Admin Login Test Results:');
+    console.log('\n Admin Login Test Results:');
     console.log('============================');
-    console.log('✅ Admin server is running on http://localhost:8080');
-    console.log('✅ Login page is accessible');
-    console.log('✅ MongoDB connection is working');
-    console.log('\n🔐 Use these credentials to login:');
+    console.log(' Admin server is running on http://localhost:8080');
+    console.log(' Login page is accessible');
+    console.log(' MongoDB connection is working');
+    console.log('\n Use these credentials to login:');
     console.log('Email: john.manager@vayaccess.com');
     console.log('Password: Manager@123');
     console.log('\nOR');
@@ -54,9 +54,9 @@ async function testAdminLogin() {
     
   } catch (error) {
     if (error.response && error.response.status === 302) {
-      console.log('✅ Login successful (redirect response)');
+      console.log(' Login successful (redirect response)');
     } else {
-      console.error('❌ Login test failed:', error.message);
+      console.error(' Login test failed:', error.message);
     }
   }
 }

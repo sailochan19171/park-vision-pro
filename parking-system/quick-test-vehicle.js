@@ -1,4 +1,4 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 
 async function testVehicleEndpoint() {
   try {
@@ -12,7 +12,7 @@ async function testVehicleEndpoint() {
     });
     
     const token = userResponse.data.tokens.accessToken;
-    console.log('✅ User registered, token obtained');
+    console.log(' User registered, token obtained');
     
     // Test vehicle registration
     console.log('Testing vehicle registration...');
@@ -28,10 +28,10 @@ async function testVehicleEndpoint() {
       headers: { Authorization: `Bearer ${token}` }
     });
     
-    console.log('✅ Vehicle registration successful:', vehicleResponse.data);
+    console.log(' Vehicle registration successful:', vehicleResponse.data);
     
   } catch (error) {
-    console.error('❌ Error:', error.response?.data || error.message);
+    console.error(' Error:', error.response?.data || error.message);
   }
 }
 

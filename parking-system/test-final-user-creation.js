@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Final Test - User Creation After Migration
  * Tests user creation after schema migration
  */
@@ -9,11 +9,11 @@ const User = require('./models/User');
 
 async function testFinalUserCreation() {
   try {
-    console.log('🧪 Final Test - User Creation After Migration...\n');
+    console.log(' Final Test - User Creation After Migration...\n');
     
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
     
     // Test 1: Verify existing users have correct schema
     console.log('\nTest 1: Verifying existing users...');
@@ -21,10 +21,10 @@ async function testFinalUserCreation() {
     
     existingUsers.forEach((user, index) => {
       console.log(`${index + 1}. ${user.email}:`);
-      console.log(`   ✅ Role: ${user.role}`);
-      console.log(`   ✅ Status: ${user.status}`);
-      console.log(`   ✅ Profile: ${user.profile ? 'Present' : 'Missing'}`);
-      console.log(`   ✅ Wallet: ${user.wallet ? 'Present' : 'Missing'}`);
+      console.log(`    Role: ${user.role}`);
+      console.log(`    Status: ${user.status}`);
+      console.log(`    Profile: ${user.profile ? 'Present' : 'Missing'}`);
+      console.log(`    Wallet: ${user.wallet ? 'Present' : 'Missing'}`);
     });
     
     // Test 2: Create new premium user
@@ -47,25 +47,25 @@ async function testFinalUserCreation() {
     const newUser = new User(premiumUserData);
     await newUser.save();
     
-    console.log('✅ Premium user created successfully!');
-    console.log(`   📧 Email: ${newUser.email}`);
-    console.log(`   👤 Role: ${newUser.role}`);
-    console.log(`   📊 Status: ${newUser.status}`);
-    console.log(`   🆔 ID: ${newUser._id}`);
+    console.log(' Premium user created successfully!');
+    console.log(`    Email: ${newUser.email}`);
+    console.log(`    Role: ${newUser.role}`);
+    console.log(`    Status: ${newUser.status}`);
+    console.log(`    ID: ${newUser._id}`);
     
     // Test 3: Verify user can be retrieved
     console.log('\nTest 3: Retrieving created user...');
     const retrievedUser = await User.findById(newUser._id);
     
     if (retrievedUser) {
-      console.log('✅ User retrieved successfully');
+      console.log(' User retrieved successfully');
       console.log(`   Name: ${retrievedUser.name}`);
       console.log(`   Role: ${retrievedUser.role}`);
       console.log(`   Status: ${retrievedUser.status}`);
       console.log(`   Profile: ${retrievedUser.profile ? 'Present' : 'Missing'}`);
       console.log(`   Wallet Balance: ${retrievedUser.wallet?.balance || 0}`);
     } else {
-      console.log('❌ Failed to retrieve user');
+      console.log(' Failed to retrieve user');
     }
     
     // Test 4: Test all roles
@@ -89,10 +89,10 @@ async function testFinalUserCreation() {
         });
         
         await roleUser.save();
-        console.log(`   ✅ ${role} user created successfully`);
+        console.log(`    ${role} user created successfully`);
         
       } catch (error) {
-        console.log(`   ❌ ${role} user creation failed:`, error.message);
+        console.log(`    ${role} user creation failed:`, error.message);
       }
     }
     
@@ -103,18 +103,18 @@ async function testFinalUserCreation() {
     const premiumCount = await User.countDocuments({ role: 'premium' });
     const adminCount = await User.countDocuments({ role: 'admin' });
     
-    console.log(`   📊 Total users: ${totalUsers}`);
-    console.log(`   👤 Regular users: ${userCount}`);
+    console.log(`    Total users: ${totalUsers}`);
+    console.log(`    Regular users: ${userCount}`);
     console.log(`   ⭐ Premium users: ${premiumCount}`);
-    console.log(`   👨‍💼 Admin users: ${adminCount}`);
+    console.log(`    Admin users: ${adminCount}`);
     
-    console.log('\n✅ All Tests Passed!');
+    console.log('\n All Tests Passed!');
     console.log('==========================================');
-    console.log('🎉 User creation should now work perfectly in the admin dashboard');
-    console.log('🚀 Try creating a premium user at: http://localhost:8081/admin/users');
+    console.log(' User creation should now work perfectly in the admin dashboard');
+    console.log(' Try creating a premium user at: http://localhost:8081/admin/users');
     
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    console.error(' Test failed:', error);
   } finally {
     await mongoose.disconnect();
   }

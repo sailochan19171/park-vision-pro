@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VayAccess Parking System Setup Script
  * Run this script to set up the complete parking management system
  */
@@ -28,7 +28,7 @@ function logSection(title) {
 }
 
 async function checkPrerequisites() {
-    logSection('🔍 Checking Prerequisites');
+    logSection(' Checking Prerequisites');
     
     try {
         // Check Node.js version
@@ -38,11 +38,11 @@ async function checkPrerequisites() {
         if (majorVersion < 16) {
             throw new Error(`Node.js v16 or higher required. Current: ${nodeVersion}`);
         }
-        log(`✅ Node.js version: ${nodeVersion}`, 'green');
+        log(` Node.js version: ${nodeVersion}`, 'green');
         
         // Check npm
         const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim();
-        log(`✅ npm version: v${npmVersion}`, 'green');
+        log(` npm version: v${npmVersion}`, 'green');
         
         // Check if MongoDB is running
         try {
@@ -51,20 +51,20 @@ async function checkPrerequisites() {
             await client.connect();
             await client.db('test').admin().ping();
             await client.close();
-            log('✅ MongoDB connection successful', 'green');
+            log(' MongoDB connection successful', 'green');
         } catch (mongoError) {
-            log('⚠️  MongoDB not accessible. Please ensure MongoDB is installed and running.', 'yellow');
+            log('  MongoDB not accessible. Please ensure MongoDB is installed and running.', 'yellow');
             log('   Installation guide: https://docs.mongodb.com/manual/installation/', 'yellow');
         }
         
     } catch (error) {
-        log(`❌ Prerequisite check failed: ${error.message}`, 'red');
+        log(` Prerequisite check failed: ${error.message}`, 'red');
         process.exit(1);
     }
 }
 
 function createDirectoryStructure() {
-    logSection('📁 Creating Directory Structure');
+    logSection(' Creating Directory Structure');
     
     const directories = [
         'public',
@@ -86,57 +86,57 @@ function createDirectoryStructure() {
         const fullPath = path.join(process.cwd(), dir);
         if (!fs.existsSync(fullPath)) {
             fs.mkdirSync(fullPath, { recursive: true });
-            log(`✅ Created directory: ${dir}`, 'green');
+            log(` Created directory: ${dir}`, 'green');
         } else {
-            log(`✓ Directory exists: ${dir}`, 'cyan');
+            log(` Directory exists: ${dir}`, 'cyan');
         }
     });
 }
 
 function createEnvironmentFile() {
-    logSection('⚙️ Setting up Environment Configuration');
+    logSection(' Setting up Environment Configuration');
     
     const envPath = path.join(process.cwd(), '.env');
     
     if (fs.existsSync(envPath)) {
-        log('✓ .env file already exists', 'cyan');
+        log(' .env file already exists', 'cyan');
         return;
     }
     
     if (!fs.existsSync('.env.example')) {
-        log('❌ .env.example file not found', 'red');
+        log(' .env.example file not found', 'red');
         return;
     }
     
     try {
         fs.copyFileSync('.env.example', '.env');
-        log('✅ Created .env file from .env.example', 'green');
-        log('📝 Please update the .env file with your configuration:', 'yellow');
+        log(' Created .env file from .env.example', 'green');
+        log(' Please update the .env file with your configuration:', 'yellow');
         log('   - Database connection string', 'yellow');
         log('   - JWT secrets (use strong, unique values)', 'yellow');
         log('   - Email service credentials (optional)', 'yellow');
         log('   - LPR service configuration (optional)', 'yellow');
     } catch (error) {
-        log(`❌ Failed to create .env file: ${error.message}`, 'red');
+        log(` Failed to create .env file: ${error.message}`, 'red');
     }
 }
 
 function installDependencies() {
-    logSection('📦 Installing Dependencies');
+    logSection(' Installing Dependencies');
     
     try {
         log('Installing npm packages...', 'cyan');
         execSync('npm install', { stdio: 'inherit' });
-        log('✅ Dependencies installed successfully', 'green');
+        log(' Dependencies installed successfully', 'green');
     } catch (error) {
-        log('❌ Failed to install dependencies', 'red');
+        log(' Failed to install dependencies', 'red');
         log('Please run: npm install', 'yellow');
         process.exit(1);
     }
 }
 
 function createStaticFiles() {
-    logSection('🎨 Creating Static Files');
+    logSection(' Creating Static Files');
     
     // Create basic CSS file
     const adminCSS = `
@@ -200,7 +200,7 @@ body {
 `;
     
     fs.writeFileSync(path.join('public', 'css', 'admin.css'), adminCSS);
-    log('✅ Created admin.css', 'green');
+    log(' Created admin.css', 'green');
     
     // Create basic JavaScript file
     const adminJS = `
@@ -292,29 +292,29 @@ async function apiCall(endpoint, options = {}) {
 `;
     
     fs.writeFileSync(path.join('public', 'js', 'admin.js'), adminJS);
-    log('✅ Created admin.js', 'green');
+    log(' Created admin.js', 'green');
 }
 
 async function seedDatabase() {
-    logSection('🌱 Seeding Database');
+    logSection(' Seeding Database');
     
     try {
         log('Creating sample data...', 'cyan');
         execSync('node utils/seedDatabase.js', { stdio: 'inherit' });
-        log('✅ Database seeded successfully', 'green');
+        log(' Database seeded successfully', 'green');
     } catch (error) {
-        log('⚠️  Database seeding failed. You can run it manually later with:', 'yellow');
+        log('  Database seeding failed. You can run it manually later with:', 'yellow');
         log('   npm run seed', 'yellow');
     }
 }
 
 function displaySuccessMessage() {
-    logSection('🎉 Setup Complete!');
+    logSection(' Setup Complete!');
     
     log('VayAccess Parking Management System is ready!', 'green');
     console.log('\n');
     
-    log('🚀 To start the system:', 'blue');
+    log(' To start the system:', 'blue');
     log('   npm run dev:all     # Start all services in development mode', 'cyan');
     log('   # OR start individually:', 'cyan');
     log('   npm run dev         # API Server (Port 3000)', 'cyan');
@@ -322,18 +322,18 @@ function displaySuccessMessage() {
     log('   npm run dev:user    # User Dashboard (Port 3002)', 'cyan');
     console.log('\n');
     
-    log('🔗 Access URLs:', 'blue');
+    log(' Access URLs:', 'blue');
     log('   API Server:      http://localhost:3000', 'cyan');
     log('   Admin Dashboard: http://localhost:3001', 'cyan');
     log('   User Dashboard:  http://localhost:3002', 'cyan');
     console.log('\n');
     
-    log('👤 Default Admin Credentials:', 'blue');
+    log(' Default Admin Credentials:', 'blue');
     log('   Email:    admin@vayaccess.com', 'cyan');
     log('   Password: Admin@123', 'cyan');
     console.log('\n');
     
-    log('📚 Next Steps:', 'blue');
+    log(' Next Steps:', 'blue');
     log('   1. Update .env file with your configuration', 'yellow');
     log('   2. Configure MongoDB connection string', 'yellow');
     log('   3. Set up email service credentials (optional)', 'yellow');
@@ -341,14 +341,14 @@ function displaySuccessMessage() {
     log('   5. Start the system with npm run dev:all', 'yellow');
     console.log('\n');
     
-    log('📖 Documentation: Check README.md for detailed information', 'blue');
-    log('❓ Support: support@vayaccess.com', 'blue');
+    log(' Documentation: Check README.md for detailed information', 'blue');
+    log(' Support: support@vayaccess.com', 'blue');
 }
 
 async function main() {
     try {
         console.clear();
-        log('🚗 VayAccess Smart Parking Management System Setup', 'bold');
+        log(' VayAccess Smart Parking Management System Setup', 'bold');
         log('Setting up your complete parking management solution...', 'cyan');
         
         await checkPrerequisites();
@@ -365,7 +365,7 @@ async function main() {
         });
         
         const seedAnswer = await new Promise((resolve) => {
-            rl.question('\n🌱 Would you like to seed the database with sample data? (y/N): ', (answer) => {
+            rl.question('\n Would you like to seed the database with sample data? (y/N): ', (answer) => {
                 resolve(answer.toLowerCase().trim());
             });
         });
@@ -375,25 +375,25 @@ async function main() {
         if (seedAnswer === 'y' || seedAnswer === 'yes') {
             await seedDatabase();
         } else {
-            log('⏭️  Database seeding skipped. Run "npm run seed" later if needed.', 'yellow');
+            log('  Database seeding skipped. Run "npm run seed" later if needed.', 'yellow');
         }
         
         displaySuccessMessage();
         
     } catch (error) {
-        log(`\n❌ Setup failed: ${error.message}`, 'red');
+        log(`\n Setup failed: ${error.message}`, 'red');
         process.exit(1);
     }
 }
 
 // Handle process interruption
 process.on('SIGINT', () => {
-    log('\n⚠️  Setup interrupted by user', 'yellow');
+    log('\n  Setup interrupted by user', 'yellow');
     process.exit(1);
 });
 
 process.on('uncaughtException', (error) => {
-    log(`\n❌ Unexpected error: ${error.message}`, 'red');
+    log(`\n Unexpected error: ${error.message}`, 'red');
     process.exit(1);
 });
 

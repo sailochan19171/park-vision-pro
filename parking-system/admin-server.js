@@ -1,4 +1,4 @@
-// MongoDB-Connected Admin Dashboard Server
+﻿// MongoDB-Connected Admin Dashboard Server
 // Port: 8080
 // Serves admin dashboard with real MongoDB data
 
@@ -28,15 +28,15 @@ const { logger } = require('./middlewares/logger');
 const app = express();
 const PORT = process.env.ADMIN_PORT || 8081;
 
-console.log('🚀 Starting MongoDB-Connected Admin Server on port:', PORT);
+console.log(' Starting MongoDB-Connected Admin Server on port:', PORT);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+.then(() => console.log(' MongoDB connected successfully'))
+.catch(err => console.error(' MongoDB connection error:', err));
 
 // Handlebars setup with helpers
 app.engine('handlebars', engine({
@@ -158,7 +158,7 @@ app.post('/api/test/login', async (req, res) => {
         status: 'active'
       });
       await admin.save();
-      console.log('✅ Test admin user created');
+      console.log(' Test admin user created');
     }
     
     // Set session
@@ -250,18 +250,18 @@ app.post('/admin/register', async (req, res) => {
       status: 'active'
     });
     
-    console.log('🔐 Creating admin with password:', password ? '***' + password.slice(-2) : 'NO PASSWORD');
+    console.log(' Creating admin with password:', password ? '***' + password.slice(-2) : 'NO PASSWORD');
     
     await adminUser.save();
     
-    console.log('✅ Admin user created successfully:', adminUser.name);
-    console.log('📧 Admin email:', adminUser.email);
+    console.log(' Admin user created successfully:', adminUser.name);
+    console.log(' Admin email:', adminUser.email);
     
     // Test the password immediately after creation
     const testAdmin = await User.findOne({ email: adminUser.email }).select('+password');
     if (testAdmin) {
       const testResult = await testAdmin.comparePassword(password);
-      console.log('🧪 Immediate password test result:', testResult);
+      console.log(' Immediate password test result:', testResult);
     }
     
     res.redirect('/admin/login?success=Admin account created successfully. Please login.');
@@ -279,12 +279,12 @@ app.post('/admin/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    console.log('🔐 Login attempt for:', email);
-    console.log('🔐 Password provided:', password ? '***' + password.slice(-2) : 'NO PASSWORD');
+    console.log(' Login attempt for:', email);
+    console.log(' Password provided:', password ? '***' + password.slice(-2) : 'NO PASSWORD');
     
     // Validate input
     if (!email || !password) {
-      console.log('❌ Missing email or password');
+      console.log(' Missing email or password');
       return res.redirect('/admin/login?error=Email and password are required');
     }
     
@@ -295,43 +295,43 @@ app.post('/admin/login', async (req, res) => {
     }).select('+password');
     
     if (!admin) {
-      console.log('❌ Admin user not found:', email);
+      console.log(' Admin user not found:', email);
       // List all admin emails for debugging
       const allAdmins = await User.find({ role: 'admin' }).select('email name');
-      console.log('📋 Available admin emails:', allAdmins.map(a => a.email));
+      console.log(' Available admin emails:', allAdmins.map(a => a.email));
       return res.redirect('/admin/login?error=Invalid credentials');
     }
     
-    console.log('✅ Admin found:', admin.name, 'Email:', admin.email);
-    console.log('🔒 Password hash exists:', !!admin.password);
-    console.log('🔒 Password hash length:', admin.password ? admin.password.length : 0);
+    console.log(' Admin found:', admin.name, 'Email:', admin.email);
+    console.log(' Password hash exists:', !!admin.password);
+    console.log(' Password hash length:', admin.password ? admin.password.length : 0);
     
     // Check password
     try {
       const isValidPassword = await admin.comparePassword(password);
-      console.log('🔐 Password comparison result:', isValidPassword);
+      console.log(' Password comparison result:', isValidPassword);
       
       if (!isValidPassword) {
-        console.log('❌ Invalid password for:', email);
+        console.log(' Invalid password for:', email);
         return res.redirect('/admin/login?error=Invalid credentials');
       }
     } catch (passwordError) {
-      console.error('❌ Password comparison error:', passwordError);
+      console.error(' Password comparison error:', passwordError);
       return res.redirect('/admin/login?error=Authentication error');
     }
     
-    console.log('✅ Login successful for:', admin.name);
+    console.log(' Login successful for:', admin.name);
     
     // Set session
     req.session.adminId = admin._id;
     req.session.adminName = admin.name;
     req.session.adminEmail = admin.email;
     
-    console.log('✅ Session set for admin:', admin.name);
+    console.log(' Session set for admin:', admin.name);
     
     res.redirect('/admin/dashboard');
   } catch (error) {
-    console.error('❌ Login error:', error);
+    console.error(' Login error:', error);
     res.redirect('/admin/login?error=Login failed');
   }
 });
@@ -1036,7 +1036,7 @@ app.post('/api/admin/users', requireAuth, async (req, res) => {
     });
     
     await newUser.save();
-    console.log('✅ User created successfully:', newUser.email, 'ID:', newUser._id.toString().substring(0, 8));
+    console.log(' User created successfully:', newUser.email, 'ID:', newUser._id.toString().substring(0, 8));
     
     console.log('User created successfully:', newUser._id);
     
@@ -1551,39 +1551,39 @@ app.get('/api/admin/bookings', requireAuth, async (req, res) => {
 
 // API: Create Booking  
 app.post('/api/admin/bookings', requireAuth, async (req, res) => {
-  console.log('🚀 Booking API called with body:', JSON.stringify(req.body, null, 2));
+  console.log(' Booking API called with body:', JSON.stringify(req.body, null, 2));
   
   try {
     // Handle both old format (IDs) and new format (names/numbers)
     let { userId, vehicleId, parkingSpotId, startTime, endTime, totalAmount } = req.body;
     const { customerName, customerEmail, vehicleNumber, parkingSpot, startDateTime, endDateTime } = req.body;
     
-    console.log('🔍 Extracted data:', {
+    console.log(' Extracted data:', {
       userId, vehicleId, parkingSpotId, startTime, endTime, totalAmount,
       customerName, customerEmail, vehicleNumber, parkingSpot, startDateTime, endDateTime
     });
     
     // If frontend sends customer info, find/create the entities
     if (customerName || customerEmail || vehicleNumber || parkingSpot) {
-      console.log('📝 Creating booking from form data:', { customerName, customerEmail, vehicleNumber, parkingSpot });
+      console.log(' Creating booking from form data:', { customerName, customerEmail, vehicleNumber, parkingSpot });
       
       // Find or create user
-      console.log('👤 Looking for user...');
+      console.log(' Looking for user...');
       let user;
       if (customerEmail) {
-        console.log(`🔍 Searching for user by email: ${customerEmail}`);
+        console.log(` Searching for user by email: ${customerEmail}`);
         user = await User.findOne({ email: customerEmail.toLowerCase() });
-        console.log(`📧 User found by email:`, user ? user.name : 'Not found');
+        console.log(` User found by email:`, user ? user.name : 'Not found');
       }
       if (!user && customerName) {
-        console.log(`🔍 Searching for user by name: ${customerName}`);
+        console.log(` Searching for user by name: ${customerName}`);
         user = await User.findOne({ name: { $regex: new RegExp(customerName, 'i') } });
-        console.log(`📛 User found by name:`, user ? user.name : 'Not found');
+        console.log(` User found by name:`, user ? user.name : 'Not found');
       }
       
       // If user doesn't exist, create one
       if (!user) {
-        console.log('🆕 Creating new user...');
+        console.log(' Creating new user...');
         const email = customerEmail || `${customerName.toLowerCase().replace(/\s+/g, '.')}@temp.com`;
         user = new User({
           name: customerName || 'Guest User',
@@ -1593,26 +1593,26 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
           password: 'temp123',
           status: 'active'
         });
-        console.log('💾 Saving new user:', user.name, user.email);
+        console.log(' Saving new user:', user.name, user.email);
         await user.save();
-        console.log('✅ Created new user:', user.name);
+        console.log(' Created new user:', user.name);
       } else {
-        console.log('✅ Using existing user:', user.name);
+        console.log(' Using existing user:', user.name);
       }
       userId = user._id;
       
       // Find vehicle by license plate
-      console.log('🚗 Looking for vehicle...');
+      console.log(' Looking for vehicle...');
       let vehicle;
       if (vehicleNumber) {
-        console.log(`🔍 Searching for vehicle: ${vehicleNumber}`);
+        console.log(` Searching for vehicle: ${vehicleNumber}`);
         vehicle = await Vehicle.findOne({ licensePlate: vehicleNumber.toUpperCase() });
-        console.log(`🚙 Vehicle found:`, vehicle ? vehicle.licensePlate : 'Not found');
+        console.log(` Vehicle found:`, vehicle ? vehicle.licensePlate : 'Not found');
       }
       
       // If vehicle doesn't exist, create one
       if (!vehicle && vehicleNumber) {
-        console.log('🆕 Creating new vehicle...');
+        console.log(' Creating new vehicle...');
         vehicle = new Vehicle({
           licensePlate: vehicleNumber.toUpperCase(),
           make: 'Unknown',
@@ -1630,36 +1630,36 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
             rto: 'Unknown'
           }
         });
-        console.log('💾 Saving new vehicle:', vehicle.licensePlate);
+        console.log(' Saving new vehicle:', vehicle.licensePlate);
         await vehicle.save();
         
         // Add vehicle to user's vehicles array
-        console.log('🔗 Linking vehicle to user...');
+        console.log(' Linking vehicle to user...');
         await User.findByIdAndUpdate(userId, {
           $push: { vehicles: vehicle._id }
         });
-        console.log('✅ Created new vehicle:', vehicle.licensePlate);
+        console.log(' Created new vehicle:', vehicle.licensePlate);
       } else if (vehicle) {
-        console.log('✅ Using existing vehicle:', vehicle.licensePlate);
+        console.log(' Using existing vehicle:', vehicle.licensePlate);
       }
       
       if (!vehicle) {
-        console.log('❌ No vehicle available');
+        console.log(' No vehicle available');
         throw new Error('Vehicle creation failed');
       }
       
       vehicleId = vehicle._id;
       
       // Find parking spot by spot number
-      console.log('🅿️ Looking for parking spot...');
+      console.log(' Looking for parking spot...');
       let spot;
       if (parkingSpot) {
-        console.log(`🔍 Searching for parking spot: ${parkingSpot}`);
+        console.log(` Searching for parking spot: ${parkingSpot}`);
         spot = await ParkingSpot.findOne({ spotNumber: parkingSpot });
-        console.log(`🏁 Parking spot found:`, spot ? `${spot.spotNumber} (${spot.status})` : 'Not found');
+        console.log(` Parking spot found:`, spot ? `${spot.spotNumber} (${spot.status})` : 'Not found');
       }
       if (!spot) {
-        console.log('❌ Parking spot not found');
+        console.log(' Parking spot not found');
         return res.status(400).json({
           success: false,
           message: `Parking spot "${parkingSpot}" not found. Available spots: BLR-001, BLR-002, BLR-003, MUM-001, MUM-002`
@@ -1668,7 +1668,7 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
       parkingSpotId = spot._id;
       
       // Convert and validate datetime formats from datetime-local inputs (e.g., "YYYY-MM-DDTHH:mm")
-      console.log('⏰ Converting datetime formats...');
+      console.log(' Converting datetime formats...');
       const parseDateTimeLocal = (val) => {
         if (!val || typeof val !== 'string') return null;
         let s = val.trim();
@@ -1683,14 +1683,14 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
       const parsedStart = parseDateTimeLocal(startDateTime);
       const parsedEnd = parseDateTimeLocal(endDateTime);
       if (!parsedStart || !parsedEnd) {
-        console.log('❌ Invalid date values received:', { startDateTime, endDateTime });
+        console.log(' Invalid date values received:', { startDateTime, endDateTime });
         return res.status(400).json({
           success: false,
           message: 'Invalid date/time. Please provide valid Start and End date-times.'
         });
       }
       if (parsedEnd <= parsedStart) {
-        console.log('❌ End time is not after start time:', { parsedStart, parsedEnd });
+        console.log(' End time is not after start time:', { parsedStart, parsedEnd });
         return res.status(400).json({
           success: false,
           message: 'End time must be after start time.'
@@ -1700,11 +1700,11 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
       startTime = parsedStart;
       endTime = parsedEnd;
       totalAmount = 100; // Default amount
-      console.log('📅 Times set:', { startTime, endTime, totalAmount });
+      console.log(' Times set:', { startTime, endTime, totalAmount });
     }
     
     // Verify all required entities exist
-    console.log('✅ Verifying all entities exist...');
+    console.log(' Verifying all entities exist...');
     console.log('IDs to verify:', { userId, vehicleId, parkingSpotId });
     
     const user = await User.findById(userId);
@@ -1718,7 +1718,7 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
     });
     
     if (!user || !vehicle || !spotEntity) {
-      console.log('❌ Entity verification failed');
+      console.log(' Entity verification failed');
       return res.status(400).json({
         success: false,
         message: `Invalid references - User: ${!!user}, Vehicle: ${!!vehicle}, ParkingSpot: ${!!spotEntity}`
@@ -1726,9 +1726,9 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
     }
     
     // Check if parking spot is available
-    console.log('🔍 Checking parking spot availability...');
+    console.log(' Checking parking spot availability...');
     if (spotEntity.status !== 'available') {
-      console.log('❌ Parking spot not available:', spotEntity.status);
+      console.log(' Parking spot not available:', spotEntity.status);
       return res.status(400).json({
         success: false,
         message: 'Parking spot is not available'
@@ -1736,7 +1736,7 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
     }
     
     // Create new booking with correct structure
-    console.log('🆕 Creating new booking...');
+    console.log(' Creating new booking...');
     const bookingAmount = totalAmount || 100; // Default amount
     const newBooking = new Booking({
       user: userId,
@@ -1766,9 +1766,9 @@ app.post('/api/admin/bookings', requireAuth, async (req, res) => {
       }
     });
     
-    console.log('💾 Saving booking...');
+    console.log(' Saving booking...');
     await newBooking.save();
-    console.log('✅ Booking saved successfully:', newBooking._id);
+    console.log(' Booking saved successfully:', newBooking._id);
     
     // Update parking spot status
     await ParkingSpot.findByIdAndUpdate(parkingSpotId, {
@@ -3055,9 +3055,9 @@ async function initializeDefaultSettings() {
         await Setting.create(setting);
       }
     }
-    console.log('✅ Default settings initialized');
+    console.log(' Default settings initialized');
   } catch (error) {
-    console.error('❌ Error initializing default settings:', error);
+    console.error(' Error initializing default settings:', error);
   }
 }
 
@@ -3068,7 +3068,7 @@ async function initializeDefaultAdmins() {
     const adminCount = await User.countDocuments({ role: 'admin' });
     
     if (adminCount === 0) {
-      console.log('🔧 Creating default admin users...');
+      console.log(' Creating default admin users...');
       
       // Create Super Admin
       const superAdminPassword = await bcrypt.hash('Admin@123', 10);
@@ -3084,7 +3084,7 @@ async function initializeDefaultAdmins() {
         updatedAt: new Date()
       });
       await superAdmin.save();
-      console.log('✅ Super Admin created: admin@vayaccess.com / Admin@123');
+      console.log(' Super Admin created: admin@vayaccess.com / Admin@123');
       
       // Create Manager
       const managerPassword = await bcrypt.hash('User@123', 10);
@@ -3100,7 +3100,7 @@ async function initializeDefaultAdmins() {
         updatedAt: new Date()
       });
       await manager.save();
-      console.log('✅ Manager created: john.manager@vayaccess.com / User@123');
+      console.log(' Manager created: john.manager@vayaccess.com / User@123');
       
       // Create Test Admin for development
       const testAdminPassword = await bcrypt.hash('test123', 10);
@@ -3116,14 +3116,14 @@ async function initializeDefaultAdmins() {
         updatedAt: new Date()
       });
       await testAdmin.save();
-      console.log('✅ Test Admin created: admin@test.com / test123');
+      console.log(' Test Admin created: admin@test.com / test123');
       
-      console.log('🎉 Default admin users created successfully!');
+      console.log(' Default admin users created successfully!');
     } else {
-      console.log(`✅ Found ${adminCount} existing admin user(s)`);
+      console.log(` Found ${adminCount} existing admin user(s)`);
     }
   } catch (error) {
-    console.error('❌ Error creating default admin users:', error);
+    console.error(' Error creating default admin users:', error);
   }
 }
 
@@ -3256,9 +3256,9 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ MongoDB-Connected Admin Server running on http://localhost:${PORT}/admin/`);
-  console.log(`📊 Dashboard: http://localhost:${PORT}/admin/dashboard`);
-  console.log(`🔐 Login: http://localhost:${PORT}/admin/login`);
+  console.log(` MongoDB-Connected Admin Server running on http://localhost:${PORT}/admin/`);
+  console.log(` Dashboard: http://localhost:${PORT}/admin/dashboard`);
+  console.log(` Login: http://localhost:${PORT}/admin/login`);
 });
 
 module.exports = app;

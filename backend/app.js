@@ -1,4 +1,4 @@
-// backend/app.js
+﻿// backend/app.js
 // Minimal Express server entry to avoid corrupted server.js
 
 const path = require('path');
@@ -36,5 +36,5 @@ app.use((req, res) => {
 
 const PORT = Number(process.env.PORT) || 4001;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(` Server running on http://localhost:${PORT}`);
 });

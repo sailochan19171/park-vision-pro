@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Comprehensive Payment System Test
  * Tests all payment-related endpoints and functionality
  */
@@ -8,7 +8,7 @@ const axios = require('axios');
 const BASE_URL = 'http://localhost:3000';
 
 async function testPaymentEndpoints() {
-    console.log('🧪 Testing Payment System Functionality...\n');
+    console.log(' Testing Payment System Functionality...\n');
     
     const tests = [
         {
@@ -145,14 +145,14 @@ async function testPaymentEndpoints() {
             }
             
             if (response.status === test.expectedStatus && response.data.success) {
-                console.log(`✅ ${test.name} - PASSED`);
+                console.log(` ${test.name} - PASSED`);
                 passed++;
             } else {
-                console.log(`❌ ${test.name} - FAILED (Status: ${response.status})`);
+                console.log(` ${test.name} - FAILED (Status: ${response.status})`);
                 failed++;
             }
         } catch (error) {
-            console.log(`❌ ${test.name} - FAILED (Error: ${error.message})`);
+            console.log(` ${test.name} - FAILED (Error: ${error.message})`);
             failed++;
         }
         
@@ -160,16 +160,16 @@ async function testPaymentEndpoints() {
         await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    console.log(`\n📊 Test Results:`);
-    console.log(`✅ Passed: ${passed}`);
-    console.log(`❌ Failed: ${failed}`);
-    console.log(`📈 Success Rate: ${((passed / (passed + failed)) * 100).toFixed(1)}%`);
+    console.log(`\n Test Results:`);
+    console.log(` Passed: ${passed}`);
+    console.log(` Failed: ${failed}`);
+    console.log(` Success Rate: ${((passed / (passed + failed)) * 100).toFixed(1)}%`);
     
     if (failed === 0) {
-        console.log(`\n🎉 All payment functionality tests passed!`);
-        console.log(`🚀 Your payment system is fully functional!`);
+        console.log(`\n All payment functionality tests passed!`);
+        console.log(` Your payment system is fully functional!`);
     } else {
-        console.log(`\n⚠️  Some tests failed. Please check the server logs.`);
+        console.log(`\n  Some tests failed. Please check the server logs.`);
     }
 }
 

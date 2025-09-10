@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -22,8 +22,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+.then(() => console.log(' MongoDB connected successfully'))
+.catch(err => console.error(' MongoDB connection error:', err));
 
 // Middleware
 app.use(cors({
@@ -44,7 +44,7 @@ app.use('/api/admin', adminRoutes);
 
 // Test endpoint to verify server is working
 app.post('/api/test', (req, res) => {
-  console.log('📝 Test POST request received:', req.body);
+  console.log(' Test POST request received:', req.body);
   res.json({
     success: true,
     message: 'Test POST endpoint working',
@@ -68,8 +68,8 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Test Server running on http://localhost:${PORT}`);
-  console.log('📋 Available endpoints:');
+  console.log(` Test Server running on http://localhost:${PORT}`);
+  console.log(' Available endpoints:');
   console.log('  GET  /api/health');
   console.log('  POST /api/test');
   console.log('  POST /api/auth/register');
@@ -77,7 +77,7 @@ app.listen(PORT, () => {
   console.log('  POST /api/parking/spots (requires auth)');
   console.log('  POST /api/vehicle/register (requires auth)');
   console.log('');
-  console.log('🧪 Test with curl:');
+  console.log(' Test with curl:');
   console.log(`  curl -X POST http://localhost:${PORT}/api/test -H "Content-Type: application/json" -d "{\\"test\\": \\"data\\"}"`);
   console.log(`  curl -X POST http://localhost:${PORT}/api/auth/register -H "Content-Type: application/json" -d "{\\"name\\": \\"John Doe\\", \\"email\\": \\"john@test.com\\", \\"password\\": \\"Password123\\", \\"phone\\": \\"+1234567890\\"}"`);
 });

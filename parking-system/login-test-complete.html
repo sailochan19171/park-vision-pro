@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -162,7 +162,7 @@
                         </div>
                         <div class="small text-muted mt-2">
                             GET: <a href="http://localhost:3002/login" target="_blank">http://localhost:3002/login</a><br>
-                            POST: /login → /user/login
+                            POST: /login  /user/login
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -237,41 +237,41 @@
                 
                 if (response.status === 0) {
                     // CORS blocked, but this means server is responding
-                    statusDiv.innerHTML = '<span class="status-badge status-success">✅ Login Working</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-success"> Login Working</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-success"><strong>✅ SUCCESS:</strong> Admin login is working!</p>
+                        <p class="text-success"><strong> SUCCESS:</strong> Admin login is working!</p>
                         <p><strong>Email:</strong> ${email}</p>
                         <p><strong>Status:</strong> CORS blocked (expected) - Server responding</p>
                         <p><strong>Next:</strong> <a href="http://localhost:3001/admin/login" target="_blank">Test manually in browser</a></p>
                     `;
                 } else if (response.status === 302) {
-                    statusDiv.innerHTML = '<span class="status-badge status-success">✅ Login Successful</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-success"> Login Successful</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-success"><strong>✅ SUCCESS:</strong> Login successful - redirecting!</p>
+                        <p class="text-success"><strong> SUCCESS:</strong> Login successful - redirecting!</p>
                         <p><strong>Email:</strong> ${email}</p>
                         <p><strong>Status:</strong> ${response.status} (Redirect)</p>
                     `;
                 } else {
-                    statusDiv.innerHTML = '<span class="status-badge status-error">❌ Login Failed</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-error"> Login Failed</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-danger"><strong>❌ FAILED:</strong> Unexpected response</p>
+                        <p class="text-danger"><strong> FAILED:</strong> Unexpected response</p>
                         <p><strong>Status:</strong> ${response.status}</p>
                         <p><strong>Response:</strong> ${await response.text()}</p>
                     `;
                 }
             } catch (error) {
                 if (error.message.includes('CORS') || error.message.includes('Network')) {
-                    statusDiv.innerHTML = '<span class="status-badge status-success">✅ Server Responding</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-success"> Server Responding</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-success"><strong>✅ GOOD:</strong> Server is responding (CORS expected)</p>
+                        <p class="text-success"><strong> GOOD:</strong> Server is responding (CORS expected)</p>
                         <p><strong>Email:</strong> ${email}</p>
                         <p><strong>Note:</strong> CORS prevents direct testing, but server is working</p>
                         <p><strong>Action:</strong> <a href="http://localhost:3001/admin/login" target="_blank">Test in browser</a></p>
                     `;
                 } else {
-                    statusDiv.innerHTML = '<span class="status-badge status-error">❌ Error</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-error"> Error</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-danger"><strong>❌ ERROR:</strong> ${error.message}</p>
+                        <p class="text-danger"><strong> ERROR:</strong> ${error.message}</p>
                     `;
                 }
             }
@@ -300,40 +300,40 @@
                 });
                 
                 if (response.status === 0) {
-                    statusDiv.innerHTML = '<span class="status-badge status-success">✅ Login Working</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-success"> Login Working</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-success"><strong>✅ SUCCESS:</strong> User login is working!</p>
+                        <p class="text-success"><strong> SUCCESS:</strong> User login is working!</p>
                         <p><strong>Email:</strong> ${email}</p>
                         <p><strong>Status:</strong> CORS blocked (expected) - Server responding</p>
                         <p><strong>Next:</strong> <a href="http://localhost:3002/login" target="_blank">Test manually in browser</a></p>
                     `;
                 } else if (response.status === 302) {
-                    statusDiv.innerHTML = '<span class="status-badge status-success">✅ Login Successful</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-success"> Login Successful</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-success"><strong>✅ SUCCESS:</strong> Login successful - redirecting!</p>
+                        <p class="text-success"><strong> SUCCESS:</strong> Login successful - redirecting!</p>
                         <p><strong>Email:</strong> ${email}</p>
                         <p><strong>Status:</strong> ${response.status} (Redirect)</p>
                     `;
                 } else {
-                    statusDiv.innerHTML = '<span class="status-badge status-error">❌ Login Failed</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-error"> Login Failed</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-danger"><strong>❌ FAILED:</strong> Unexpected response</p>
+                        <p class="text-danger"><strong> FAILED:</strong> Unexpected response</p>
                         <p><strong>Status:</strong> ${response.status}</p>
                     `;
                 }
             } catch (error) {
                 if (error.message.includes('CORS') || error.message.includes('Network')) {
-                    statusDiv.innerHTML = '<span class="status-badge status-success">✅ Server Responding</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-success"> Server Responding</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-success"><strong>✅ GOOD:</strong> Server is responding (CORS expected)</p>
+                        <p class="text-success"><strong> GOOD:</strong> Server is responding (CORS expected)</p>
                         <p><strong>Email:</strong> ${email}</p>
                         <p><strong>Note:</strong> CORS prevents direct testing, but server is working</p>
                         <p><strong>Action:</strong> <a href="http://localhost:3002/login" target="_blank">Test in browser</a></p>
                     `;
                 } else {
-                    statusDiv.innerHTML = '<span class="status-badge status-error">❌ Error</span>';
+                    statusDiv.innerHTML = '<span class="status-badge status-error"> Error</span>';
                     resultDiv.innerHTML = `
-                        <p class="text-danger"><strong>❌ ERROR:</strong> ${error.message}</p>
+                        <p class="text-danger"><strong> ERROR:</strong> ${error.message}</p>
                     `;
                 }
             }
@@ -350,17 +350,17 @@
             // Check admin server
             try {
                 await fetch('http://localhost:3001/admin/login', {method: 'HEAD', mode: 'no-cors'});
-                adminStatusDiv.innerHTML = '<span class="status-badge status-success">✅ Online</span>';
+                adminStatusDiv.innerHTML = '<span class="status-badge status-success"> Online</span>';
             } catch {
-                adminStatusDiv.innerHTML = '<span class="status-badge status-success">✅ Responding</span>';
+                adminStatusDiv.innerHTML = '<span class="status-badge status-success"> Responding</span>';
             }
             
             // Check user server  
             try {
                 await fetch('http://localhost:3002/login', {method: 'HEAD', mode: 'no-cors'});
-                userStatusDiv.innerHTML = '<span class="status-badge status-success">✅ Online</span>';
+                userStatusDiv.innerHTML = '<span class="status-badge status-success"> Online</span>';
             } catch {
-                userStatusDiv.innerHTML = '<span class="status-badge status-success">✅ Responding</span>';
+                userStatusDiv.innerHTML = '<span class="status-badge status-success"> Responding</span>';
             }
         }
         
@@ -384,7 +384,7 @@
                 }
             });
             
-            console.log('🔧 VayAccess Login Test Center Ready');
+            console.log(' VayAccess Login Test Center Ready');
             console.log('Admin: http://localhost:3001/admin/login');
             console.log('User: http://localhost:3002/login');
         });

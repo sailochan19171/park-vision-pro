@@ -1,4 +1,4 @@
-import { io, Socket } from 'socket.io-client';
+﻿import { io, Socket } from 'socket.io-client';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 const isNgrok = /ngrok/i.test(String(import.meta.env.VITE_API_BASE_URL || ''));
@@ -60,32 +60,32 @@ class AICallService {
       });
 
       this.socket.on('connect', () => {
-        console.log('🔌 Connected to AI Call Service');
+        console.log(' Connected to AI Call Service');
       });
 
       this.socket.on('disconnect', () => {
-        console.log('🔌 Disconnected from AI Call Service');
+        console.log(' Disconnected from AI Call Service');
       });
 
       this.socket.on('call-status-changed', (data) => {
-        console.log('📞 Call status changed:', data);
+        console.log(' Call status changed:', data);
         // Handle real-time call status updates
       });
 
       this.socket.on('call-conversation-update', (data) => {
-        console.log('💬 Conversation update:', data);
+        console.log(' Conversation update:', data);
         // Handle real-time conversation updates
       });
 
     } catch (error) {
-      console.error('❌ Failed to initialize socket connection:', error);
+      console.error(' Failed to initialize socket connection:', error);
     }
   }
 
   // Initialize a new AI call session
   async initializeCall(customerPhone: string, customerName?: string): Promise<{ success: boolean; sessionId?: string; message: string }> {
     try {
-      console.log(`📞 Initializing AI call for ${customerPhone}`);
+      console.log(` Initializing AI call for ${customerPhone}`);
 
       const response = await fetch(`${API_BASE_URL}/api/ai-call/initialize`, {
         method: 'POST',
@@ -117,7 +117,7 @@ class AICallService {
       return result;
 
     } catch (error) {
-      console.error('❌ Error initializing call:', error);
+      console.error(' Error initializing call:', error);
       return {
         success: false,
         message: 'Failed to initialize call. Please try again.'
@@ -132,7 +132,7 @@ class AICallService {
         throw new Error('No active call session');
       }
 
-      console.log(`💬 Sending message: "${message}"`);
+      console.log(` Sending message: "${message}"`);
 
       const response = await fetch(`${API_BASE_URL}/api/ai-call/chat`, {
         method: 'POST',
@@ -164,7 +164,7 @@ class AICallService {
       return result;
 
     } catch (error) {
-      console.error('❌ Error sending message:', error);
+      console.error(' Error sending message:', error);
       return {
         success: false,
         error: 'Failed to send message. Please try again.'
@@ -203,12 +203,12 @@ class AICallService {
       };
 
       this.mediaRecorder.onstop = async () => {
-        console.log('🎤 Voice recording stopped, processing...');
+        console.log(' Voice recording stopped, processing...');
         await this.processVoiceRecording();
       };
 
       this.mediaRecorder.start();
-      console.log('🎤 Voice recording started');
+      console.log(' Voice recording started');
 
       return {
         success: true,
@@ -216,7 +216,7 @@ class AICallService {
       };
 
     } catch (error) {
-      console.error('❌ Error starting voice recording:', error);
+      console.error(' Error starting voice recording:', error);
       return {
         success: false,
         message: 'Failed to start voice recording. Please check microphone permissions.'
@@ -243,7 +243,7 @@ class AICallService {
       };
 
     } catch (error) {
-      console.error('❌ Error stopping voice recording:', error);
+      console.error(' Error stopping voice recording:', error);
       return {
         success: false,
         message: 'Failed to stop voice recording'
@@ -266,7 +266,7 @@ class AICallService {
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('sessionId', this.currentSession.sessionId);
 
-      console.log('🎤 Sending audio for speech-to-text processing...');
+      console.log(' Sending audio for speech-to-text processing...');
 
       // Send to backend for speech-to-text processing
       const response = await fetch(`${API_BASE_URL}/api/ai-call/speech-to-text`, {
@@ -277,7 +277,7 @@ class AICallService {
       const result = await response.json();
 
       if (result.success && result.transcription) {
-        console.log(`🎤 Transcription: "${result.transcription}"`);
+        console.log(` Transcription: "${result.transcription}"`);
         
         // Send transcribed text to AI agent
         const aiResponse = await this.sendMessage(result.transcription);
@@ -289,7 +289,7 @@ class AICallService {
       }
 
     } catch (error) {
-      console.error('❌ Error processing voice recording:', error);
+      console.error(' Error processing voice recording:', error);
     }
   }
 
@@ -300,7 +300,7 @@ class AICallService {
         return;
       }
 
-      console.log('🔊 Converting AI response to speech...');
+      console.log(' Converting AI response to speech...');
 
       const response = await fetch(`${API_BASE_URL}/api/ai-call/text-to-speech`, {
         method: 'POST',
@@ -316,7 +316,7 @@ class AICallService {
       const result = await response.json();
 
       if (result.success && result.audioUrl) {
-        console.log('🔊 AI audio generated, playing...');
+        console.log(' AI audio generated, playing...');
         
         // Create audio element and play
         const audio = new Audio(`${API_BASE_URL}${result.audioUrl}`);
@@ -327,28 +327,28 @@ class AICallService {
         
         // Handle audio events
         audio.onloadstart = () => {
-          console.log('🔊 Starting to load audio...');
+          console.log(' Starting to load audio...');
         };
         
         audio.oncanplay = () => {
-          console.log('🔊 Audio ready, playing AI response...');
+          console.log(' Audio ready, playing AI response...');
           audio.play().catch(e => {
-            console.error('❌ Error playing audio:', e);
+            console.error(' Error playing audio:', e);
             // Fallback to speech synthesis if available
             this.fallbackToSpeechSynthesis(text);
           });
         };
 
         audio.onplay = () => {
-          console.log('✅ AI response audio playing');
+          console.log(' AI response audio playing');
         };
 
         audio.onended = () => {
-          console.log('✅ AI response audio finished');
+          console.log(' AI response audio finished');
         };
 
         audio.onerror = (error) => {
-          console.error('❌ Error loading/playing AI audio:', error);
+          console.error(' Error loading/playing AI audio:', error);
           // Fallback to browser speech synthesis
           this.fallbackToSpeechSynthesis(text);
         };
@@ -357,12 +357,12 @@ class AICallService {
         audio.load();
         
       } else {
-        console.warn('⚠️ No audio URL received, using speech synthesis fallback');
+        console.warn(' No audio URL received, using speech synthesis fallback');
         this.fallbackToSpeechSynthesis(text);
       }
 
     } catch (error) {
-      console.error('❌ Error converting to speech:', error);
+      console.error(' Error converting to speech:', error);
       // Fallback to browser speech synthesis
       this.fallbackToSpeechSynthesis(text);
     }
@@ -372,7 +372,7 @@ class AICallService {
   private fallbackToSpeechSynthesis(text: string): void {
     try {
       if ('speechSynthesis' in window) {
-        console.log('🔊 Using browser speech synthesis as fallback...');
+        console.log(' Using browser speech synthesis as fallback...');
         
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 0.9;
@@ -392,24 +392,24 @@ class AICallService {
         }
 
         utterance.onstart = () => {
-          console.log('🔊 Browser speech synthesis started');
+          console.log(' Browser speech synthesis started');
         };
 
         utterance.onend = () => {
-          console.log('✅ Browser speech synthesis ended');
+          console.log(' Browser speech synthesis ended');
         };
 
         utterance.onerror = (error) => {
-          console.error('❌ Speech synthesis error:', error);
+          console.error(' Speech synthesis error:', error);
         };
 
         speechSynthesis.speak(utterance);
         
       } else {
-        console.warn('⚠️ Speech synthesis not supported in this browser');
+        console.warn(' Speech synthesis not supported in this browser');
       }
     } catch (error) {
-      console.error('❌ Error in speech synthesis fallback:', error);
+      console.error(' Error in speech synthesis fallback:', error);
     }
   }
 
@@ -422,7 +422,7 @@ class AICallService {
 
       const callDuration = Math.round((new Date().getTime() - this.currentSession.startTime.getTime()) / 1000);
 
-      console.log(`📞 Ending call session ${this.currentSession.sessionId}`);
+      console.log(` Ending call session ${this.currentSession.sessionId}`);
 
       const response = await fetch(`${API_BASE_URL}/api/ai-call/end`, {
         method: 'POST',
@@ -443,7 +443,7 @@ class AICallService {
       return result;
 
     } catch (error) {
-      console.error('❌ Error ending call:', error);
+      console.error(' Error ending call:', error);
       return {
         success: false,
         message: 'Failed to end call properly'
@@ -470,7 +470,7 @@ class AICallService {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('❌ Error fetching call recordings:', error);
+      console.error(' Error fetching call recordings:', error);
       return {
         success: false,
         error: 'Failed to fetch call recordings'
@@ -485,7 +485,7 @@ class AICallService {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('❌ Error fetching call recording:', error);
+      console.error(' Error fetching call recording:', error);
       return {
         success: false,
         error: 'Failed to fetch call recording'
@@ -500,7 +500,7 @@ class AICallService {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('❌ Error fetching call statistics:', error);
+      console.error(' Error fetching call statistics:', error);
       return {
         success: false,
         error: 'Failed to fetch call statistics'
@@ -529,7 +529,7 @@ class AICallService {
   // Initiate a real phone call via Asterisk AMI
   async initiatePhoneCall(phoneNumber: string): Promise<{ success: boolean; sessionId?: string; message: string }> {
     try {
-      console.log(`📞 Initiating phone call to ${phoneNumber}`);
+      console.log(` Initiating phone call to ${phoneNumber}`);
 
       const response = await fetch(`${API_BASE_URL}/api/call`, {
         method: 'POST',
@@ -545,7 +545,7 @@ class AICallService {
       return result;
 
     } catch (error) {
-      console.error('❌ Error initiating phone call:', error);
+      console.error(' Error initiating phone call:', error);
       return {
         success: false,
         message: 'Failed to initiate phone call. Please try again.'

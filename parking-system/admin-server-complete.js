@@ -1,4 +1,4 @@
-// Complete Admin Dashboard Server
+﻿// Complete Admin Dashboard Server
 // Port: 8080
 // Serves admin dashboard with authentication and API endpoints
 
@@ -12,7 +12,7 @@ const { engine } = require('express-handlebars');
 const app = express();
 const PORT = process.env.ADMIN_PORT || 8080;
 
-console.log('🚀 Starting Complete Admin Server on port:', PORT);
+console.log(' Starting Complete Admin Server on port:', PORT);
 
 // ===== IN-MEMORY DATA STORE =====
 // This will hold all the actual data created by admins
@@ -354,7 +354,7 @@ function addActivity(type, message, status = 'info', userId = null) {
     dataStore.recentActivity = dataStore.recentActivity.slice(0, 50);
   }
   
-  console.log('📝 New activity added:', activity.message);
+  console.log(' New activity added:', activity.message);
 }
 
 function calculateStats() {
@@ -397,7 +397,7 @@ function calculateStats() {
   };
 }
 
-console.log('✅ Data store initialized with', Object.keys(dataStore).length, 'data collections');
+console.log(' Data store initialized with', Object.keys(dataStore).length, 'data collections');
 
 // Handlebars configuration
 app.engine('handlebars', engine({
@@ -442,7 +442,7 @@ const requireAdminAuth = (req, res, next) => {
   if (req.session && req.session.admin) {
     return next();
   } else {
-    console.log('❌ Unauthorized access attempt to:', req.path);
+    console.log(' Unauthorized access attempt to:', req.path);
     if (req.path.startsWith('/api/')) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
@@ -476,7 +476,7 @@ app.post('/admin/login', async (req, res) => {
   try {
     const { email, password, rememberMe } = req.body;
     
-    console.log('🔐 Login attempt for:', email);
+    console.log(' Login attempt for:', email);
     
     // Hardcoded admin credentials for demo
     const validCredentials = {
@@ -501,10 +501,10 @@ app.post('/admin/login', async (req, res) => {
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       }
       
-      console.log('✅ Login successful for:', normalizedEmail);
+      console.log(' Login successful for:', normalizedEmail);
       return res.redirect('/admin/dashboard');
     } else {
-      console.log('❌ Invalid credentials for:', normalizedEmail);
+      console.log(' Invalid credentials for:', normalizedEmail);
       return res.render('login', {
         title: 'Admin Login - VayAccess',
         layout: 'auth',
@@ -513,7 +513,7 @@ app.post('/admin/login', async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('🚨 Admin login error:', error);
+    console.error(' Admin login error:', error);
     return res.render('login', {
       title: 'Admin Login - VayAccess',
       layout: 'auth',
@@ -645,7 +645,7 @@ app.get('/admin/manage-admins', requireAdminAuth, (req, res) => {
 // Dashboard API endpoint (This was missing!)
 app.get('/api/admin/dashboard', requireAdminAuth, (req, res) => {
   try {
-    console.log('📊 Dashboard API called by:', req.session.admin.email);
+    console.log(' Dashboard API called by:', req.session.admin.email);
     
     // Real dashboard data from data store
     const stats = calculateStats();
@@ -671,10 +671,10 @@ app.get('/api/admin/dashboard', requireAdminAuth, (req, res) => {
       }
     };
     
-    console.log('📊 Returning real dashboard stats:', stats);
+    console.log(' Returning real dashboard stats:', stats);
     res.json(dashboardData);
   } catch (error) {
-    console.error('🚨 Dashboard API error:', error);
+    console.error(' Dashboard API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error loading dashboard data',
@@ -686,7 +686,7 @@ app.get('/api/admin/dashboard', requireAdminAuth, (req, res) => {
 // AI Call Recordings API endpoint (This was missing!)
 app.get('/api/admin/ai-call-recordings', requireAdminAuth, (req, res) => {
   try {
-    console.log('🤖 AI Call Recordings API called by:', req.session.admin.email);
+    console.log(' AI Call Recordings API called by:', req.session.admin.email);
     
     // Sample AI call recordings data
     const aiCallData = {
@@ -735,7 +735,7 @@ app.get('/api/admin/ai-call-recordings', requireAdminAuth, (req, res) => {
     
     res.json(aiCallData);
   } catch (error) {
-    console.error('🚨 AI Call Recordings API error:', error);
+    console.error(' AI Call Recordings API error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error loading AI call recordings',
@@ -1458,7 +1458,7 @@ app.get('/favicon.ico', (req, res) => {
 
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {
-  console.log('❌ API endpoint not found:', req.path);
+  console.log(' API endpoint not found:', req.path);
   res.status(404).json({ 
     success: false, 
     message: 'API endpoint not found',
@@ -1468,7 +1468,7 @@ app.use('/api/*', (req, res) => {
 
 // 404 handler for regular routes
 app.use((req, res) => {
-  console.log('❌ Page not found:', req.path);
+  console.log(' Page not found:', req.path);
   res.status(404).render('404', {
     title: '404 - Page Not Found',
     admin: req.session ? req.session.admin : null,
@@ -1478,7 +1478,7 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error('🚨 Server error:', err.stack);
+  console.error(' Server error:', err.stack);
   
   if (req.path.startsWith('/api/')) {
     res.status(500).json({
@@ -1497,9 +1497,9 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Complete Admin Server running on http://localhost:${PORT}`);
+  console.log(` Complete Admin Server running on http://localhost:${PORT}`);
   console.log('');
-  console.log('🔗 Admin Pages Available:');
+  console.log(' Admin Pages Available:');
   console.log('   Login: http://localhost:' + PORT + '/admin/login');
   console.log('   Dashboard: http://localhost:' + PORT + '/admin/dashboard');
   console.log('   Users: http://localhost:' + PORT + '/admin/users');
@@ -1514,12 +1514,12 @@ app.listen(PORT, () => {
   console.log('   Logs: http://localhost:' + PORT + '/admin/logs');
   console.log('   Manage Admins: http://localhost:' + PORT + '/admin/manage-admins');
   console.log('');
-  console.log('🔐 Demo Credentials:');
+  console.log(' Demo Credentials:');
   console.log('   admin@vayaccess.com / Admin@123');
   console.log('   john.manager@vayaccess.com / User@123');
   console.log('   demo@vayaccess.com / Demo@123');
   console.log('');
-  console.log('🚀 API Endpoints Available:');
+  console.log(' API Endpoints Available:');
   console.log('   GET /api/admin/dashboard');
   console.log('   GET /api/admin/ai-call-recordings');
   console.log('   GET /api/admin/users');

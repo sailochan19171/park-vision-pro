@@ -1,13 +1,13 @@
-// Complete Admin Dashboard JavaScript
+﻿// Complete Admin Dashboard JavaScript
 // Fixed for localhost:8080 with session-based authentication
 
-console.log('🚀 Admin Dashboard JavaScript Loading...');
+console.log(' Admin Dashboard JavaScript Loading...');
 
 // Removed duplicate DOMContentLoaded - using the one at the bottom of the file
 
 // Dashboard initialization
 function initializeDashboard() {
-    console.log('🎯 Initializing dashboard...');
+    console.log(' Initializing dashboard...');
     
     // Load initial data
     refreshDashboard();
@@ -18,7 +18,7 @@ function initializeDashboard() {
 
 // Main dashboard refresh function
 async function refreshDashboard() {
-    console.log('🔄 Refreshing dashboard data...');
+    console.log(' Refreshing dashboard data...');
     
     try {
         // Load dashboard stats
@@ -30,9 +30,9 @@ async function refreshDashboard() {
         // Load recent activity
         await loadRecentActivity();
         
-        console.log('✅ Dashboard refresh completed');
+        console.log(' Dashboard refresh completed');
     } catch (error) {
-        console.error('❌ Dashboard refresh error:', error);
+        console.error(' Dashboard refresh error:', error);
         showError('Failed to refresh dashboard data');
     }
 }
@@ -40,7 +40,7 @@ async function refreshDashboard() {
 // Load dashboard statistics
 async function loadDashboardStats() {
     try {
-        console.log('📈 Loading dashboard stats...');
+        console.log(' Loading dashboard stats...');
         
         const response = await fetch('/api/admin/dashboard', {
             method: 'GET',
@@ -55,7 +55,7 @@ async function loadDashboardStats() {
         }
         
         const result = await response.json();
-        console.log('📊 Dashboard stats loaded:', result);
+        console.log(' Dashboard stats loaded:', result);
         
         // Support both old and new response shapes
         const stats = result.data?.stats || result.stats;
@@ -69,7 +69,7 @@ async function loadDashboardStats() {
         }
         
     } catch (error) {
-        console.error('❌ Error loading dashboard stats:', error);
+        console.error(' Error loading dashboard stats:', error);
         showError('Failed to load dashboard statistics');
         
         // Show fallback data
@@ -84,7 +84,7 @@ async function loadDashboardStats() {
 
 // Update dashboard stats in UI
 function updateDashboardStats(stats) {
-    console.log('📊 Updating dashboard stats UI:', stats);
+    console.log(' Updating dashboard stats UI:', stats);
     
     try {
         // Update total users
@@ -117,7 +117,7 @@ function updateDashboardStats(stats) {
         updateQuickStats(stats);
         
     } catch (error) {
-        console.error('❌ Error updating dashboard stats UI:', error);
+        console.error(' Error updating dashboard stats UI:', error);
     }
 }
 
@@ -149,14 +149,14 @@ function updateQuickStats(stats) {
         }
         
     } catch (error) {
-        console.error('❌ Error updating quick stats:', error);
+        console.error(' Error updating quick stats:', error);
     }
 }
 
 // Load AI call recordings
 async function loadAICallRecordings() {
     try {
-        console.log('🤖 Loading AI call recordings...');
+        console.log(' Loading AI call recordings...');
         
         const response = await fetch('/api/admin/ai-call-recordings', {
             method: 'GET',
@@ -171,7 +171,7 @@ async function loadAICallRecordings() {
         }
         
         const result = await response.json();
-        console.log('🤖 AI call recordings loaded:', result);
+        console.log(' AI call recordings loaded:', result);
         
         if (result.success && result.data) {
             updateAICallAnalytics(result.data);
@@ -180,7 +180,7 @@ async function loadAICallRecordings() {
         }
         
     } catch (error) {
-        console.error('❌ Failed to load AI call recordings:', error);
+        console.error(' Failed to load AI call recordings:', error);
         // Don't show error for AI calls as it's optional
     }
 }
@@ -188,7 +188,7 @@ async function loadAICallRecordings() {
 // Update AI call analytics
 function updateAICallAnalytics(data) {
     try {
-        console.log('🤖 Updating AI call analytics:', data);
+        console.log(' Updating AI call analytics:', data);
         
         // Update AI call stats if elements exist
         const aiCallStatsEl = document.getElementById('aiCallStats');
@@ -212,20 +212,20 @@ function updateAICallAnalytics(data) {
         }
         
     } catch (error) {
-        console.error('❌ Error updating AI call analytics:', error);
+        console.error(' Error updating AI call analytics:', error);
     }
 }
 
 // Load recent activity
 async function loadRecentActivity() {
     // Recent activity is part of dashboard stats, so it's already loaded
-    console.log('✅ Recent activity loaded via dashboard stats');
+    console.log(' Recent activity loaded via dashboard stats');
 }
 
 // Update recent activity UI
 function updateRecentActivity(activities) {
     try {
-        console.log('📝 Updating recent activity:', activities);
+        console.log(' Updating recent activity:', activities);
         
         const recentActivityEl = document.getElementById('recentActivity');
         if (!recentActivityEl || !Array.isArray(activities)) {
@@ -257,7 +257,7 @@ function updateRecentActivity(activities) {
         recentActivityEl.innerHTML = activityHtml;
         
     } catch (error) {
-        console.error('❌ Error updating recent activity:', error);
+        console.error(' Error updating recent activity:', error);
         const recentActivityEl = document.getElementById('recentActivity');
         if (recentActivityEl) {
             recentActivityEl.innerHTML = '<div class="text-center text-danger">Error loading activity</div>';
@@ -267,14 +267,14 @@ function updateRecentActivity(activities) {
 
 // Initialize users page
 function initializeUsersPage() {
-    console.log('👥 Initializing users page...');
+    console.log(' Initializing users page...');
     loadUsers();
 }
 
 // Load users data
 async function loadUsers() {
     try {
-        console.log('👥 Loading users...');
+        console.log(' Loading users...');
         
         const response = await fetch('/api/admin/users', {
             method: 'GET',
@@ -289,14 +289,14 @@ async function loadUsers() {
         }
         
         const result = await response.json();
-        console.log('👥 Users loaded:', result);
+        console.log(' Users loaded:', result);
         
         if (result.success && result.data) {
             updateUsersTable(result.data.users || []);
         }
         
     } catch (error) {
-        console.error('❌ Error loading users:', error);
+        console.error(' Error loading users:', error);
         showError('Failed to load users data');
     }
 }
@@ -382,7 +382,7 @@ function getActivityStatusClass(status) {
 }
 
 function showError(message) {
-    console.error('🚨 Error:', message);
+    console.error(' Error:', message);
     
     // Create error notification
     const notification = document.createElement('div');
@@ -403,7 +403,7 @@ function showError(message) {
 }
 
 function showSuccess(message) {
-    console.log('✅ Success:', message);
+    console.log(' Success:', message);
     
     // Create success notification
     const notification = document.createElement('div');
@@ -425,14 +425,14 @@ function showSuccess(message) {
 
 // Parking page functions
 function initializeParkingPage() {
-    console.log('🅿️ Initializing parking page...');
+    console.log(' Initializing parking page...');
     loadParkingData();
     loadParkingSpots();
 }
 
 async function loadParkingData() {
     try {
-        console.log('🅿️ Loading parking data...');
+        console.log(' Loading parking data...');
         
         const response = await fetch('/api/admin/parking', {
             method: 'GET',
@@ -447,7 +447,7 @@ async function loadParkingData() {
         }
         
         const result = await response.json();
-        console.log('🅿️ Parking data loaded:', result);
+        console.log(' Parking data loaded:', result);
         
         if (result.success) {
             // Handle the actual API response format
@@ -456,14 +456,14 @@ async function loadParkingData() {
         }
         
     } catch (error) {
-        console.error('❌ Error loading parking data:', error);
+        console.error(' Error loading parking data:', error);
         showError('Failed to load parking data');
     }
 }
 
 async function loadParkingSpots() {
     try {
-        console.log('🅿️ Loading parking spots...');
+        console.log(' Loading parking spots...');
         
         const response = await fetch('/api/admin/parking/spots', {
             method: 'GET',
@@ -478,7 +478,7 @@ async function loadParkingSpots() {
         }
         
         const result = await response.json();
-        console.log('🅿️ Parking spots loaded:', result);
+        console.log(' Parking spots loaded:', result);
         
         if (result.success && result.data) {
             updateParkingSpots(result.data.spots || []);
@@ -486,14 +486,14 @@ async function loadParkingSpots() {
         }
         
     } catch (error) {
-        console.error('❌ Error loading parking spots:', error);
+        console.error(' Error loading parking spots:', error);
         showError('Failed to load parking spots data');
     }
 }
 
 function updateParkingStats(data) {
     try {
-        console.log('🅿️ Updating parking stats:', data);
+        console.log(' Updating parking stats:', data);
         
         // Update total spots
         const totalSpotsEl = document.getElementById('totalSpots');
@@ -520,13 +520,13 @@ function updateParkingStats(data) {
         }
         
     } catch (error) {
-        console.error('❌ Error updating parking stats:', error);
+        console.error(' Error updating parking stats:', error);
     }
 }
 
 function updateParkingSpots(spots) {
     try {
-        console.log('🅿️ Updating parking spots table:', spots);
+        console.log(' Updating parking spots table:', spots);
         
         const spotsTableEl = document.getElementById('spotsTable');
         if (!spotsTableEl || !Array.isArray(spots)) {
@@ -562,7 +562,7 @@ function updateParkingSpots(spots) {
         spotsTableEl.innerHTML = spotsHtml;
         
     } catch (error) {
-        console.error('❌ Error updating parking spots table:', error);
+        console.error(' Error updating parking spots table:', error);
     }
 }
 
@@ -587,7 +587,7 @@ function getSpotStatusIcon(status) {
 }
 
 async function refreshParkingData() {
-    console.log('🔄 Refreshing parking data...');
+    console.log(' Refreshing parking data...');
     await loadParkingData();
     await loadParkingSpots();
     showSuccess('Parking data refreshed successfully');
@@ -618,8 +618,8 @@ window.initializePage = initializePage;
 
 // Update the DOMContentLoaded to use the new initializePage function
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📊 Admin Dashboard DOM loaded, initializing page...');
+    console.log(' Admin Dashboard DOM loaded, initializing page...');
     initializePage();
 });
 
-console.log('✅ Admin Dashboard JavaScript Loaded Successfully');
+console.log(' Admin Dashboard JavaScript Loaded Successfully');

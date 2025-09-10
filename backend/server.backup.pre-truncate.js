@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
@@ -1108,7 +1108,7 @@ function buildDigestHtml(snapshot) {
   // Add parking services section
   const parkingServices = `
     <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:20px 0;">
-      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;">🚗 Our Parking Services</h3>
+      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;"> Our Parking Services</h3>
       <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
         <li><strong>Smart Parking Management:</strong> Complete ticketless and ticket-based parking solutions</li>
         <li><strong>ANPR Technology:</strong> Automatic number plate recognition for seamless access</li>
@@ -1123,20 +1123,20 @@ function buildDigestHtml(snapshot) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:20px;border-radius:12px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;">🚀 VayAccess Latest Updates</h2>
+        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;"> VayAccess Latest Updates</h2>
         <p style="color:#6b7280;line-height:1.6;margin:0;">Discover our cutting-edge parking solutions and smart access control systems</p>
       </div>
       
       ${productCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">🛠️ Featured Products</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Featured Products</h3>
           ${productCards}
         </div>
       ` : ''}
       
       ${solutionCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">💡 Smart Solutions</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Smart Solutions</h3>
           ${solutionCards}
         </div>
       ` : ''}
@@ -1179,11 +1179,11 @@ function buildDigestText(snapshot) {
 const DIGEST_TEMPLATES = [
   {
     key: 'products_spotlight',
-    subject: () => '🚀 VayAccess Product Spotlight - Smart Parking Solutions',
+    subject: () => ' VayAccess Product Spotlight - Smart Parking Solutions',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🛠️ Featured Products</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Featured Products</h1>
           <p style="margin:0;opacity:0.9;">Discover our latest smart parking technology</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -1192,11 +1192,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'solutions_focus',
-    subject: () => '💡 VayAccess Solutions Update - Transform Your Parking',
+    subject: () => ' VayAccess Solutions Update - Transform Your Parking',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#059669,#047857);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🎯 Smart Solutions</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Smart Solutions</h1>
           <p style="margin:0;opacity:0.9;">Complete parking management solutions for modern facilities</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -1205,11 +1205,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'weekly_roundup',
-    subject: () => '📊 VayAccess Weekly Roundup - Products, Solutions & Services',
+    subject: () => ' VayAccess Weekly Roundup - Products, Solutions & Services',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">📈 Weekly Update</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Weekly Update</h1>
           <p style="margin:0;opacity:0.9;">Your complete guide to VayAccess innovations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -1218,11 +1218,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'technology_insights',
-    subject: () => '🔬 VayAccess Tech Insights - ANPR, IoT & Smart Access',
+    subject: () => ' VayAccess Tech Insights - ANPR, IoT & Smart Access',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🔧 Technology Focus</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Technology Focus</h1>
           <p style="margin:0;opacity:0.9;">Advanced parking technology and smart city solutions</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -1231,11 +1231,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'customer_success',
-    subject: () => '🏆 VayAccess Success Stories - Real Results, Real Impact',
+    subject: () => ' VayAccess Success Stories - Real Results, Real Impact',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#ea580c,#c2410c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">✨ Success Stories</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Success Stories</h1>
           <p style="margin:0;opacity:0.9;">See how our solutions transform parking operations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -1569,7 +1569,7 @@ function buildProductEmailHtml(product) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🚀 Product Spotlight</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Product Spotlight</h1>
         <p style="margin:8px 0 0 0;color:#dbeafe;font-size:16px;">Discover VayAccess Innovation</p>
       </div>
       
@@ -1593,7 +1593,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Key Features -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">✨ Key Features</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> Key Features</h3>
           <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
             <li>Advanced technology integration</li>
             <li>User-friendly interface</li>
@@ -1605,7 +1605,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Benefits Section -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Benefits</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Benefits</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Increased operational efficiency</li>
             <li>Enhanced customer satisfaction</li>
@@ -1628,8 +1628,8 @@ function buildProductEmailHtml(product) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Questions? We're here to help!</p>
           <p style="margin:0;color:#2563eb;font-size:14px;">
-            📧 <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -1688,7 +1688,7 @@ function buildSolutionEmailHtml(solution) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">💡 Smart Solution</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Smart Solution</h1>
         <p style="margin:8px 0 0 0;color:#e9d5ff;font-size:16px;">Intelligent Parking Innovation</p>
       </div>
       
@@ -1697,7 +1697,7 @@ function buildSolutionEmailHtml(solution) {
         <!-- Solution Icon/Visual -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 25px rgba(124,58,237,0.3);">
-            <span style="font-size:42px;">💡</span>
+            <span style="font-size:42px;"></span>
           </div>
         </div>
         
@@ -1713,7 +1713,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- How It Works -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">🔧 How It Works</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> How It Works</h3>
           <div style="display:grid;gap:12px;">
             <div style="display:flex;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">
               <span style="background:#7c3aed;color:#ffffff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;">1</span>
@@ -1732,7 +1732,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- Key Advantages -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Key Advantages</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Key Advantages</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Reduces parking search time by up to 70%</li>
             <li>Increases parking revenue by 25-40%</li>
@@ -1755,8 +1755,8 @@ function buildSolutionEmailHtml(solution) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Ready to implement this solution?</p>
           <p style="margin:0;color:#7c3aed;font-size:14px;">
-            📧 <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -1773,7 +1773,7 @@ async function sendProductEmail(to, product, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'product_spotlight',
       to,
-      subject: `🚀 New Product: ${product.title} - VayAccess`,
+      subject: ` New Product: ${product.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -1797,7 +1797,7 @@ async function sendSolutionEmail(to, solution, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'solution_spotlight',
       to,
-      subject: `💡 Smart Solution: ${solution.title} - VayAccess`,
+      subject: ` Smart Solution: ${solution.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -2170,9 +2170,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -2225,14 +2225,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -2242,12 +2242,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -2255,7 +2255,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -2268,19 +2268,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -2587,14 +2587,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -2605,15 +2605,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -3185,7 +3185,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -4165,7 +4165,7 @@ function buildDigestHtml(snapshot) {
   // Add parking services section
   const parkingServices = `
     <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:20px 0;">
-      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;">🚗 Our Parking Services</h3>
+      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;"> Our Parking Services</h3>
       <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
         <li><strong>Smart Parking Management:</strong> Complete ticketless and ticket-based parking solutions</li>
         <li><strong>ANPR Technology:</strong> Automatic number plate recognition for seamless access</li>
@@ -4180,20 +4180,20 @@ function buildDigestHtml(snapshot) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:20px;border-radius:12px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;">🚀 VayAccess Latest Updates</h2>
+        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;"> VayAccess Latest Updates</h2>
         <p style="color:#6b7280;line-height:1.6;margin:0;">Discover our cutting-edge parking solutions and smart access control systems</p>
       </div>
       
       ${productCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">🛠️ Featured Products</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Featured Products</h3>
           ${productCards}
         </div>
       ` : ''}
       
       ${solutionCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">💡 Smart Solutions</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Smart Solutions</h3>
           ${solutionCards}
         </div>
       ` : ''}
@@ -4236,11 +4236,11 @@ function buildDigestText(snapshot) {
 const DIGEST_TEMPLATES = [
   {
     key: 'products_spotlight',
-    subject: () => '🚀 VayAccess Product Spotlight - Smart Parking Solutions',
+    subject: () => ' VayAccess Product Spotlight - Smart Parking Solutions',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🛠️ Featured Products</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Featured Products</h1>
           <p style="margin:0;opacity:0.9;">Discover our latest smart parking technology</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -4249,11 +4249,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'solutions_focus',
-    subject: () => '💡 VayAccess Solutions Update - Transform Your Parking',
+    subject: () => ' VayAccess Solutions Update - Transform Your Parking',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#059669,#047857);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🎯 Smart Solutions</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Smart Solutions</h1>
           <p style="margin:0;opacity:0.9;">Complete parking management solutions for modern facilities</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -4262,11 +4262,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'weekly_roundup',
-    subject: () => '📊 VayAccess Weekly Roundup - Products, Solutions & Services',
+    subject: () => ' VayAccess Weekly Roundup - Products, Solutions & Services',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">📈 Weekly Update</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Weekly Update</h1>
           <p style="margin:0;opacity:0.9;">Your complete guide to VayAccess innovations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -4275,11 +4275,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'technology_insights',
-    subject: () => '🔬 VayAccess Tech Insights - ANPR, IoT & Smart Access',
+    subject: () => ' VayAccess Tech Insights - ANPR, IoT & Smart Access',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🔧 Technology Focus</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Technology Focus</h1>
           <p style="margin:0;opacity:0.9;">Advanced parking technology and smart city solutions</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -4288,11 +4288,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'customer_success',
-    subject: () => '🏆 VayAccess Success Stories - Real Results, Real Impact',
+    subject: () => ' VayAccess Success Stories - Real Results, Real Impact',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#ea580c,#c2410c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">✨ Success Stories</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Success Stories</h1>
           <p style="margin:0;opacity:0.9;">See how our solutions transform parking operations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -4626,7 +4626,7 @@ function buildProductEmailHtml(product) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🚀 Product Spotlight</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Product Spotlight</h1>
         <p style="margin:8px 0 0 0;color:#dbeafe;font-size:16px;">Discover VayAccess Innovation</p>
       </div>
       
@@ -4650,7 +4650,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Key Features -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">✨ Key Features</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> Key Features</h3>
           <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
             <li>Advanced technology integration</li>
             <li>User-friendly interface</li>
@@ -4662,7 +4662,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Benefits Section -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Benefits</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Benefits</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Increased operational efficiency</li>
             <li>Enhanced customer satisfaction</li>
@@ -4685,8 +4685,8 @@ function buildProductEmailHtml(product) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Questions? We're here to help!</p>
           <p style="margin:0;color:#2563eb;font-size:14px;">
-            📧 <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -4745,7 +4745,7 @@ function buildSolutionEmailHtml(solution) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">💡 Smart Solution</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Smart Solution</h1>
         <p style="margin:8px 0 0 0;color:#e9d5ff;font-size:16px;">Intelligent Parking Innovation</p>
       </div>
       
@@ -4754,7 +4754,7 @@ function buildSolutionEmailHtml(solution) {
         <!-- Solution Icon/Visual -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 25px rgba(124,58,237,0.3);">
-            <span style="font-size:42px;">💡</span>
+            <span style="font-size:42px;"></span>
           </div>
         </div>
         
@@ -4770,7 +4770,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- How It Works -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">🔧 How It Works</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> How It Works</h3>
           <div style="display:grid;gap:12px;">
             <div style="display:flex;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">
               <span style="background:#7c3aed;color:#ffffff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;">1</span>
@@ -4789,7 +4789,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- Key Advantages -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Key Advantages</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Key Advantages</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Reduces parking search time by up to 70%</li>
             <li>Increases parking revenue by 25-40%</li>
@@ -4812,8 +4812,8 @@ function buildSolutionEmailHtml(solution) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Ready to implement this solution?</p>
           <p style="margin:0;color:#7c3aed;font-size:14px;">
-            📧 <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -4830,7 +4830,7 @@ async function sendProductEmail(to, product, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'product_spotlight',
       to,
-      subject: `🚀 New Product: ${product.title} - VayAccess`,
+      subject: ` New Product: ${product.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -4854,7 +4854,7 @@ async function sendSolutionEmail(to, solution, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'solution_spotlight',
       to,
-      subject: `💡 Smart Solution: ${solution.title} - VayAccess`,
+      subject: ` Smart Solution: ${solution.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -5227,9 +5227,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -5282,14 +5282,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -5299,12 +5299,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -5312,7 +5312,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -5325,19 +5325,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -5644,14 +5644,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -5662,15 +5662,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -6242,7 +6242,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -7283,7 +7283,7 @@ function buildDigestHtml(snapshot) {
   // Add parking services section
   const parkingServices = `
     <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:20px 0;">
-      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;">🚗 Our Parking Services</h3>
+      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;"> Our Parking Services</h3>
       <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
         <li><strong>Smart Parking Management:</strong> Complete ticketless and ticket-based parking solutions</li>
         <li><strong>ANPR Technology:</strong> Automatic number plate recognition for seamless access</li>
@@ -7298,20 +7298,20 @@ function buildDigestHtml(snapshot) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:20px;border-radius:12px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;">🚀 VayAccess Latest Updates</h2>
+        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;"> VayAccess Latest Updates</h2>
         <p style="color:#6b7280;line-height:1.6;margin:0;">Discover our cutting-edge parking solutions and smart access control systems</p>
       </div>
       
       ${productCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">🛠️ Featured Products</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Featured Products</h3>
           ${productCards}
         </div>
       ` : ''}
       
       ${solutionCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">💡 Smart Solutions</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Smart Solutions</h3>
           ${solutionCards}
         </div>
       ` : ''}
@@ -7354,11 +7354,11 @@ function buildDigestText(snapshot) {
 const DIGEST_TEMPLATES = [
   {
     key: 'products_spotlight',
-    subject: () => '🚀 VayAccess Product Spotlight - Smart Parking Solutions',
+    subject: () => ' VayAccess Product Spotlight - Smart Parking Solutions',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🛠️ Featured Products</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Featured Products</h1>
           <p style="margin:0;opacity:0.9;">Discover our latest smart parking technology</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -7367,11 +7367,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'solutions_focus',
-    subject: () => '💡 VayAccess Solutions Update - Transform Your Parking',
+    subject: () => ' VayAccess Solutions Update - Transform Your Parking',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#059669,#047857);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🎯 Smart Solutions</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Smart Solutions</h1>
           <p style="margin:0;opacity:0.9;">Complete parking management solutions for modern facilities</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -7380,11 +7380,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'weekly_roundup',
-    subject: () => '📊 VayAccess Weekly Roundup - Products, Solutions & Services',
+    subject: () => ' VayAccess Weekly Roundup - Products, Solutions & Services',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">📈 Weekly Update</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Weekly Update</h1>
           <p style="margin:0;opacity:0.9;">Your complete guide to VayAccess innovations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -7393,11 +7393,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'technology_insights',
-    subject: () => '🔬 VayAccess Tech Insights - ANPR, IoT & Smart Access',
+    subject: () => ' VayAccess Tech Insights - ANPR, IoT & Smart Access',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🔧 Technology Focus</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Technology Focus</h1>
           <p style="margin:0;opacity:0.9;">Advanced parking technology and smart city solutions</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -7406,11 +7406,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'customer_success',
-    subject: () => '🏆 VayAccess Success Stories - Real Results, Real Impact',
+    subject: () => ' VayAccess Success Stories - Real Results, Real Impact',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#ea580c,#c2410c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">✨ Success Stories</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Success Stories</h1>
           <p style="margin:0;opacity:0.9;">See how our solutions transform parking operations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -7740,7 +7740,7 @@ function buildProductEmailHtml(product) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🚀 Product Spotlight</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Product Spotlight</h1>
         <p style="margin:8px 0 0 0;color:#dbeafe;font-size:16px;">Discover VayAccess Innovation</p>
       </div>
       
@@ -7764,7 +7764,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Key Features -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">✨ Key Features</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> Key Features</h3>
           <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
             <li>Advanced technology integration</li>
             <li>User-friendly interface</li>
@@ -7776,7 +7776,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Benefits Section -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Benefits</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Benefits</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Increased operational efficiency</li>
             <li>Enhanced customer satisfaction</li>
@@ -7799,8 +7799,8 @@ function buildProductEmailHtml(product) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Questions? We're here to help!</p>
           <p style="margin:0;color:#2563eb;font-size:14px;">
-            📧 <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -7859,7 +7859,7 @@ function buildSolutionEmailHtml(solution) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">💡 Smart Solution</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Smart Solution</h1>
         <p style="margin:8px 0 0 0;color:#e9d5ff;font-size:16px;">Intelligent Parking Innovation</p>
       </div>
       
@@ -7868,7 +7868,7 @@ function buildSolutionEmailHtml(solution) {
         <!-- Solution Icon/Visual -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 25px rgba(124,58,237,0.3);">
-            <span style="font-size:42px;">💡</span>
+            <span style="font-size:42px;"></span>
           </div>
         </div>
         
@@ -7884,7 +7884,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- How It Works -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">🔧 How It Works</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> How It Works</h3>
           <div style="display:grid;gap:12px;">
             <div style="display:flex;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">
               <span style="background:#7c3aed;color:#ffffff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;">1</span>
@@ -7903,7 +7903,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- Key Advantages -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Key Advantages</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Key Advantages</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Reduces parking search time by up to 70%</li>
             <li>Increases parking revenue by 25-40%</li>
@@ -7926,8 +7926,8 @@ function buildSolutionEmailHtml(solution) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Ready to implement this solution?</p>
           <p style="margin:0;color:#7c3aed;font-size:14px;">
-            📧 <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -7944,7 +7944,7 @@ async function sendProductEmail(to, product, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'product_spotlight',
       to,
-      subject: `🚀 New Product: ${product.title} - VayAccess`,
+      subject: ` New Product: ${product.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -7968,7 +7968,7 @@ async function sendSolutionEmail(to, solution, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'solution_spotlight',
       to,
-      subject: `💡 Smart Solution: ${solution.title} - VayAccess`,
+      subject: ` Smart Solution: ${solution.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -8341,9 +8341,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -8396,14 +8396,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -8413,12 +8413,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -8426,7 +8426,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -8439,19 +8439,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -8717,14 +8717,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -8735,15 +8735,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -9315,7 +9315,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -10416,7 +10416,7 @@ function buildDigestHtml(snapshot) {
   // Add parking services section
   const parkingServices = `
     <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:20px 0;">
-      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;">🚗 Our Parking Services</h3>
+      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;"> Our Parking Services</h3>
       <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
         <li><strong>Smart Parking Management:</strong> Complete ticketless and ticket-based parking solutions</li>
         <li><strong>ANPR Technology:</strong> Automatic number plate recognition for seamless access</li>
@@ -10431,20 +10431,20 @@ function buildDigestHtml(snapshot) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:20px;border-radius:12px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;">🚀 VayAccess Latest Updates</h2>
+        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;"> VayAccess Latest Updates</h2>
         <p style="color:#6b7280;line-height:1.6;margin:0;">Discover our cutting-edge parking solutions and smart access control systems</p>
       </div>
       
       ${productCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">🛠️ Featured Products</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Featured Products</h3>
           ${productCards}
         </div>
       ` : ''}
       
       ${solutionCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">💡 Smart Solutions</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Smart Solutions</h3>
           ${solutionCards}
         </div>
       ` : ''}
@@ -10487,11 +10487,11 @@ function buildDigestText(snapshot) {
 const DIGEST_TEMPLATES = [
   {
     key: 'products_spotlight',
-    subject: () => '🚀 VayAccess Product Spotlight - Smart Parking Solutions',
+    subject: () => ' VayAccess Product Spotlight - Smart Parking Solutions',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🛠️ Featured Products</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Featured Products</h1>
           <p style="margin:0;opacity:0.9;">Discover our latest smart parking technology</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -10500,11 +10500,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'solutions_focus',
-    subject: () => '💡 VayAccess Solutions Update - Transform Your Parking',
+    subject: () => ' VayAccess Solutions Update - Transform Your Parking',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#059669,#047857);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🎯 Smart Solutions</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Smart Solutions</h1>
           <p style="margin:0;opacity:0.9;">Complete parking management solutions for modern facilities</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -10513,11 +10513,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'weekly_roundup',
-    subject: () => '📊 VayAccess Weekly Roundup - Products, Solutions & Services',
+    subject: () => ' VayAccess Weekly Roundup - Products, Solutions & Services',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">📈 Weekly Update</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Weekly Update</h1>
           <p style="margin:0;opacity:0.9;">Your complete guide to VayAccess innovations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -10526,11 +10526,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'technology_insights',
-    subject: () => '🔬 VayAccess Tech Insights - ANPR, IoT & Smart Access',
+    subject: () => ' VayAccess Tech Insights - ANPR, IoT & Smart Access',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🔧 Technology Focus</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Technology Focus</h1>
           <p style="margin:0;opacity:0.9;">Advanced parking technology and smart city solutions</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -10539,11 +10539,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'customer_success',
-    subject: () => '🏆 VayAccess Success Stories - Real Results, Real Impact',
+    subject: () => ' VayAccess Success Stories - Real Results, Real Impact',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#ea580c,#c2410c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">✨ Success Stories</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Success Stories</h1>
           <p style="margin:0;opacity:0.9;">See how our solutions transform parking operations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -10873,7 +10873,7 @@ function buildProductEmailHtml(product) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🚀 Product Spotlight</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Product Spotlight</h1>
         <p style="margin:8px 0 0 0;color:#dbeafe;font-size:16px;">Discover VayAccess Innovation</p>
       </div>
       
@@ -10897,7 +10897,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Key Features -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">✨ Key Features</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> Key Features</h3>
           <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
             <li>Advanced technology integration</li>
             <li>User-friendly interface</li>
@@ -10909,7 +10909,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Benefits Section -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Benefits</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Benefits</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Increased operational efficiency</li>
             <li>Enhanced customer satisfaction</li>
@@ -10932,8 +10932,8 @@ function buildProductEmailHtml(product) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Questions? We're here to help!</p>
           <p style="margin:0;color:#2563eb;font-size:14px;">
-            📧 <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -10992,7 +10992,7 @@ function buildSolutionEmailHtml(solution) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">💡 Smart Solution</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Smart Solution</h1>
         <p style="margin:8px 0 0 0;color:#e9d5ff;font-size:16px;">Intelligent Parking Innovation</p>
       </div>
       
@@ -11001,7 +11001,7 @@ function buildSolutionEmailHtml(solution) {
         <!-- Solution Icon/Visual -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 25px rgba(124,58,237,0.3);">
-            <span style="font-size:42px;">💡</span>
+            <span style="font-size:42px;"></span>
           </div>
         </div>
         
@@ -11017,7 +11017,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- How It Works -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">🔧 How It Works</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> How It Works</h3>
           <div style="display:grid;gap:12px;">
             <div style="display:flex;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">
               <span style="background:#7c3aed;color:#ffffff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;">1</span>
@@ -11036,7 +11036,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- Key Advantages -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Key Advantages</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Key Advantages</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Reduces parking search time by up to 70%</li>
             <li>Increases parking revenue by 25-40%</li>
@@ -11059,8 +11059,8 @@ function buildSolutionEmailHtml(solution) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Ready to implement this solution?</p>
           <p style="margin:0;color:#7c3aed;font-size:14px;">
-            📧 <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -11077,7 +11077,7 @@ async function sendProductEmail(to, product, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'product_spotlight',
       to,
-      subject: `🚀 New Product: ${product.title} - VayAccess`,
+      subject: ` New Product: ${product.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -11101,7 +11101,7 @@ async function sendSolutionEmail(to, solution, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'solution_spotlight',
       to,
-      subject: `💡 Smart Solution: ${solution.title} - VayAccess`,
+      subject: ` Smart Solution: ${solution.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -11474,9 +11474,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -11529,14 +11529,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -11546,12 +11546,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -11559,7 +11559,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -11572,19 +11572,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -11850,14 +11850,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -11868,15 +11868,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -12448,7 +12448,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -13536,7 +13536,7 @@ function buildDigestHtml(snapshot) {
   // Add parking services section
   const parkingServices = `
     <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:20px 0;">
-      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;">🚗 Our Parking Services</h3>
+      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;"> Our Parking Services</h3>
       <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
         <li><strong>Smart Parking Management:</strong> Complete ticketless and ticket-based parking solutions</li>
         <li><strong>ANPR Technology:</strong> Automatic number plate recognition for seamless access</li>
@@ -13551,20 +13551,20 @@ function buildDigestHtml(snapshot) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:20px;border-radius:12px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;">🚀 VayAccess Latest Updates</h2>
+        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;"> VayAccess Latest Updates</h2>
         <p style="color:#6b7280;line-height:1.6;margin:0;">Discover our cutting-edge parking solutions and smart access control systems</p>
       </div>
       
       ${productCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">🛠️ Featured Products</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Featured Products</h3>
           ${productCards}
         </div>
       ` : ''}
       
       ${solutionCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">💡 Smart Solutions</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Smart Solutions</h3>
           ${solutionCards}
         </div>
       ` : ''}
@@ -13607,11 +13607,11 @@ function buildDigestText(snapshot) {
 const DIGEST_TEMPLATES = [
   {
     key: 'products_spotlight',
-    subject: () => '🚀 VayAccess Product Spotlight - Smart Parking Solutions',
+    subject: () => ' VayAccess Product Spotlight - Smart Parking Solutions',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🛠️ Featured Products</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Featured Products</h1>
           <p style="margin:0;opacity:0.9;">Discover our latest smart parking technology</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -13620,11 +13620,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'solutions_focus',
-    subject: () => '💡 VayAccess Solutions Update - Transform Your Parking',
+    subject: () => ' VayAccess Solutions Update - Transform Your Parking',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#059669,#047857);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🎯 Smart Solutions</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Smart Solutions</h1>
           <p style="margin:0;opacity:0.9;">Complete parking management solutions for modern facilities</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -13633,11 +13633,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'weekly_roundup',
-    subject: () => '📊 VayAccess Weekly Roundup - Products, Solutions & Services',
+    subject: () => ' VayAccess Weekly Roundup - Products, Solutions & Services',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">📈 Weekly Update</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Weekly Update</h1>
           <p style="margin:0;opacity:0.9;">Your complete guide to VayAccess innovations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -13646,11 +13646,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'technology_insights',
-    subject: () => '🔬 VayAccess Tech Insights - ANPR, IoT & Smart Access',
+    subject: () => ' VayAccess Tech Insights - ANPR, IoT & Smart Access',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🔧 Technology Focus</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Technology Focus</h1>
           <p style="margin:0;opacity:0.9;">Advanced parking technology and smart city solutions</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -13659,11 +13659,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'customer_success',
-    subject: () => '🏆 VayAccess Success Stories - Real Results, Real Impact',
+    subject: () => ' VayAccess Success Stories - Real Results, Real Impact',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#ea580c,#c2410c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">✨ Success Stories</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Success Stories</h1>
           <p style="margin:0;opacity:0.9;">See how our solutions transform parking operations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -13993,7 +13993,7 @@ function buildProductEmailHtml(product) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🚀 Product Spotlight</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Product Spotlight</h1>
         <p style="margin:8px 0 0 0;color:#dbeafe;font-size:16px;">Discover VayAccess Innovation</p>
       </div>
       
@@ -14017,7 +14017,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Key Features -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">✨ Key Features</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> Key Features</h3>
           <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
             <li>Advanced technology integration</li>
             <li>User-friendly interface</li>
@@ -14029,7 +14029,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Benefits Section -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Benefits</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Benefits</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Increased operational efficiency</li>
             <li>Enhanced customer satisfaction</li>
@@ -14052,8 +14052,8 @@ function buildProductEmailHtml(product) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Questions? We're here to help!</p>
           <p style="margin:0;color:#2563eb;font-size:14px;">
-            📧 <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -14112,7 +14112,7 @@ function buildSolutionEmailHtml(solution) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">💡 Smart Solution</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Smart Solution</h1>
         <p style="margin:8px 0 0 0;color:#e9d5ff;font-size:16px;">Intelligent Parking Innovation</p>
       </div>
       
@@ -14121,7 +14121,7 @@ function buildSolutionEmailHtml(solution) {
         <!-- Solution Icon/Visual -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 25px rgba(124,58,237,0.3);">
-            <span style="font-size:42px;">💡</span>
+            <span style="font-size:42px;"></span>
           </div>
         </div>
         
@@ -14137,7 +14137,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- How It Works -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">🔧 How It Works</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> How It Works</h3>
           <div style="display:grid;gap:12px;">
             <div style="display:flex;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">
               <span style="background:#7c3aed;color:#ffffff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;">1</span>
@@ -14156,7 +14156,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- Key Advantages -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Key Advantages</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Key Advantages</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Reduces parking search time by up to 70%</li>
             <li>Increases parking revenue by 25-40%</li>
@@ -14179,8 +14179,8 @@ function buildSolutionEmailHtml(solution) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Ready to implement this solution?</p>
           <p style="margin:0;color:#7c3aed;font-size:14px;">
-            📧 <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -14197,7 +14197,7 @@ async function sendProductEmail(to, product, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'product_spotlight',
       to,
-      subject: `🚀 New Product: ${product.title} - VayAccess`,
+      subject: ` New Product: ${product.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -14221,7 +14221,7 @@ async function sendSolutionEmail(to, solution, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'solution_spotlight',
       to,
-      subject: `💡 Smart Solution: ${solution.title} - VayAccess`,
+      subject: ` Smart Solution: ${solution.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -14594,9 +14594,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -14649,14 +14649,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -14666,12 +14666,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -14679,7 +14679,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -14692,19 +14692,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -14970,14 +14970,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -14988,15 +14988,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -15568,7 +15568,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -16623,7 +16623,7 @@ function buildDigestHtml(snapshot) {
   // Add parking services section
   const parkingServices = `
     <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:20px 0;">
-      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;">🚗 Our Parking Services</h3>
+      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;"> Our Parking Services</h3>
       <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
         <li><strong>Smart Parking Management:</strong> Complete ticketless and ticket-based parking solutions</li>
         <li><strong>ANPR Technology:</strong> Automatic number plate recognition for seamless access</li>
@@ -16638,20 +16638,20 @@ function buildDigestHtml(snapshot) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:20px;border-radius:12px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;">🚀 VayAccess Latest Updates</h2>
+        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;"> VayAccess Latest Updates</h2>
         <p style="color:#6b7280;line-height:1.6;margin:0;">Discover our cutting-edge parking solutions and smart access control systems</p>
       </div>
       
       ${productCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">🛠️ Featured Products</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Featured Products</h3>
           ${productCards}
         </div>
       ` : ''}
       
       ${solutionCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">💡 Smart Solutions</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Smart Solutions</h3>
           ${solutionCards}
         </div>
       ` : ''}
@@ -16694,11 +16694,11 @@ function buildDigestText(snapshot) {
 const DIGEST_TEMPLATES = [
   {
     key: 'products_spotlight',
-    subject: () => '🚀 VayAccess Product Spotlight - Smart Parking Solutions',
+    subject: () => ' VayAccess Product Spotlight - Smart Parking Solutions',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🛠️ Featured Products</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Featured Products</h1>
           <p style="margin:0;opacity:0.9;">Discover our latest smart parking technology</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -16707,11 +16707,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'solutions_focus',
-    subject: () => '💡 VayAccess Solutions Update - Transform Your Parking',
+    subject: () => ' VayAccess Solutions Update - Transform Your Parking',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#059669,#047857);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🎯 Smart Solutions</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Smart Solutions</h1>
           <p style="margin:0;opacity:0.9;">Complete parking management solutions for modern facilities</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -16720,11 +16720,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'weekly_roundup',
-    subject: () => '📊 VayAccess Weekly Roundup - Products, Solutions & Services',
+    subject: () => ' VayAccess Weekly Roundup - Products, Solutions & Services',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">📈 Weekly Update</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Weekly Update</h1>
           <p style="margin:0;opacity:0.9;">Your complete guide to VayAccess innovations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -16733,11 +16733,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'technology_insights',
-    subject: () => '🔬 VayAccess Tech Insights - ANPR, IoT & Smart Access',
+    subject: () => ' VayAccess Tech Insights - ANPR, IoT & Smart Access',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🔧 Technology Focus</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Technology Focus</h1>
           <p style="margin:0;opacity:0.9;">Advanced parking technology and smart city solutions</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -16746,11 +16746,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'customer_success',
-    subject: () => '🏆 VayAccess Success Stories - Real Results, Real Impact',
+    subject: () => ' VayAccess Success Stories - Real Results, Real Impact',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#ea580c,#c2410c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">✨ Success Stories</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Success Stories</h1>
           <p style="margin:0;opacity:0.9;">See how our solutions transform parking operations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -17080,7 +17080,7 @@ function buildProductEmailHtml(product) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🚀 Product Spotlight</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Product Spotlight</h1>
         <p style="margin:8px 0 0 0;color:#dbeafe;font-size:16px;">Discover VayAccess Innovation</p>
       </div>
       
@@ -17104,7 +17104,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Key Features -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">✨ Key Features</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> Key Features</h3>
           <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
             <li>Advanced technology integration</li>
             <li>User-friendly interface</li>
@@ -17116,7 +17116,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Benefits Section -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Benefits</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Benefits</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Increased operational efficiency</li>
             <li>Enhanced customer satisfaction</li>
@@ -17139,8 +17139,8 @@ function buildProductEmailHtml(product) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Questions? We're here to help!</p>
           <p style="margin:0;color:#2563eb;font-size:14px;">
-            📧 <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -17199,7 +17199,7 @@ function buildSolutionEmailHtml(solution) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">💡 Smart Solution</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Smart Solution</h1>
         <p style="margin:8px 0 0 0;color:#e9d5ff;font-size:16px;">Intelligent Parking Innovation</p>
       </div>
       
@@ -17208,7 +17208,7 @@ function buildSolutionEmailHtml(solution) {
         <!-- Solution Icon/Visual -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 25px rgba(124,58,237,0.3);">
-            <span style="font-size:42px;">💡</span>
+            <span style="font-size:42px;"></span>
           </div>
         </div>
         
@@ -17224,7 +17224,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- How It Works -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">🔧 How It Works</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> How It Works</h3>
           <div style="display:grid;gap:12px;">
             <div style="display:flex;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">
               <span style="background:#7c3aed;color:#ffffff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;">1</span>
@@ -17243,7 +17243,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- Key Advantages -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Key Advantages</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Key Advantages</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Reduces parking search time by up to 70%</li>
             <li>Increases parking revenue by 25-40%</li>
@@ -17266,8 +17266,8 @@ function buildSolutionEmailHtml(solution) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Ready to implement this solution?</p>
           <p style="margin:0;color:#7c3aed;font-size:14px;">
-            📧 <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -17284,7 +17284,7 @@ async function sendProductEmail(to, product, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'product_spotlight',
       to,
-      subject: `🚀 New Product: ${product.title} - VayAccess`,
+      subject: ` New Product: ${product.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -17308,7 +17308,7 @@ async function sendSolutionEmail(to, solution, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'solution_spotlight',
       to,
-      subject: `💡 Smart Solution: ${solution.title} - VayAccess`,
+      subject: ` Smart Solution: ${solution.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -17681,9 +17681,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -17736,14 +17736,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -17753,12 +17753,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -17766,7 +17766,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -17779,19 +17779,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -18057,14 +18057,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -18075,15 +18075,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -18655,7 +18655,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -19710,7 +19710,7 @@ function buildDigestHtml(snapshot) {
   // Add parking services section
   const parkingServices = `
     <div style="background:#f8fafc;border-radius:12px;padding:20px;margin:20px 0;">
-      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;">🚗 Our Parking Services</h3>
+      <h3 style="margin:0 0 12px 0;color:#111827;font-size:18px;font-weight:600;"> Our Parking Services</h3>
       <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
         <li><strong>Smart Parking Management:</strong> Complete ticketless and ticket-based parking solutions</li>
         <li><strong>ANPR Technology:</strong> Automatic number plate recognition for seamless access</li>
@@ -19725,20 +19725,20 @@ function buildDigestHtml(snapshot) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:20px;border-radius:12px;">
       <div style="text-align:center;margin-bottom:24px;">
-        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;">🚀 VayAccess Latest Updates</h2>
+        <h2 style="margin:0 0 8px 0;color:#111827;font-size:24px;font-weight:700;"> VayAccess Latest Updates</h2>
         <p style="color:#6b7280;line-height:1.6;margin:0;">Discover our cutting-edge parking solutions and smart access control systems</p>
       </div>
       
       ${productCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">🛠️ Featured Products</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Featured Products</h3>
           ${productCards}
         </div>
       ` : ''}
       
       ${solutionCards ? `
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;">💡 Smart Solutions</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:20px;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:8px;"> Smart Solutions</h3>
           ${solutionCards}
         </div>
       ` : ''}
@@ -19781,11 +19781,11 @@ function buildDigestText(snapshot) {
 const DIGEST_TEMPLATES = [
   {
     key: 'products_spotlight',
-    subject: () => '🚀 VayAccess Product Spotlight - Smart Parking Solutions',
+    subject: () => ' VayAccess Product Spotlight - Smart Parking Solutions',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🛠️ Featured Products</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Featured Products</h1>
           <p style="margin:0;opacity:0.9;">Discover our latest smart parking technology</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -19794,11 +19794,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'solutions_focus',
-    subject: () => '💡 VayAccess Solutions Update - Transform Your Parking',
+    subject: () => ' VayAccess Solutions Update - Transform Your Parking',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#059669,#047857);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🎯 Smart Solutions</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Smart Solutions</h1>
           <p style="margin:0;opacity:0.9;">Complete parking management solutions for modern facilities</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -19807,11 +19807,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'weekly_roundup',
-    subject: () => '📊 VayAccess Weekly Roundup - Products, Solutions & Services',
+    subject: () => ' VayAccess Weekly Roundup - Products, Solutions & Services',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">📈 Weekly Update</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Weekly Update</h1>
           <p style="margin:0;opacity:0.9;">Your complete guide to VayAccess innovations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -19820,11 +19820,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'technology_insights',
-    subject: () => '🔬 VayAccess Tech Insights - ANPR, IoT & Smart Access',
+    subject: () => ' VayAccess Tech Insights - ANPR, IoT & Smart Access',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">🔧 Technology Focus</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Technology Focus</h1>
           <p style="margin:0;opacity:0.9;">Advanced parking technology and smart city solutions</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -19833,11 +19833,11 @@ const DIGEST_TEMPLATES = [
   },
   {
     key: 'customer_success',
-    subject: () => '🏆 VayAccess Success Stories - Real Results, Real Impact',
+    subject: () => ' VayAccess Success Stories - Real Results, Real Impact',
     buildHtml: (snapshot) => withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <div style="text-align:center;background:linear-gradient(135deg,#ea580c,#c2410c);color:white;padding:24px;border-radius:12px;margin-bottom:20px;">
-          <h1 style="margin:0 0 8px 0;font-size:28px;">✨ Success Stories</h1>
+          <h1 style="margin:0 0 8px 0;font-size:28px;"> Success Stories</h1>
           <p style="margin:0;opacity:0.9;">See how our solutions transform parking operations</p>
         </div>
         ${buildDigestHtml(snapshot)}
@@ -20167,7 +20167,7 @@ function buildProductEmailHtml(product) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">🚀 Product Spotlight</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Product Spotlight</h1>
         <p style="margin:8px 0 0 0;color:#dbeafe;font-size:16px;">Discover VayAccess Innovation</p>
       </div>
       
@@ -20191,7 +20191,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Key Features -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">✨ Key Features</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> Key Features</h3>
           <ul style="margin:0;padding-left:20px;color:#374151;line-height:1.8;">
             <li>Advanced technology integration</li>
             <li>User-friendly interface</li>
@@ -20203,7 +20203,7 @@ function buildProductEmailHtml(product) {
         
         <!-- Benefits Section -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Benefits</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Benefits</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Increased operational efficiency</li>
             <li>Enhanced customer satisfaction</li>
@@ -20226,8 +20226,8 @@ function buildProductEmailHtml(product) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Questions? We're here to help!</p>
           <p style="margin:0;color:#2563eb;font-size:14px;">
-            📧 <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:info@vayaccess.com" style="color:#2563eb;text-decoration:none;">info@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#2563eb;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -20286,7 +20286,7 @@ function buildSolutionEmailHtml(solution) {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
       <!-- Header -->
       <div style="background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);padding:30px 20px;text-align:center;border-radius:12px 12px 0 0;">
-        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">💡 Smart Solution</h1>
+        <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;"> Smart Solution</h1>
         <p style="margin:8px 0 0 0;color:#e9d5ff;font-size:16px;">Intelligent Parking Innovation</p>
       </div>
       
@@ -20295,7 +20295,7 @@ function buildSolutionEmailHtml(solution) {
         <!-- Solution Icon/Visual -->
         <div style="text-align:center;margin-bottom:24px;">
           <div style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#5b21b6 100%);width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 25px rgba(124,58,237,0.3);">
-            <span style="font-size:42px;">💡</span>
+            <span style="font-size:42px;"></span>
           </div>
         </div>
         
@@ -20311,7 +20311,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- How It Works -->
         <div style="margin:24px 0;">
-          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;">🔧 How It Works</h3>
+          <h3 style="margin:0 0 16px 0;color:#111827;font-size:18px;font-weight:600;"> How It Works</h3>
           <div style="display:grid;gap:12px;">
             <div style="display:flex;align-items:center;padding:12px;background:#f8fafc;border-radius:8px;">
               <span style="background:#7c3aed;color:#ffffff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;margin-right:12px;">1</span>
@@ -20330,7 +20330,7 @@ function buildSolutionEmailHtml(solution) {
         
         <!-- Key Advantages -->
         <div style="background:#ecfdf5;border-left:4px solid #10b981;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
-          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;">🎯 Key Advantages</h3>
+          <h3 style="margin:0 0 12px 0;color:#065f46;font-size:18px;font-weight:600;"> Key Advantages</h3>
           <ul style="margin:0;padding-left:20px;color:#065f46;line-height:1.6;">
             <li>Reduces parking search time by up to 70%</li>
             <li>Increases parking revenue by 25-40%</li>
@@ -20353,8 +20353,8 @@ function buildSolutionEmailHtml(solution) {
         <div style="text-align:center;padding:20px;background:#f9fafb;border-radius:8px;margin-top:24px;">
           <p style="margin:0 0 8px 0;color:#374151;font-size:14px;">Ready to implement this solution?</p>
           <p style="margin:0;color:#7c3aed;font-size:14px;">
-            📧 <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
-            📞 <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
+             <a href="mailto:solutions@vayaccess.com" style="color:#7c3aed;text-decoration:none;">solutions@vayaccess.com</a> • 
+             <a href="tel:+1234567890" style="color:#7c3aed;text-decoration:none;">+1 (234) 567-890</a>
           </p>
         </div>
       </div>
@@ -20371,7 +20371,7 @@ async function sendProductEmail(to, product, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'product_spotlight',
       to,
-      subject: `🚀 New Product: ${product.title} - VayAccess`,
+      subject: ` New Product: ${product.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -20395,7 +20395,7 @@ async function sendSolutionEmail(to, solution, emailIndex = 0) {
     await emailHelper.sendCategorizedEmail({
       category: 'solution_spotlight',
       to,
-      subject: `💡 Smart Solution: ${solution.title} - VayAccess`,
+      subject: ` Smart Solution: ${solution.title} - VayAccess`,
       html,
       text,
       headers: buildUnsubscribeHeaders(to),
@@ -20769,9 +20769,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -20824,14 +20824,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -20841,12 +20841,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -20854,7 +20854,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -20867,19 +20867,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -21145,14 +21145,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -21163,15 +21163,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -21743,7 +21743,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -22329,3 +22329,4 @@ if (ENABLE_HOURLY_DIGEST) {
   setTimeout(sendHourlyDigestOnce, 15 * 1000);
   setInterval(sendHourlyDigestOnce, 60 * 60 * 1000);
 }
+

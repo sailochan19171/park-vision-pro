@@ -1,4 +1,4 @@
-<div class="container-fluid py-4">
+﻿<div class="container-fluid py-4">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Parking Management</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
@@ -350,7 +350,7 @@ async function loadParkingData() {
 
 async function loadParkingSpotsTable() {
     try {
-        console.log('🅿️ Loading parking spots table...');
+        console.log(' Loading parking spots table...');
         
         const response = await fetch('/api/admin/parking/spots', {
             credentials: 'same-origin',
@@ -370,7 +370,7 @@ async function loadParkingSpotsTable() {
         }
         
         const result = await response.json();
-        console.log('🅿️ Spots table data loaded:', result);
+        console.log(' Spots table data loaded:', result);
         
         if (result.success) {
             // Handle the actual API response format
@@ -381,18 +381,18 @@ async function loadParkingSpotsTable() {
             showError('Failed to load parking spots table');
         }
     } catch (error) {
-        console.error('❌ Error loading parking spots table:', error);
+        console.error(' Error loading parking spots table:', error);
         showError('Error loading parking spots table. Please try again.');
     }
 }
 
 function updateParkingSpotsTable(spots) {
     try {
-        console.log('🅿️ Updating parking spots table with', spots.length, 'spots');
+        console.log(' Updating parking spots table with', spots.length, 'spots');
         
         const tbody = document.querySelector('#spotsTable tbody') || document.getElementById('spotsTable');
         if (!tbody) {
-            console.warn('⚠️ Spots table element not found');
+            console.warn(' Spots table element not found');
             return;
         }
         
@@ -423,10 +423,10 @@ function updateParkingSpotsTable(spots) {
         }).join('');
         
         tbody.innerHTML = spotsHtml;
-        console.log('✅ Parking spots table updated successfully');
+        console.log(' Parking spots table updated successfully');
         
     } catch (error) {
-        console.error('❌ Error updating parking spots table:', error);
+        console.error(' Error updating parking spots table:', error);
     }
 }
 
@@ -641,7 +641,7 @@ async function addSpot() {
         const number = document.getElementById('number').value.trim();
         const rate = document.getElementById('rate').value.trim();
         
-        console.log('🅿️ Form data collected:', { level, section, number, rate });
+        console.log(' Form data collected:', { level, section, number, rate });
         
         // Validation
         if (!level || !section || !number) {
@@ -656,7 +656,7 @@ async function addSpot() {
             hourlyRate: parseInt(rate) || 25
         };
         
-        console.log('🅿️ Sending spot data to API:', spotData);
+        console.log(' Sending spot data to API:', spotData);
         
         const response = await fetch('/api/admin/parking/spots', {
             method: 'POST',
@@ -668,7 +668,7 @@ async function addSpot() {
         });
         
         const result = await response.json();
-        console.log('🅿️ API response:', result);
+        console.log(' API response:', result);
         
         if (result.success) {
             showNotification(result.message || 'Parking spot created successfully!', 'success');
@@ -687,7 +687,7 @@ async function addSpot() {
             showError(result.message || 'Failed to create parking spot');
         }
     } catch (error) {
-        console.error('❌ Error creating parking spot:', error);
+        console.error(' Error creating parking spot:', error);
         showError('Error creating parking spot: ' + error.message);
     }
 }

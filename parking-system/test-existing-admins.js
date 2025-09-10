@@ -1,4 +1,4 @@
-// Test existing admin passwords
+﻿// Test existing admin passwords
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
@@ -10,11 +10,11 @@ async function testExistingAdmins() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ MongoDB connected');
+    console.log(' MongoDB connected');
 
     // Find all admin users
     const admins = await User.find({ role: 'admin' }).select('+password');
-    console.log('\n📋 Testing existing admin passwords...');
+    console.log('\n Testing existing admin passwords...');
     
     // Common passwords to test
     const commonPasswords = [
@@ -31,26 +31,26 @@ async function testExistingAdmins() {
     ];
     
     for (const admin of admins) {
-      console.log(`\n👤 Testing ${admin.name} (${admin.email}):`);
+      console.log(`\n Testing ${admin.name} (${admin.email}):`);
       
       for (const testPass of commonPasswords) {
         try {
           const isValid = await admin.comparePassword(testPass);
           if (isValid) {
-            console.log(`✅ Password "${testPass}" works for ${admin.email}`);
+            console.log(` Password "${testPass}" works for ${admin.email}`);
             break;
           }
         } catch (error) {
-          console.log(`❌ Error testing password "${testPass}": ${error.message}`);
+          console.log(` Error testing password "${testPass}": ${error.message}`);
         }
       }
     }
     
   } catch (error) {
-    console.error('❌ Test error:', error);
+    console.error(' Test error:', error);
   } finally {
     await mongoose.disconnect();
-    console.log('\n🔌 MongoDB disconnected');
+    console.log('\n MongoDB disconnected');
   }
 }
 

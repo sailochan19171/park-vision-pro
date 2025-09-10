@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <title>Test Parking Form</title>
@@ -89,7 +89,7 @@
                 const number = document.getElementById('number').value.trim();
                 const rate = document.getElementById('rate').value.trim();
                 
-                console.log('🧪 Form values:', { level, section, number, rate });
+                console.log(' Form values:', { level, section, number, rate });
                 
                 if (!level || !section || !number) {
                     alert('Please fill in all required fields!');
@@ -103,7 +103,7 @@
                     rate: parseInt(rate) || 25
                 };
                 
-                console.log('🧪 Sending data:', spotData);
+                console.log(' Sending data:', spotData);
                 
                 const response = await fetch('http://localhost:8080/api/admin/parking/spots', {
                     method: 'POST',
@@ -115,7 +115,7 @@
                 });
                 
                 const result = await response.json();
-                console.log('🧪 API response:', result);
+                console.log(' API response:', result);
                 
                 document.getElementById('apiResponse').textContent = JSON.stringify(result, null, 2);
                 
@@ -126,7 +126,7 @@
                 }
                 
             } catch (error) {
-                console.error('🚨 Test error:', error);
+                console.error(' Test error:', error);
                 document.getElementById('apiResponse').textContent = 'Error: ' + error.message;
                 alert('ERROR: ' + error.message);
             }

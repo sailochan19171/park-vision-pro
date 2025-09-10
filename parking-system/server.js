@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Main API Server
  * Port: 3000
  * Handles all API endpoints for authentication, parking management, etc.
@@ -48,8 +48,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+.then(() => console.log(' MongoDB connected successfully'))
+.catch(err => console.error(' MongoDB connection error:', err));
 
 // Security middleware
 app.use(helmet());
@@ -85,20 +85,20 @@ app.use('/uploads', express.static('public/uploads'));
 
 // Socket.IO for real-time updates
 io.on('connection', (socket) => {
-  console.log('🔌 Client connected:', socket.id);
+  console.log(' Client connected:', socket.id);
   
   socket.on('join-admin', () => {
     socket.join('admin-room');
-    console.log('👤 Admin joined real-time updates');
+    console.log(' Admin joined real-time updates');
   });
   
   socket.on('join-user', (userId) => {
     socket.join(`user-${userId}`);
-    console.log(`👤 User ${userId} joined real-time updates`);
+    console.log(` User ${userId} joined real-time updates`);
   });
   
   socket.on('disconnect', () => {
-    console.log('🔌 Client disconnected:', socket.id);
+    console.log(' Client disconnected:', socket.id);
   });
 });
 
@@ -739,9 +739,9 @@ app.use(errorHandler);
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`🚀 API Server running on http://localhost:${PORT}`);
-  console.log(`📊 Admin Dashboard: http://localhost:${process.env.ADMIN_PORT}`);
-  console.log(`👤 User Dashboard: http://localhost:${process.env.USER_PORT}`);
+  console.log(` API Server running on http://localhost:${PORT}`);
+  console.log(` Admin Dashboard: http://localhost:${process.env.ADMIN_PORT}`);
+  console.log(` User Dashboard: http://localhost:${process.env.USER_PORT}`);
 });
 
 module.exports = { app, io };

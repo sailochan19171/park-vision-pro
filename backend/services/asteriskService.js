@@ -1,4 +1,4 @@
-const net = require('net');
+﻿const net = require('net');
 const EventEmitter = require('events');
 
 class AsteriskService extends EventEmitter {
@@ -23,16 +23,16 @@ class AsteriskService extends EventEmitter {
       this.amiConnection = new net.Socket();
       
       this.amiConnection.connect(this.config.port, this.config.host, () => {
-        console.log('🔌 Connected to Asterisk AMI');
+        console.log(' Connected to Asterisk AMI');
         this.isConnected = true;
       });
 
       this.amiConnection.on('data', (data) => {
         const response = data.toString();
-        console.log('📞 AMI Response:', response);
+        console.log(' AMI Response:', response);
         
         if (response.includes('Authentication accepted')) {
-          console.log('✅ AMI Authentication successful');
+          console.log(' AMI Authentication successful');
           resolve();
         } else if (response.includes('Authentication failed')) {
           reject(new Error('AMI Authentication failed'));
@@ -40,7 +40,7 @@ class AsteriskService extends EventEmitter {
       });
 
       this.amiConnection.on('error', (error) => {
-        console.error('❌ AMI Connection error:', error);
+        console.error(' AMI Connection error:', error);
         reject(error);
       });
 
@@ -74,7 +74,7 @@ class AsteriskService extends EventEmitter {
         '\r\n'
       ].join('\r\n');
 
-      console.log('📞 Originating call:', originateCommand);
+      console.log(' Originating call:', originateCommand);
 
       this.amiConnection.write(originateCommand);
 
@@ -83,11 +83,11 @@ class AsteriskService extends EventEmitter {
         const response = data.toString();
         
         if (response.includes('Success')) {
-          console.log('✅ Call originated successfully');
+          console.log(' Call originated successfully');
           this.emit('call-originated', { sessionId, customerPhone, extension });
           resolve({ success: true, sessionId, message: 'Call originated successfully' });
         } else if (response.includes('Error')) {
-          console.error('❌ Call origination failed:', response);
+          console.error(' Call origination failed:', response);
           reject(new Error('Failed to originate call'));
         }
       };
@@ -120,7 +120,7 @@ class AsteriskService extends EventEmitter {
 
       const onData = (data) => {
         const response = data.toString();
-        console.log('📞 Call status:', response);
+        console.log(' Call status:', response);
         
         if (response.includes('Status:')) {
           resolve({ success: true, status: response });
@@ -177,7 +177,7 @@ class AsteriskService extends EventEmitter {
       this.amiConnection.write('Action: Logoff\r\n\r\n');
       this.amiConnection.end();
       this.isConnected = false;
-      console.log('🔌 Disconnected from Asterisk AMI');
+      console.log(' Disconnected from Asterisk AMI');
     }
   }
 
@@ -188,3 +188,4 @@ class AsteriskService extends EventEmitter {
 }
 
 module.exports = new AsteriskService();
+

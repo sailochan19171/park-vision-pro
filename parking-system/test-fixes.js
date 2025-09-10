@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Test Script for Payment Method Fixes
  * Tests all payment method types and dashboard route
  */
@@ -9,7 +9,7 @@ const BASE_URL = 'http://localhost:3000';
 const USER_DASHBOARD_URL = 'http://localhost:3002';
 
 async function testPaymentMethodFixes() {
-    console.log('🧪 Testing Payment Method Fixes...\n');
+    console.log(' Testing Payment Method Fixes...\n');
     
     const tests = [
         {
@@ -86,7 +86,7 @@ async function testPaymentMethodFixes() {
             const response = await axios.post(BASE_URL + test.url, test.data);
             
             if (response.status === test.expectedStatus && response.data.success) {
-                console.log(`✅ ${test.name} - PASSED`);
+                console.log(` ${test.name} - PASSED`);
                 console.log(`   Method ID: ${response.data.data.methodId}`);
                 console.log(`   Type: ${response.data.data.type}`);
                 
@@ -101,11 +101,11 @@ async function testPaymentMethodFixes() {
                 
                 passed++;
             } else {
-                console.log(`❌ ${test.name} - FAILED (Status: ${response.status})`);
+                console.log(` ${test.name} - FAILED (Status: ${response.status})`);
                 failed++;
             }
         } catch (error) {
-            console.log(`❌ ${test.name} - FAILED (Error: ${error.response?.data?.message || error.message})`);
+            console.log(` ${test.name} - FAILED (Error: ${error.response?.data?.message || error.message})`);
             failed++;
         }
         
@@ -126,42 +126,42 @@ async function testPaymentMethodFixes() {
         });
         
         if (response.status === 302 || response.status === 200) {
-            console.log('✅ Dashboard Route - PASSED (Redirect or Direct Access)');
+            console.log(' Dashboard Route - PASSED (Redirect or Direct Access)');
             passed++;
         } else {
-            console.log(`❌ Dashboard Route - FAILED (Status: ${response.status})`);
+            console.log(` Dashboard Route - FAILED (Status: ${response.status})`);
             failed++;
         }
     } catch (error) {
         if (error.response && error.response.status === 302) {
-            console.log('✅ Dashboard Route - PASSED (Redirect Working)');
+            console.log(' Dashboard Route - PASSED (Redirect Working)');
             passed++;
         } else {
-            console.log(`❌ Dashboard Route - FAILED (Error: ${error.message})`);
+            console.log(` Dashboard Route - FAILED (Error: ${error.message})`);
             failed++;
         }
     }
     
-    console.log('\n📊 Test Results:');
-    console.log(`✅ Passed: ${passed}`);
-    console.log(`❌ Failed: ${failed}`);
-    console.log(`📈 Success Rate: ${((passed / (passed + failed)) * 100).toFixed(1)}%`);
+    console.log('\n Test Results:');
+    console.log(` Passed: ${passed}`);
+    console.log(` Failed: ${failed}`);
+    console.log(` Success Rate: ${((passed / (passed + failed)) * 100).toFixed(1)}%`);
     
     if (failed === 0) {
-        console.log('\n🎉 All fixes working correctly!');
-        console.log('✅ UPI payment methods can be added without errors');
-        console.log('✅ Card payment methods work correctly');
-        console.log('✅ Wallet payment methods work correctly');
-        console.log('✅ Dashboard route is accessible');
-        console.log('✅ No 400, 404, or 500 errors detected');
+        console.log('\n All fixes working correctly!');
+        console.log(' UPI payment methods can be added without errors');
+        console.log(' Card payment methods work correctly');
+        console.log(' Wallet payment methods work correctly');
+        console.log(' Dashboard route is accessible');
+        console.log(' No 400, 404, or 500 errors detected');
     } else {
-        console.log('\n⚠️  Some tests failed. Please check the server logs.');
+        console.log('\n  Some tests failed. Please check the server logs.');
     }
 }
 
 // Test error handling
 async function testErrorHandling() {
-    console.log('\n🔍 Testing Error Handling:\n');
+    console.log('\n Testing Error Handling:\n');
     
     const errorTests = [
         {
@@ -191,13 +191,13 @@ async function testErrorHandling() {
             console.log(`Testing: ${test.name}...`);
             
             const response = await axios.post(BASE_URL + '/api/user/payments/add-method', test.data);
-            console.log(`❌ ${test.name} - Should have failed but didn't`);
+            console.log(` ${test.name} - Should have failed but didn't`);
         } catch (error) {
             if (error.response && error.response.status === 400 && 
                 error.response.data.message.includes(test.expectedError.split(' ')[0])) {
-                console.log(`✅ ${test.name} - PASSED (Proper error handling)`);
+                console.log(` ${test.name} - PASSED (Proper error handling)`);
             } else {
-                console.log(`❌ ${test.name} - FAILED (Wrong error: ${error.response?.data?.message || error.message})`);
+                console.log(` ${test.name} - FAILED (Wrong error: ${error.response?.data?.message || error.message})`);
             }
         }
         

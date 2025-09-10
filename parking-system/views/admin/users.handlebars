@@ -1,4 +1,4 @@
-<div class="container-fluid py-4">
+﻿<div class="container-fluid py-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>User Management</h2>
                 <div>
@@ -600,7 +600,7 @@ async function createUser() {
             console.log('Response data:', data);
             
             if (data.success) {
-                showAlert('✅ User created successfully!', 'success');
+                showAlert(' User created successfully!', 'success');
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
                 if (modal) modal.hide();
                 form.reset();
@@ -610,14 +610,14 @@ async function createUser() {
             } else {
                 // Handle specific error messages
                 if (data.message && data.message.includes('already exists')) {
-                    showAlert('❌ A user with this email already exists. Please use a different email.', 'warning');
+                    showAlert(' A user with this email already exists. Please use a different email.', 'warning');
                 } else {
                     throw new Error(data.message || 'Failed to create user');
                 }
             }
         } catch (error) {
             console.error('Error creating user:', error);
-            showAlert('❌ Error creating user: ' + error.message, 'danger');
+            showAlert(' Error creating user: ' + error.message, 'danger');
         } finally {
             // Re-enable submit button
             submitButton.disabled = false;

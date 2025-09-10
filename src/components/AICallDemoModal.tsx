@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Phone, MessageSquare, CheckCircle, Clock } from 'lucide-react';
 import Groq from 'groq-sdk';
 
@@ -15,7 +15,7 @@ interface ConversationItem {
 
 // VayAccess Knowledge Base for AI Expert
 const knowledgeBase = `
-🏢 COMPANY INFORMATION:
+ COMPANY INFORMATION:
 - Company: VayAccess Parking Solutions
 - Location: Hyderabad, Telangana, India
 - Phone: +91 720 724 4344
@@ -23,7 +23,7 @@ const knowledgeBase = `
 - Website: https://vayaccess.com
 - Business Hours: Monday-Friday 9:00 AM - 6:00 PM IST
 
-🚗 PARKING SOLUTIONS & PRICING:
+ PARKING SOLUTIONS & PRICING:
 
 1. HYBRID ANPR/FASTAG SYSTEM - ₹8-15 lakhs
    - Automatic number plate recognition + FASTAG integration
@@ -55,7 +55,7 @@ const knowledgeBase = `
    - Navigation assistance
    - Mobile app integration
 
-🚪 ACCESS CONTROL SYSTEMS:
+ ACCESS CONTROL SYSTEMS:
 
 1. SMART BARRIER GATES - ₹2.5-6 lakhs each
    - Boom lengths: 3m, 4m, 5m, 6m
@@ -75,20 +75,20 @@ const knowledgeBase = `
    - Attendance tracking integration
    - Cloud connectivity
 
-📱 SOFTWARE SOLUTIONS:
+ SOFTWARE SOLUTIONS:
 - Cloud-based management platform - ₹50,000-2 lakhs/year
 - Mobile apps for iOS/Android - ₹1-3 lakhs development
 - Integration APIs - ₹25,000-1 lakh setup
 - Custom reporting dashboards - ₹75,000-2 lakhs
 
-🎯 CURRENT AVAILABILITY (Real-time parking status):
+ CURRENT AVAILABILITY (Real-time parking status):
 - VayAccess HQ Parking: 45/100 spots available
 - Tech Park Block A: 23/80 spots available  
 - Residential Complex: 156/200 spots available
 - Shopping Mall: 189/500 spots available
 - Corporate Office: 12/50 spots available
 
-⚡ INSTALLATION & SUPPORT:
+ INSTALLATION & SUPPORT:
 - Installation time: 5-15 working days
 - Free site assessment and consultation
 - 2-year comprehensive warranty
@@ -96,7 +96,7 @@ const knowledgeBase = `
 - Preventive maintenance contracts available
 - Training for security personnel included
 
-🏆 CERTIFICATIONS:
+ CERTIFICATIONS:
 - ISO 9001:2015 Quality Management
 - ISO 27001:2013 Information Security
 - CE marking for European standards
@@ -206,7 +206,7 @@ Guidelines for phone conversation:
               temperature: 0.7,
               max_tokens: 1200
             });
-            console.log(`✅ Groq AI responded using model: ${model}`);
+            console.log(` Groq AI responded using model: ${model}`);
             break; // Success, exit the loop
           } catch (modelError: any) {
             console.log(`Model ${model} failed, trying next...`, modelError.message);
@@ -282,7 +282,7 @@ We provide free site assessment and custom quotes. Our technical team can visit 
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
-                🤖 Talk to AI Experts
+                 Talk to AI Experts
               </h2>
               <p className="text-sm text-gray-600">Instant answers powered by advanced AI</p>
             </div>
@@ -339,7 +339,7 @@ We provide free site assessment and custom quotes. Our technical team can visit 
                 </div>
 
                 <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border">
-                  <h4 className="font-medium text-blue-900 mb-2">🧠 AI Expert Features:</h4>
+                  <h4 className="font-medium text-blue-900 mb-2"> AI Expert Features:</h4>
                   <ul className="text-sm text-blue-700 space-y-1">
                     <li>• Advanced Groq AI powered responses</li>
                     <li>• Real-time parking availability data</li>
@@ -370,9 +370,9 @@ We provide free site assessment and custom quotes. Our technical team can visit 
                     'bg-blue-400'
                   }`}></div>
                   <span className="font-medium">
-                    {callStatus === 'connecting' && '📞 Connecting to AI Expert...'}
-                    {callStatus === 'active' && '🧠 AI Expert Analyzing...'}
-                    {callStatus === 'completed' && '✅ AI Expert Response Complete'}
+                    {callStatus === 'connecting' && ' Connecting to AI Expert...'}
+                    {callStatus === 'active' && ' AI Expert Analyzing...'}
+                    {callStatus === 'completed' && ' AI Expert Response Complete'}
                   </span>
                 </div>
                 <span className="text-sm text-gray-600">
@@ -394,7 +394,7 @@ We provide free site assessment and custom quotes. Our technical team can visit 
                     }`}>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-sm">
-                          {item.speaker === 'customer' ? '👤 You' : '🧠 AI Expert'}
+                          {item.speaker === 'customer' ? ' You' : ' AI Expert'}
                         </span>
                         <span className="text-xs text-gray-500">
                           {new Date(item.timestamp).toLocaleTimeString()}
@@ -420,10 +420,10 @@ We provide free site assessment and custom quotes. Our technical team can visit 
                     <h4 className="font-medium text-green-900">AI Expert Consultation Complete!</h4>
                   </div>
                   <div className="text-sm text-green-700 space-y-1">
-                    <p>✅ Advanced AI provided expert analysis</p>
-                    <p>✅ Personalized recommendations generated</p>
-                    <p>✅ Technical specifications included</p>
-                    <p>✅ Next: Our human experts will follow up</p>
+                    <p> Advanced AI provided expert analysis</p>
+                    <p> Personalized recommendations generated</p>
+                    <p> Technical specifications included</p>
+                    <p> Next: Our human experts will follow up</p>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-green-200">
@@ -431,15 +431,15 @@ We provide free site assessment and custom quotes. Our technical team can visit 
                     <div className="flex flex-wrap gap-2 mt-2">
                       <a href="tel:+917207244344" 
                          className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">
-                        📱 +91 720 724 4344
+                         +91 720 724 4344
                       </a>
                       <a href="https://wa.me/917207244344"
                          className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">
-                        💬 WhatsApp
+                         WhatsApp
                       </a>
                       <a href="mailto:info@vayaccess.com"
                          className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">
-                        ✉️ Email
+                         Email
                       </a>
                     </div>
                   </div>

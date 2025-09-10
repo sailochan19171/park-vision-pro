@@ -1,10 +1,10 @@
-// Test script to verify all API fixes
+﻿// Test script to verify all API fixes
 const http = require('http');
 
 const BASE_URL = 'http://localhost:8080';
 
 async function testAPIFixes() {
-    console.log('🧪 Testing API fixes...\n');
+    console.log(' Testing API fixes...\n');
     
     try {
         // Test 1: Test login to get session
@@ -15,7 +15,7 @@ async function testAPIFixes() {
         });
         
         if (loginResponse.ok) {
-            console.log('✅ Test login works');
+            console.log(' Test login works');
             
             // Extract session cookie
             const cookies = loginResponse.headers.get('set-cookie');
@@ -32,9 +32,9 @@ async function testAPIFixes() {
             
             if (usersResponse.ok) {
                 const usersData = await usersResponse.json();
-                console.log(`✅ Users API works - Found ${usersData.users ? usersData.users.length : 0} users`);
+                console.log(` Users API works - Found ${usersData.users ? usersData.users.length : 0} users`);
             } else {
-                console.log(`❌ Users API failed: ${usersResponse.status}`);
+                console.log(` Users API failed: ${usersResponse.status}`);
             }
             
             // Test 3: Test vehicles API
@@ -48,9 +48,9 @@ async function testAPIFixes() {
             
             if (vehiclesResponse.ok) {
                 const vehiclesData = await vehiclesResponse.json();
-                console.log(`✅ Vehicles API works - Found ${vehiclesData.vehicles ? vehiclesData.vehicles.length : 0} vehicles`);
+                console.log(` Vehicles API works - Found ${vehiclesData.vehicles ? vehiclesData.vehicles.length : 0} vehicles`);
             } else {
-                console.log(`❌ Vehicles API failed: ${vehiclesResponse.status}`);
+                console.log(` Vehicles API failed: ${vehiclesResponse.status}`);
             }
             
             // Test 4: Test bookings API
@@ -64,12 +64,12 @@ async function testAPIFixes() {
             
             if (bookingsResponse.ok) {
                 const bookingsData = await bookingsResponse.json();
-                console.log(`✅ Bookings API works - Found ${bookingsData.bookings ? bookingsData.bookings.length : 0} bookings`);
+                console.log(` Bookings API works - Found ${bookingsData.bookings ? bookingsData.bookings.length : 0} bookings`);
                 if (bookingsData.hourlyData) {
-                    console.log('✅ Hourly data for charts is present');
+                    console.log(' Hourly data for charts is present');
                 }
             } else {
-                console.log(`❌ Bookings API failed: ${bookingsResponse.status}`);
+                console.log(` Bookings API failed: ${bookingsResponse.status}`);
             }
             
             // Test 5: Test payments API
@@ -83,12 +83,12 @@ async function testAPIFixes() {
             
             if (paymentsResponse.ok) {
                 const paymentsData = await paymentsResponse.json();
-                console.log(`✅ Payments API works - Found ${paymentsData.payments ? paymentsData.payments.length : 0} payments`);
+                console.log(` Payments API works - Found ${paymentsData.payments ? paymentsData.payments.length : 0} payments`);
                 if (paymentsData.methods) {
-                    console.log(`✅ Payment methods data present: UPI ${paymentsData.methods.upi}%, Card ${paymentsData.methods.card}%`);
+                    console.log(` Payment methods data present: UPI ${paymentsData.methods.upi}%, Card ${paymentsData.methods.card}%`);
                 }
             } else {
-                console.log(`❌ Payments API failed: ${paymentsResponse.status}`);
+                console.log(` Payments API failed: ${paymentsResponse.status}`);
             }
             
             // Test 6: Test user creation
@@ -110,7 +110,7 @@ async function testAPIFixes() {
             
             if (createUserResponse.ok) {
                 const userData = await createUserResponse.json();
-                console.log('✅ User creation works');
+                console.log(' User creation works');
                 
                 // Test vehicle creation for this user
                 console.log('7. Testing vehicle creation...');
@@ -131,13 +131,13 @@ async function testAPIFixes() {
                 });
                 
                 if (createVehicleResponse.ok) {
-                    console.log('✅ Vehicle creation works');
+                    console.log(' Vehicle creation works');
                 } else {
-                    console.log(`❌ Vehicle creation failed: ${createVehicleResponse.status}`);
+                    console.log(` Vehicle creation failed: ${createVehicleResponse.status}`);
                 }
                 
             } else {
-                console.log(`❌ User creation failed: ${createUserResponse.status}`);
+                console.log(` User creation failed: ${createUserResponse.status}`);
                 const errorData = await createUserResponse.json().catch(() => null);
                 if (errorData) {
                     console.log(`Error: ${errorData.message}`);
@@ -145,14 +145,14 @@ async function testAPIFixes() {
             }
             
         } else {
-            console.log('❌ Test login failed');
+            console.log(' Test login failed');
         }
         
     } catch (error) {
-        console.error('🚨 Test failed:', error.message);
+        console.error(' Test failed:', error.message);
     }
     
-    console.log('\n🏁 API tests completed!');
+    console.log('\n API tests completed!');
 }
 
 // Wait for server to start, then run tests

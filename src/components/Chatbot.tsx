@@ -1,4 +1,4 @@
-// import React, { useState, useRef, useEffect } from 'react';
+﻿// import React, { useState, useRef, useEffect } from 'react';
 // import { Button } from './ui/button';
 // import { Card, CardContent, CardHeader } from './ui/card';
 // import { Input } from './ui/input';
@@ -43,11 +43,11 @@
 //   // Test email function for debugging
 //   const testEmailNow = async () => {
 //     try {
-//       console.log('🧪 TESTING EMAIL SENDING...');
+//       console.log(' TESTING EMAIL SENDING...');
 //       await sendConversationEmail('What are your barrier gate prices?', 'Our barrier gates range from $3,500-8,500 depending on features...');
-//       console.log('🧪 TEST COMPLETED - Check console for details and your email');
+//       console.log(' TEST COMPLETED - Check console for details and your email');
 //     } catch (error) {
-//       console.error('🧪 TEST FAILED:', error);
+//       console.error(' TEST FAILED:', error);
 //     }
 //   };
 
@@ -55,11 +55,11 @@
 //   const sendConversationEmail = async (userQuestion: string, botResponse: string) => {
 //     try {
 //       // Console logging for debugging
-//       console.log('🤖 Chatbot conversation:');
-//       console.log('❓ User:', userQuestion);
-//       console.log('🤖 Bot:', botResponse);
-//       console.log('⏰ Time:', new Date().toLocaleString());
-//       console.log('🆔 Session:', sessionId);
+//       console.log(' Chatbot conversation:');
+//       console.log(' User:', userQuestion);
+//       console.log(' Bot:', botResponse);
+//       console.log(' Time:', new Date().toLocaleString());
+//       console.log(' Session:', sessionId);
       
 //       const conversation: ChatbotConversation = {
 //         userQuestion,
@@ -70,10 +70,10 @@
       
 //       // Using Simple Email Service (Multiple backup options, No Branding) - ENABLED
 //       await sendChatbotConversationSimple(conversation);
-//       console.log('📧 Chatbot conversation sent to info@vayaccess.com');
+//       console.log(' Chatbot conversation sent to info@vayaccess.com');
       
 //     } catch (error) {
-//       console.error('❌ Failed to send chatbot conversation email:', error);
+//       console.error(' Failed to send chatbot conversation email:', error);
 //       // Don't show error to user - email is background process
 //     }
 //   };

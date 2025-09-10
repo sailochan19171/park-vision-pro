@@ -1,4 +1,4 @@
-// Simple Chatbot Email Service (No Dependencies, No Branding)
+﻿// Simple Chatbot Email Service (No Dependencies, No Branding)
 export interface ChatbotConversation {
   userQuestion: string;
   botResponse: string;
@@ -9,25 +9,25 @@ export interface ChatbotConversation {
 // Simple HTTP POST to send emails directly (No Branding)
 export const sendChatbotConversationSimple = async (conversation: ChatbotConversation): Promise<boolean> => {
   try {
-    console.log('🤖 Attempting to send chatbot conversation to info@vayaccess.com...');
-    console.log('📝 User Question:', conversation.userQuestion);
-    console.log('🤖 Bot Response:', conversation.botResponse);
-    console.log('⏰ Timestamp:', conversation.timestamp.toLocaleString());
+    console.log(' Attempting to send chatbot conversation to info@vayaccess.com...');
+    console.log(' User Question:', conversation.userQuestion);
+    console.log(' Bot Response:', conversation.botResponse);
+    console.log(' Timestamp:', conversation.timestamp.toLocaleString());
     
-    const emailBody = `🤖 NEW CHATBOT CONVERSATION
+    const emailBody = ` NEW CHATBOT CONVERSATION
 
-📊 Session Details:
+ Session Details:
 • Timestamp: ${conversation.timestamp.toLocaleString()}
 • Session ID: ${conversation.sessionId || 'Anonymous'}
 • Source: Website Chatbot (VayBot)
 
-❓ USER QUESTION:
+ USER QUESTION:
 "${conversation.userQuestion}"
 
-🤖 BOT RESPONSE:
+ BOT RESPONSE:
 "${conversation.botResponse}"
 
-📈 ANALYTICS:
+ ANALYTICS:
 • Question Length: ${conversation.userQuestion.length} characters
 • Response Length: ${conversation.botResponse.length} characters
 
@@ -38,12 +38,12 @@ All chatbot conversations are logged for quality improvement and customer servic
     // Using your actual Formspree endpoint
     const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mzzvkeqy';
     
-    console.log('📡 Sending to Formspree endpoint:', FORMSPREE_ENDPOINT);
+    console.log(' Sending to Formspree endpoint:', FORMSPREE_ENDPOINT);
     
     const formData = {
       email: 'info@vayaccess.com',
       name: 'VayBot Assistant',
-      subject: `🤖 New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
+      subject: ` New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
       message: emailBody,
       user_question: conversation.userQuestion,
       bot_response: conversation.botResponse,
@@ -51,7 +51,7 @@ All chatbot conversations are logged for quality improvement and customer servic
       timestamp: conversation.timestamp.toISOString(),
     };
     
-    console.log('📦 Form data being sent:', formData);
+    console.log(' Form data being sent:', formData);
     
     const response = await fetch(FORMSPREE_ENDPOINT, {
       method: 'POST',
@@ -62,26 +62,26 @@ All chatbot conversations are logged for quality improvement and customer servic
       body: JSON.stringify(formData),
     });
 
-    console.log('📡 Response status:', response.status);
-    console.log('📡 Response ok:', response.ok);
+    console.log(' Response status:', response.status);
+    console.log(' Response ok:', response.ok);
     
     if (response.ok) {
       const responseData = await response.text();
-      console.log('✅ SUCCESS: Chatbot conversation sent to info@vayaccess.com via Formspree');
-      console.log('📧 Response data:', responseData);
+      console.log(' SUCCESS: Chatbot conversation sent to info@vayaccess.com via Formspree');
+      console.log(' Response data:', responseData);
       return true;
     } else {
       const errorText = await response.text();
-      console.error('❌ Formspree failed with status:', response.status);
-      console.error('❌ Error response:', errorText);
+      console.error(' Formspree failed with status:', response.status);
+      console.error(' Error response:', errorText);
       
       // Try alternative format
-      console.log('🔄 Trying alternative form format...');
+      console.log(' Trying alternative form format...');
       return await sendViaAlternativeFormat(conversation);
     }
     
   } catch (error) {
-    console.error('❌ Network error sending chatbot conversation:', error);
+    console.error(' Network error sending chatbot conversation:', error);
     // Try backup method
     return await sendViaBackupMethod(conversation);
   }
@@ -90,24 +90,24 @@ All chatbot conversations are logged for quality improvement and customer servic
 // Alternative format method (form-encoded instead of JSON)
 const sendViaAlternativeFormat = async (conversation: ChatbotConversation): Promise<boolean> => {
   try {
-    console.log('🔄 Trying form-encoded format instead of JSON...');
+    console.log(' Trying form-encoded format instead of JSON...');
     
     const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mzzvkeqy';
     
-    const emailBody = `🤖 NEW CHATBOT CONVERSATION
+    const emailBody = ` NEW CHATBOT CONVERSATION
 
-📊 Session Details:
+ Session Details:
 • Timestamp: ${conversation.timestamp.toLocaleString()}
 • Session ID: ${conversation.sessionId || 'Anonymous'}
 • Source: Website Chatbot (VayBot)
 
-❓ USER QUESTION:
+ USER QUESTION:
 "${conversation.userQuestion}"
 
-🤖 BOT RESPONSE:
+ BOT RESPONSE:
 "${conversation.botResponse}"
 
-📈 ANALYTICS:
+ ANALYTICS:
 • Question Length: ${conversation.userQuestion.length} characters
 • Response Length: ${conversation.botResponse.length} characters
 
@@ -119,7 +119,7 @@ All chatbot conversations are logged for quality improvement and customer servic
     const formBody = encode({
       'email': 'info@vayaccess.com',
       'name': 'VayBot Assistant',
-      'subject': `🤖 New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
+      'subject': ` New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
       'message': emailBody,
       'user_question': conversation.userQuestion,
       'bot_response': conversation.botResponse,
@@ -135,21 +135,21 @@ All chatbot conversations are logged for quality improvement and customer servic
       body: formBody
     });
 
-    console.log('📡 Alternative format response status:', response.status);
-    console.log('📡 Alternative format response ok:', response.ok);
+    console.log(' Alternative format response status:', response.status);
+    console.log(' Alternative format response ok:', response.ok);
 
     if (response.ok) {
       const responseData = await response.text();
-      console.log('✅ SUCCESS: Chatbot conversation sent via alternative format');
-      console.log('📧 Alternative response data:', responseData);
+      console.log(' SUCCESS: Chatbot conversation sent via alternative format');
+      console.log(' Alternative response data:', responseData);
       return true;
     } else {
       const errorText = await response.text();
-      console.error('❌ Alternative format also failed:', errorText);
+      console.error(' Alternative format also failed:', errorText);
       return false;
     }
   } catch (error) {
-    console.error('❌ Alternative format error:', error);
+    console.error(' Alternative format error:', error);
     return false;
   }
 };
@@ -163,7 +163,7 @@ const sendViaNetlifyForms = async (conversation: ChatbotConversation): Promise<b
       body: encode({
         'form-name': 'chatbot-conversations',
         'email': 'info@vayaccess.com',
-        'subject': `🤖 New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
+        'subject': ` New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
         'user-question': conversation.userQuestion,
         'bot-response': conversation.botResponse,
         'session-id': conversation.sessionId || 'Anonymous',
@@ -172,12 +172,12 @@ const sendViaNetlifyForms = async (conversation: ChatbotConversation): Promise<b
     });
 
     if (response.ok) {
-      console.log('✅ Chatbot conversation sent via Netlify Forms');
+      console.log(' Chatbot conversation sent via Netlify Forms');
       return true;
     }
     return false;
   } catch (error) {
-    console.error('❌ Netlify Forms failed:', error);
+    console.error(' Netlify Forms failed:', error);
     return false;
   }
 };
@@ -185,24 +185,24 @@ const sendViaNetlifyForms = async (conversation: ChatbotConversation): Promise<b
 // Final backup: Log to console with copy-paste format
 const sendViaBackupMethod = async (conversation: ChatbotConversation): Promise<boolean> => {
   console.log(`
-🚨 EMAIL BACKUP - COPY AND FORWARD TO info@vayaccess.com 🚨
+ EMAIL BACKUP - COPY AND FORWARD TO info@vayaccess.com 
 
-Subject: 🤖 New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}
+Subject:  New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}
 
-🤖 NEW CHATBOT CONVERSATION
+ NEW CHATBOT CONVERSATION
 
-📊 Session Details:
+ Session Details:
 • Timestamp: ${conversation.timestamp.toLocaleString()}
 • Session ID: ${conversation.sessionId || 'Anonymous'}
 • Source: Website Chatbot (VayBot)
 
-❓ USER QUESTION:
+ USER QUESTION:
 "${conversation.userQuestion}"
 
-🤖 BOT RESPONSE:
+ BOT RESPONSE:
 "${conversation.botResponse}"
 
-📈 ANALYTICS:
+ ANALYTICS:
 • Question Length: ${conversation.userQuestion.length} characters
 • Response Length: ${conversation.botResponse.length} characters
 

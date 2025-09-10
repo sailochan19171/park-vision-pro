@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 
 const AnimatedBarrierDemo = () => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -158,7 +158,7 @@ const AnimatedBarrierDemo = () => {
           {!isAnimating ? 'Smart Access Control System' : 
            carPosition < 35 ? 'Vehicle Approaching...' :
            scanningActive ? 'Scanning Vehicle...' :
-           barrierOpen ? 'Access Granted ✓' : 'Processing...'}
+           barrierOpen ? 'Access Granted ' : 'Processing...'}
         </div>
 
         {/* System Status Indicators */}

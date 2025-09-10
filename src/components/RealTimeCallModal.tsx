@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -97,7 +97,7 @@ const RealTimeCallModal = ({ isOpen, onClose }: RealTimeCallModalProps) => {
       
       if (result.success) {
         toast({
-          title: "Call Initiated! 📞",
+          title: "Call Initiated! ",
           description: `Our agent will call you at ${formatPhoneNumber(phoneNumber)} within 30 seconds.`,
           duration: 5000
         });
@@ -112,7 +112,7 @@ const RealTimeCallModal = ({ isOpen, onClose }: RealTimeCallModalProps) => {
         throw new Error(result.message);
       }
     } catch (error: any) {
-      console.error('❌ Failed to initiate call:', error);
+      console.error(' Failed to initiate call:', error);
       toast({
         title: "Call Failed",
         description: error.message || "Failed to initiate call. Please try again.",
@@ -163,7 +163,7 @@ const RealTimeCallModal = ({ isOpen, onClose }: RealTimeCallModalProps) => {
             </div>
             <div>
               <DialogTitle className="text-xl">
-                {callStatus.status === 'idle' ? '📞 Talk to AI Expert' : 'Call Status'}
+                {callStatus.status === 'idle' ? ' Talk to AI Expert' : 'Call Status'}
               </DialogTitle>
               <DialogDescription>
                 {callStatus.status === 'idle' 
@@ -179,7 +179,7 @@ const RealTimeCallModal = ({ isOpen, onClose }: RealTimeCallModalProps) => {
           {callStatus.status === 'idle' && (
             <div className="space-y-4">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">🚀 How it works:</h3>
+                <h3 className="font-semibold text-blue-900 mb-2"> How it works:</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• Enter your phone number</li>
                   <li>• Our AI expert will call you instantly</li>
@@ -321,3 +321,4 @@ const RealTimeCallModal = ({ isOpen, onClose }: RealTimeCallModalProps) => {
 };
 
 export default RealTimeCallModal;
+

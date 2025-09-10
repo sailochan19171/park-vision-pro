@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -56,12 +56,12 @@
                 });
                 
                 if (response.ok) {
-                    resultDiv.innerHTML = '<div class="success">✅ Login successful! Redirected to dashboard.</div>';
+                    resultDiv.innerHTML = '<div class="success"> Login successful! Redirected to dashboard.</div>';
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ Login failed: ${response.status}</div>`;
+                    resultDiv.innerHTML = `<div class="error"> Login failed: ${response.status}</div>`;
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ Login error: ${error.message}</div>`;
+                resultDiv.innerHTML = `<div class="error"> Login error: ${error.message}</div>`;
             }
         }
         
@@ -81,12 +81,12 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    resultDiv.innerHTML = `<div class="success">✅ Profile API working!<br>User: ${data.data.user.name} (${data.data.user.email})</div>`;
+                    resultDiv.innerHTML = `<div class="success"> Profile API working!<br>User: ${data.data.user.name} (${data.data.user.email})</div>`;
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ Profile API failed: ${data.message || 'Unknown error'}</div>`;
+                    resultDiv.innerHTML = `<div class="error"> Profile API failed: ${data.message || 'Unknown error'}</div>`;
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ Profile API error: ${error.message}</div>`;
+                resultDiv.innerHTML = `<div class="error"> Profile API error: ${error.message}</div>`;
             }
         }
         
@@ -106,12 +106,12 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    resultDiv.innerHTML = `<div class="success">✅ Bookings API working!<br>Found ${data.data.bookings.length} bookings<br>Total: ${data.data.pagination.totalBookings}</div>`;
+                    resultDiv.innerHTML = `<div class="success"> Bookings API working!<br>Found ${data.data.bookings.length} bookings<br>Total: ${data.data.pagination.totalBookings}</div>`;
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ Bookings API failed: ${data.message || 'Unknown error'}</div>`;
+                    resultDiv.innerHTML = `<div class="error"> Bookings API failed: ${data.message || 'Unknown error'}</div>`;
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ Bookings API error: ${error.message}</div>`;
+                resultDiv.innerHTML = `<div class="error"> Bookings API error: ${error.message}</div>`;
             }
         }
         
@@ -131,12 +131,12 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    resultDiv.innerHTML = `<div class="success">✅ Parking Spots API working!<br>Found ${data.data.spots.length} spots</div>`;
+                    resultDiv.innerHTML = `<div class="success"> Parking Spots API working!<br>Found ${data.data.spots.length} spots</div>`;
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ Parking Spots API failed: ${data.message || 'Unknown error'}</div>`;
+                    resultDiv.innerHTML = `<div class="error"> Parking Spots API failed: ${data.message || 'Unknown error'}</div>`;
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<div class="error">❌ Parking Spots API error: ${error.message}</div>`;
+                resultDiv.innerHTML = `<div class="error"> Parking Spots API error: ${error.message}</div>`;
             }
         }
         

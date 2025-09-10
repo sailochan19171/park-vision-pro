@@ -1,4 +1,4 @@
-const ActivityLog = require('../models/ActivityLog');
+﻿const ActivityLog = require('../models/ActivityLog');
 
 /**
  * Activity Logger Middleware
@@ -268,11 +268,11 @@ const activityLogger = (req, res, next) => {
       
       // Log to console in development
       if (process.env.NODE_ENV === 'development') {
-        console.log(`📊 Activity Logged: ${activityData.userRole} - ${activityData.action} - ${activityData.responseStatus} - ${duration}ms`);
+        console.log(` Activity Logged: ${activityData.userRole} - ${activityData.action} - ${activityData.responseStatus} - ${duration}ms`);
       }
       
     } catch (error) {
-      console.error('❌ Failed to log activity:', error);
+      console.error(' Failed to log activity:', error);
     }
   };
   

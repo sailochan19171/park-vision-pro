@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -71,14 +71,14 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      console.log('📝 Submitting contact form to live email backend...', formData);
+      console.log(' Submitting contact form to live email backend...', formData);
       
       // Submit the form with automated real-time email processing
       const result = await submitContactForm(formData);
       
       if (result.success) {
         toast({
-          title: "Message Sent Successfully! ✅",
+          title: "Message Sent Successfully! ",
           description: result.message,
           duration: 10000,
         });
@@ -316,7 +316,7 @@ const Contact = () => {
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2.5 text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300 font-poppins"
               >
                 <Bot className="h-4 w-4 mr-2" />
-                🤖 Talk to AI Expert - Instant Answers!
+                 Talk to AI Expert - Instant Answers!
               </Button>
               
               {/* Traditional options */}

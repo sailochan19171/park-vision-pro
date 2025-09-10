@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
@@ -807,7 +807,7 @@ function buildProductsDigestHtml(products) {
       ${a.image ? `<img src="${a.image}" alt="${a.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" />` : ''}
       <h3 style="margin:0 0 8px 0;color:#111827;">${a.title}</h3>
       <p style="margin:0;color:#374151;line-height:1.6;">${a.description || ''}</p>
-      <p style="margin-top:8px;"><a href="${url}" style="color:#2563eb;text-decoration:none;">Learn more →</a></p>
+      <p style="margin-top:8px;"><a href="${url}" style="color:#2563eb;text-decoration:none;">Learn more </a></p>
     </div>`;
   }).join('');
   return `
@@ -825,7 +825,7 @@ function buildSolutionsDigestHtml(solutions) {
       ${a.image ? `<img src="${a.image}" alt="${a.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" />` : ''}
       <h3 style="margin:0 0 8px 0;color:#111827;">${a.title}</h3>
       <p style="margin:0;color:#374151;line-height:1.6;">${a.description || ''}</p>
-      <p style="margin-top:8px;"><a href="${url}" style="color:#2563eb;text-decoration:none;">Learn more →</a></p>
+      <p style="margin-top:8px;"><a href="${url}" style="color:#2563eb;text-decoration:none;">Learn more </a></p>
     </div>`;
   }).join('');
   return `
@@ -1185,9 +1185,9 @@ function ymd(d = nowIST()) {
 function getDailySubject(d = nowIST()) {
   const dateStr = formatISTDate(d);
   const options = [
-    `🚗 Live Parking Updates + Smart Access News — ${dateStr}`,
+    ` Live Parking Updates + Smart Access News — ${dateStr}`,
     'VayAccess Daily: Smarter Parking, Safer Access',
-    '🔔 New Features + Live Analytics for Parking Control',
+    ' New Features + Live Analytics for Parking Control',
     `[Today’s Update] VayAccess Parking Solutions — ${dateStr}`,
   ];
   return options[Math.floor(Math.random() * options.length)];
@@ -1240,14 +1240,14 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     <h2 style="margin:4px 0 10px 0;">${getDailySubject(d)}</h2>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
-      <h3 style="margin:0 0 8px 0;">📰 Daily System Highlights</h3>
+      <h3 style="margin:0 0 8px 0;"> Daily System Highlights</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">
         ${highlight || 'Today’s report: Live updates across VayAccess deployments.'}
       </p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📊 Analytics Snapshot</h3>
+      <h3 style="margin:0 0 8px 0;"> Analytics Snapshot</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>Subscribers: ${sections?.subsCount ?? '—'}</li>
         <li>Announcements today: ${sections?.todaysAnnouncements ?? '—'}</li>
@@ -1257,12 +1257,12 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">💡 Product Tips / Knowledge</h3>
+      <h3 style="margin:0 0 8px 0;"> Product Tips / Knowledge</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Did you know? VayAccess web dashboard supports live push notifications for security alerts and automated reports in one click.</p>
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">📢 Marketing / Offers</h3>
+      <h3 style="margin:0 0 8px 0;"> Marketing / Offers</h3>
       <ul style="margin:0;padding-left:18px;color:#374151;line-height:1.7;">
         <li>This week only: Get 20% off on new camera integrations.</li>
         <li>Upgrade to Enterprise to unlock advanced AI analytics.</li>
@@ -1270,7 +1270,7 @@ function buildDailyDigestHtml(sections, d = nowIST()) {
     </div>
 
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-top:12px;">
-      <h3 style="margin:0 0 8px 0;">🔔 Real-Time Alerts</h3>
+      <h3 style="margin:0 0 8px 0;"> Real-Time Alerts</h3>
       <p style="color:#374151;line-height:1.6;margin:0;">Enable web push to get instant alerts for gate failures, unauthorized entries, and congestion updates.</p>
     </div>
 
@@ -1283,19 +1283,19 @@ function buildDailyDigestText(sections, d = nowIST()) {
   return [
     getDailySubject(d),
     '',
-    '📰 Daily System Highlights:',
+    ' Daily System Highlights:',
     (sections?.top3 || []).map(t => `- ${t}`).join('\n') || '- New Hikvision camera integration live on 2 sites',
     '',
-    '📊 Analytics Snapshot:',
+    ' Analytics Snapshot:',
     `- Subscribers: ${sections?.subsCount ?? '—'}`,
     `- Announcements today: ${sections?.todaysAnnouncements ?? '—'}`,
     '- Peak entry time: 9:12 AM (sample)',
     '- Average parking duration: 3h 20m (sample)',
     '',
-    '💡 Product Tips / Knowledge:',
+    ' Product Tips / Knowledge:',
     '- Dashboard supports live push alerts and automated reports',
     '',
-    '📢 Marketing / Offers:',
+    ' Marketing / Offers:',
     '- 20% off on new camera integrations',
     '- Enterprise unlocks advanced AI analytics',
     '',
@@ -1561,14 +1561,14 @@ This is an automated confirmation. Please save this email for your records.`
             </p>
             
             <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 25px 0;">
-              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;">📝 Your Message Summary</h3>
+              <h3 style="color: #2563eb; margin: 0 0 15px 0; font-size: 16px;"> Your Message Summary</h3>
               <div style="background: white; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0; color: #6b7280; font-style: italic;">"${message.length > 200 ? message.substring(0, 200) + '...' : message}"</p>
               </div>
             </div>
             
             <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 25px; margin: 25px 0;">
-              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;">⏰ What Happens Next?</h3>
+              <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px;"> What Happens Next?</h3>
               <ul style="color: #065f46; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li><strong>Quick Response:</strong> Our technical specialists will respond within 2 hours during business hours</li>
                 <li><strong>Detailed Analysis:</strong> We'll review your requirements and provide customized recommendations</li>
@@ -1579,15 +1579,15 @@ This is an automated confirmation. Please save this email for your records.`
             <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 16px;"> Need Immediate Assistance?</h3>
               <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">📱 +91 720 724 4344</a>
-                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">💬 WhatsApp</a>
-                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;">✉️ Email</a>
+                <a href="tel:+917207244344" style="background: #2563eb; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> +91 720 724 4344</a>
+                <a href="https://wa.me/917207244344" style="background: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> WhatsApp</a>
+                <a href="mailto:info@vayaccess.com" style="background: #6b7280; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px;"> Email</a>
               </div>
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://vayaccess.com" style="background: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
-                🌐 Visit Our Website
+                 Visit Our Website
               </a>
             </div>
             
@@ -2159,7 +2159,7 @@ app.post('/api/admin/sync-call-recordings', async (req, res) => {
       });
 
     } catch (syncError) {
-      console.log('⚠️ Parking system not available for sync, continuing with local storage');
+      console.log(' Parking system not available for sync, continuing with local storage');
       
       res.json({
         success: true,
@@ -2772,7 +2772,7 @@ async function sendArticleDigestFor(freq, since) {
         <div>
           <div style="font-weight:600;font-size:15px;color:#111827;">${i.title}</div>
           <div style="color:#4b5563;font-size:13px;line-height:1.5;margin-top:4px;">${i.summary || ''}</div>
-          <a href="${PUBLIC_BASE_URL}${i.link}" style="color:#2563eb;font-size:13px;text-decoration:none;display:inline-block;margin-top:6px;">Read more →</a>
+          <a href="${PUBLIC_BASE_URL}${i.link}" style="color:#2563eb;font-size:13px;text-decoration:none;display:inline-block;margin-top:6px;">Read more </a>
         </div>
       </li>
     `).join('');

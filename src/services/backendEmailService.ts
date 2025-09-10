@@ -1,4 +1,4 @@
-// Backend Email Service - Real-time Live Email Automation
+﻿// Backend Email Service - Real-time Live Email Automation
 // This service connects to your Node.js backend for automated email processing
 
 export interface ContactFormData {
@@ -19,7 +19,7 @@ const API_BASE_URL = RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_B
 // Submit contact form with live email automation
 export const submitContactForm = async (formData: ContactFormData): Promise<ApiResponse> => {
   try {
-    console.log('🎯 Submitting contact form to backend API...', {
+    console.log(' Submitting contact form to backend API...', {
       name: formData.name,
       email: formData.email,
       messageLength: formData.message.length
@@ -41,11 +41,11 @@ export const submitContactForm = async (formData: ContactFormData): Promise<ApiR
     
     const result: ApiResponse = await response.json();
     
-    console.log('✅ Backend API response:', result);
+    console.log(' Backend API response:', result);
     return result;
     
   } catch (error) {
-    console.error('❌ Backend API error:', error);
+    console.error(' Backend API error:', error);
     
     // Return user-friendly error message
     return {
@@ -58,7 +58,7 @@ export const submitContactForm = async (formData: ContactFormData): Promise<ApiR
 // Test backend connection
 export const testBackendConnection = async (): Promise<boolean> => {
   try {
-    console.log('🔍 Testing backend connection...');
+    console.log(' Testing backend connection...');
     
     const response = await fetch(`${API_BASE_URL}/health`, {
       method: 'GET',
@@ -69,15 +69,15 @@ export const testBackendConnection = async (): Promise<boolean> => {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Backend is healthy:', data);
+      console.log(' Backend is healthy:', data);
       return true;
     } else {
-      console.error('❌ Backend health check failed:', response.status);
+      console.error(' Backend health check failed:', response.status);
       return false;
     }
     
   } catch (error) {
-    console.error('❌ Backend connection error:', error);
+    console.error(' Backend connection error:', error);
     return false;
   }
 };
@@ -85,7 +85,7 @@ export const testBackendConnection = async (): Promise<boolean> => {
 // Send test email (for development/testing)
 export const sendTestEmail = async (): Promise<ApiResponse> => {
   try {
-    console.log('🧪 Sending test email...');
+    console.log(' Sending test email...');
     
     const response = await fetch(`${API_BASE_URL}/test-email`, {
       method: 'POST',
@@ -101,11 +101,11 @@ export const sendTestEmail = async (): Promise<ApiResponse> => {
     }
     
     const result: ApiResponse = await response.json();
-    console.log('✅ Test email result:', result);
+    console.log(' Test email result:', result);
     return result;
     
   } catch (error) {
-    console.error('❌ Test email error:', error);
+    console.error(' Test email error:', error);
     return {
       success: false,
       message: `Test email failed: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -132,7 +132,7 @@ export const subscribeToNewsletter = async (email: string, source: string = 'foo
 
     return await response.json();
   } catch (error) {
-    console.error('❌ Newsletter subscribe error:', error);
+    console.error(' Newsletter subscribe error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Failed to subscribe' };
   }
 };
@@ -178,4 +178,4 @@ export const getEmailServiceConfig = () => {
   };
 };
 
-console.log('📧 VayAccess Email Service Configuration:', getEmailServiceConfig());
+console.log(' VayAccess Email Service Configuration:', getEmailServiceConfig());

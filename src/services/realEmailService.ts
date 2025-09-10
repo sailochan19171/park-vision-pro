@@ -1,4 +1,4 @@
-// Real Email Service Integration using EmailJS
+﻿// Real Email Service Integration using EmailJS
 // This allows sending real emails directly from the frontend
 
 import emailjs from '@emailjs/browser';
@@ -19,7 +19,7 @@ export const EMAIL_JS_CONFIG: EmailJSConfig = {
 // Real email sending function using EmailJS
 export const sendRealSubscriptionEmail = async (subscriberEmail: string): Promise<boolean> => {
   try {
-    console.log('📧 Sending real email via EmailJS...');
+    console.log(' Sending real email via EmailJS...');
     console.log('From: info@vayaccess.com');
     console.log('To:', subscriberEmail);
     console.log('Service ID:', EMAIL_JS_CONFIG.serviceID);
@@ -55,11 +55,11 @@ You can unsubscribe anytime by replying to this email.`
       EMAIL_JS_CONFIG.userID
     );
 
-    console.log('✅ Real email sent successfully via EmailJS:', result);
+    console.log(' Real email sent successfully via EmailJS:', result);
     return true;
     
   } catch (error) {
-    console.error('❌ Failed to send real email via EmailJS:', error);
+    console.error(' Failed to send real email via EmailJS:', error);
     return false;
   }
 };
@@ -82,13 +82,13 @@ export const sendViaFormspree = async (subscriberEmail: string): Promise<boolean
     });
 
     if (response.ok) {
-      console.log('✅ Subscription sent via Formspree');
+      console.log(' Subscription sent via Formspree');
       return true;
     } else {
       throw new Error('Formspree submission failed');
     }
   } catch (error) {
-    console.error('❌ Formspree error:', error);
+    console.error(' Formspree error:', error);
     return false;
   }
 };
@@ -96,7 +96,7 @@ export const sendViaFormspree = async (subscriberEmail: string): Promise<boolean
 // Newsletter subscription with real email sending
 export const subscribeToNewsletterReal = async (email: string): Promise<boolean> => {
   try {
-    console.log('🎯 Starting real newsletter subscription for:', email);
+    console.log(' Starting real newsletter subscription for:', email);
     
     // Send welcome email via EmailJS
     const emailSent = await sendRealSubscriptionEmail(email);
@@ -105,10 +105,10 @@ export const subscribeToNewsletterReal = async (email: string): Promise<boolean>
       throw new Error('Failed to send welcome email');
     }
     
-    console.log('✅ Newsletter subscription completed successfully!');
+    console.log(' Newsletter subscription completed successfully!');
     return true;
   } catch (error) {
-    console.error('❌ Newsletter subscription failed:', error);
+    console.error(' Newsletter subscription failed:', error);
     throw error;
   }
 };
@@ -123,7 +123,7 @@ export interface ContactFormData {
 // Send notification to info@vayaccess.com about new contact form submission
 export const sendContactNotificationEmail = async (formData: ContactFormData): Promise<boolean> => {
   try {
-    console.log('📧 Sending contact form notification to info@vayaccess.com...');
+    console.log(' Sending contact form notification to info@vayaccess.com...');
     
     const templateParams = {
       to_email: 'info@vayaccess.com',
@@ -132,12 +132,12 @@ export const sendContactNotificationEmail = async (formData: ContactFormData): P
       subject: `New Contact Form Submission from ${formData.name}`,
       message: `NEW CONTACT FORM SUBMISSION
       
-📝 Customer Details:
+ Customer Details:
 • Name: ${formData.name}
 • Email: ${formData.email}
 • Submission Time: ${new Date().toLocaleString()}
 
-💬 Message:
+ Message:
 ${formData.message}
 
 ---
@@ -159,11 +159,11 @@ Reply directly to this email to respond to the customer.`,
       EMAIL_JS_CONFIG.userID
     );
 
-    console.log('✅ Contact notification sent successfully:', result);
+    console.log(' Contact notification sent successfully:', result);
     return true;
     
   } catch (error) {
-    console.error('❌ Failed to send contact notification:', error);
+    console.error(' Failed to send contact notification:', error);
     return false;
   }
 };
@@ -171,7 +171,7 @@ Reply directly to this email to respond to the customer.`,
 // Send auto-reply to customer confirming receipt of their message
 export const sendContactAutoReply = async (formData: ContactFormData): Promise<boolean> => {
   try {
-    console.log('📧 Sending auto-reply to customer:', formData.email);
+    console.log(' Sending auto-reply to customer:', formData.email);
     
     const templateParams = {
       to_email: formData.email,
@@ -182,10 +182,10 @@ export const sendContactAutoReply = async (formData: ContactFormData): Promise<b
 
 Thank you for contacting VayAccess regarding your parking solution requirements.
 
-📧 YOUR MESSAGE RECEIVED:
+ YOUR MESSAGE RECEIVED:
 "${formData.message}"
 
-⏰ RESPONSE TIMELINE:
+ RESPONSE TIMELINE:
 Our technical specialists have received your inquiry and will review your requirements. You can expect a detailed response with:
 • Product recommendations
 • Pricing estimates  
@@ -194,13 +194,13 @@ Our technical specialists have received your inquiry and will review your requir
 
 We'll respond within 2 hours during business hours (Mon-Fri 9AM-6PM IST).
 
-📞 IMMEDIATE ASSISTANCE:
+ IMMEDIATE ASSISTANCE:
 For urgent inquiries, please contact us directly:
 • Phone: +91 70137 99462
 • WhatsApp: +91 70137 99462
 • Email: info@vayaccess.com
 
-🌐 LEARN MORE:
+ LEARN MORE:
 Visit our website: https://vayaccess.com
 View our products: https://vayaccess.com/products
 
@@ -222,11 +222,11 @@ For further questions, contact us at info@vayaccess.com`,
       EMAIL_JS_CONFIG.userID
     );
 
-    console.log('✅ Auto-reply sent successfully:', result);
+    console.log(' Auto-reply sent successfully:', result);
     return true;
     
   } catch (error) {
-    console.error('❌ Failed to send auto-reply:', error);
+    console.error(' Failed to send auto-reply:', error);
     return false;
   }
 };
@@ -234,7 +234,7 @@ For further questions, contact us at info@vayaccess.com`,
 // Complete contact form submission process
 export const submitContactForm = async (formData: ContactFormData): Promise<{ success: boolean; message: string }> => {
   try {
-    console.log('🎯 Processing contact form submission via Formspree...', formData);
+    console.log(' Processing contact form submission via Formspree...', formData);
 
     // Use existing Formspree form (configured in project)
     const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mzzvkeqy';
@@ -270,7 +270,7 @@ export const submitContactForm = async (formData: ContactFormData): Promise<{ su
     });
 
     if (response.ok) {
-      console.log('✅ Contact form sent via Formspree successfully');
+      console.log(' Contact form sent via Formspree successfully');
       return {
         success: true,
         message: 'Thank you for your inquiry! We have received your message. Our team will respond within 2 hours during business hours.'
@@ -280,7 +280,7 @@ export const submitContactForm = async (formData: ContactFormData): Promise<{ su
       throw new Error(`Formspree submission failed: ${errorText}`);
     }
   } catch (error) {
-    console.error('❌ Contact form submission failed:', error);
+    console.error(' Contact form submission failed:', error);
     return {
       success: false,
       message: 'Sorry, there was an error sending your message. Please try again or contact us directly at info@vayaccess.com or +91 720 724 4344.'
@@ -299,25 +299,25 @@ export interface ChatbotConversation {
 // Send chatbot conversation via Formspree (Professional, No Branding)
 export const sendChatbotConversationFormspree = async (conversation: ChatbotConversation): Promise<boolean> => {
   try {
-    console.log('🤖 Sending chatbot conversation to info@vayaccess.com via Formspree...');
+    console.log(' Sending chatbot conversation to info@vayaccess.com via Formspree...');
     
     // Using a demo Formspree endpoint - replace with your actual form ID
     const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xanygowk'; // Demo form ID - replace with your actual form ID
     
-    const emailBody = `🤖 NEW CHATBOT CONVERSATION
+    const emailBody = ` NEW CHATBOT CONVERSATION
 
-📊 Session Details:
+ Session Details:
 • Timestamp: ${conversation.timestamp.toLocaleString()}
 • Session ID: ${conversation.sessionId || 'Anonymous'}
 • Source: Website Chatbot (VayBot)
 
-❓ USER QUESTION:
+ USER QUESTION:
 "${conversation.userQuestion}"
 
-🤖 BOT RESPONSE:
+ BOT RESPONSE:
 "${conversation.botResponse}"
 
-📈 ANALYTICS:
+ ANALYTICS:
 • Question Length: ${conversation.userQuestion.length} characters
 • Response Length: ${conversation.botResponse.length} characters
 • Category: ${getCategoryFromQuestion(conversation.userQuestion)}
@@ -334,7 +334,7 @@ All chatbot conversations are logged for quality improvement and customer servic
       },
       body: JSON.stringify({
         email: 'info@vayaccess.com',
-        subject: `🤖 New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
+        subject: ` New Chatbot Conversation - ${conversation.timestamp.toLocaleString()}`,
         message: emailBody,
         user_question: conversation.userQuestion,
         bot_response: conversation.botResponse,
@@ -345,7 +345,7 @@ All chatbot conversations are logged for quality improvement and customer servic
     });
 
     if (response.ok) {
-      console.log('✅ Chatbot conversation sent via Formspree successfully');
+      console.log(' Chatbot conversation sent via Formspree successfully');
       return true;
     } else {
       const errorText = await response.text();
@@ -353,7 +353,7 @@ All chatbot conversations are logged for quality improvement and customer servic
     }
     
   } catch (error) {
-    console.error('❌ Failed to send chatbot conversation via Formspree:', error);
+    console.error(' Failed to send chatbot conversation via Formspree:', error);
     return false;
   }
 };
@@ -361,27 +361,27 @@ All chatbot conversations are logged for quality improvement and customer servic
 // Original EmailJS function (kept for reference - but has branding)
 export const sendChatbotConversationEmail = async (conversation: ChatbotConversation): Promise<boolean> => {
   try {
-    console.log('🤖 Sending chatbot conversation to info@vayaccess.com...');
+    console.log(' Sending chatbot conversation to info@vayaccess.com...');
     
     const templateParams = {
       to_email: 'info@vayaccess.com',
       from_email: 'chatbot@vayaccess.com',
       from_name: 'VayBot Assistant',
-      subject: `🤖 New Chatbot Conversation - ${new Date().toLocaleString()}`,
-      message: `🤖 NEW CHATBOT CONVERSATION
+      subject: ` New Chatbot Conversation - ${new Date().toLocaleString()}`,
+      message: ` NEW CHATBOT CONVERSATION
       
-📊 Session Details:
+ Session Details:
 • Timestamp: ${conversation.timestamp.toLocaleString()}
 • Session ID: ${conversation.sessionId || 'Anonymous'}
 • Source: Website Chatbot (VayBot)
 
-❓ USER QUESTION:
+ USER QUESTION:
 "${conversation.userQuestion}"
 
-🤖 BOT RESPONSE:
+ BOT RESPONSE:
 "${conversation.botResponse}"
 
-📈 ANALYTICS:
+ ANALYTICS:
 • Question Length: ${conversation.userQuestion.length} characters
 • Response Length: ${conversation.botResponse.length} characters
 • Category: ${getCategoryFromQuestion(conversation.userQuestion)}
@@ -405,11 +405,11 @@ Review conversation quality: Dashboard > AI Training`,
       EMAIL_JS_CONFIG.userID
     );
 
-    console.log('✅ Chatbot conversation sent successfully:', result);
+    console.log(' Chatbot conversation sent successfully:', result);
     return true;
     
   } catch (error) {
-    console.error('❌ Failed to send chatbot conversation:', error);
+    console.error(' Failed to send chatbot conversation:', error);
     return false;
   }
 };

@@ -1,10 +1,10 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 
 async function testMongoDBConnection() {
   try {
-    console.log('🔄 Connecting to MongoDB...');
+    console.log(' Connecting to MongoDB...');
     console.log('MongoDB URI:', process.env.MONGODB_URI);
     
     await mongoose.connect(process.env.MONGODB_URI, {
@@ -12,10 +12,10 @@ async function testMongoDBConnection() {
       useUnifiedTopology: true,
     });
     
-    console.log('✅ MongoDB connected successfully');
+    console.log(' MongoDB connected successfully');
     
     // Test creating a user
-    console.log('🔄 Testing user creation...');
+    console.log(' Testing user creation...');
     
     const testUser = new User({
       name: 'Test User',
@@ -25,25 +25,25 @@ async function testMongoDBConnection() {
     });
     
     const savedUser = await testUser.save();
-    console.log('✅ User created successfully:', savedUser._id);
+    console.log(' User created successfully:', savedUser._id);
     
     // Test finding the user
     const foundUser = await User.findById(savedUser._id);
-    console.log('✅ User found:', foundUser.name, foundUser.email);
+    console.log(' User found:', foundUser.name, foundUser.email);
     
     // Clean up - delete the test user
     await User.findByIdAndDelete(savedUser._id);
-    console.log('✅ Test user deleted');
+    console.log(' Test user deleted');
     
     // Test database stats
     const userCount = await User.countDocuments();
-    console.log('📊 Total users in database:', userCount);
+    console.log(' Total users in database:', userCount);
     
     await mongoose.disconnect();
-    console.log('✅ MongoDB disconnected');
+    console.log(' MongoDB disconnected');
     
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error(' Error:', error.message);
     console.error('Full error:', error);
     process.exit(1);
   }

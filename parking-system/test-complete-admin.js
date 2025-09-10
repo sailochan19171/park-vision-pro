@@ -1,4 +1,4 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
@@ -9,14 +9,14 @@ const ParkingSpot = require('./models/ParkingSpot');
 
 async function testCompleteAdmin() {
   try {
-    console.log('🧪 Testing Complete Admin Functionality...');
+    console.log(' Testing Complete Admin Functionality...');
     
     // Connect to MongoDB to verify data
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ Connected to MongoDB for verification');
+    console.log(' Connected to MongoDB for verification');
     
     // Step 1: Test admin login
     console.log('\n1. Testing Admin Login...');
@@ -32,7 +32,7 @@ async function testCompleteAdmin() {
     
     const cookies = loginResponse.headers['set-cookie'];
     const cookieHeader = cookies ? cookies.join('; ') : '';
-    console.log('✅ Admin login successful');
+    console.log(' Admin login successful');
     
     // Step 2: Test dashboard access
     console.log('\n2. Testing Dashboard Access...');
@@ -45,7 +45,7 @@ async function testCompleteAdmin() {
     });
     
     if (dashboardResponse.status === 200) {
-      console.log('✅ Dashboard accessible with real MongoDB data');
+      console.log(' Dashboard accessible with real MongoDB data');
     }
     
     // Step 3: Test users page
@@ -55,7 +55,7 @@ async function testCompleteAdmin() {
     });
     
     if (usersResponse.status === 200) {
-      console.log('✅ Users page accessible with real MongoDB data');
+      console.log(' Users page accessible with real MongoDB data');
     }
     
     // Step 4: Test vehicles page
@@ -65,7 +65,7 @@ async function testCompleteAdmin() {
     });
     
     if (vehiclesResponse.status === 200) {
-      console.log('✅ Vehicles page accessible with real MongoDB data');
+      console.log(' Vehicles page accessible with real MongoDB data');
     }
     
     // Step 5: Test parking page
@@ -75,7 +75,7 @@ async function testCompleteAdmin() {
     });
     
     if (parkingResponse.status === 200) {
-      console.log('✅ Parking page accessible with real MongoDB data');
+      console.log(' Parking page accessible with real MongoDB data');
     }
     
     // Step 6: Test bookings page
@@ -85,7 +85,7 @@ async function testCompleteAdmin() {
     });
     
     if (bookingsResponse.status === 200) {
-      console.log('✅ Bookings page accessible with real MongoDB data');
+      console.log(' Bookings page accessible with real MongoDB data');
     }
     
     // Step 7: Test logs page
@@ -95,7 +95,7 @@ async function testCompleteAdmin() {
     });
     
     if (logsResponse.status === 200) {
-      console.log('✅ Logs page accessible with real MongoDB data');
+      console.log(' Logs page accessible with real MongoDB data');
     }
     
     // Step 8: Test creating new user via admin API
@@ -115,13 +115,13 @@ async function testCompleteAdmin() {
     });
     
     if (createUserResponse.data.success) {
-      console.log('✅ User created successfully via admin API');
+      console.log(' User created successfully via admin API');
       console.log(`   User: ${createUserResponse.data.user.name} (${createUserResponse.data.user.email})`);
       
       // Verify in MongoDB
       const userInDB = await User.findById(createUserResponse.data.user.id);
       if (userInDB) {
-        console.log('✅ User verified in MongoDB database');
+        console.log(' User verified in MongoDB database');
       }
     }
     
@@ -145,13 +145,13 @@ async function testCompleteAdmin() {
     });
     
     if (createSpotResponse.data.success) {
-      console.log('✅ Parking spot created successfully via admin API');
+      console.log(' Parking spot created successfully via admin API');
       console.log(`   Spot: ${createSpotResponse.data.spot.spotNumber} at ${createSpotResponse.data.spot.location}`);
       
       // Verify in MongoDB
       const spotInDB = await ParkingSpot.findById(createSpotResponse.data.spot.id);
       if (spotInDB) {
-        console.log('✅ Parking spot verified in MongoDB database');
+        console.log(' Parking spot verified in MongoDB database');
       }
     }
     
@@ -176,13 +176,13 @@ async function testCompleteAdmin() {
     });
     
     if (createVehicleResponse.data.success) {
-      console.log('✅ Vehicle created successfully via admin API');
+      console.log(' Vehicle created successfully via admin API');
       console.log(`   Vehicle: ${createVehicleResponse.data.vehicle.licensePlate} - ${createVehicleResponse.data.vehicle.make} ${createVehicleResponse.data.vehicle.model}`);
       
       // Verify in MongoDB
       const vehicleInDB = await Vehicle.findById(createVehicleResponse.data.vehicle.id);
       if (vehicleInDB) {
-        console.log('✅ Vehicle verified in MongoDB database');
+        console.log(' Vehicle verified in MongoDB database');
       }
     }
     
@@ -194,27 +194,27 @@ async function testCompleteAdmin() {
     const totalVehicles = await Vehicle.countDocuments();
     const totalSpots = await ParkingSpot.countDocuments();
     
-    console.log(`   👥 Total Users: ${totalUsers} (${adminUsers} admins, ${regularUsers} regular)`);
-    console.log(`   🚗 Total Vehicles: ${totalVehicles}`);
-    console.log(`   🅿️ Total Parking Spots: ${totalSpots}`);
+    console.log(`    Total Users: ${totalUsers} (${adminUsers} admins, ${regularUsers} regular)`);
+    console.log(`    Total Vehicles: ${totalVehicles}`);
+    console.log(`    Total Parking Spots: ${totalSpots}`);
     
-    console.log('\n🎉 COMPLETE ADMIN TEST RESULTS:');
+    console.log('\n COMPLETE ADMIN TEST RESULTS:');
     console.log('=====================================');
-    console.log('✅ Admin Server: RUNNING on http://localhost:8080');
-    console.log('✅ MongoDB Connection: WORKING');
-    console.log('✅ Admin Authentication: WORKING');
-    console.log('✅ Dashboard: SHOWING REAL DATA');
-    console.log('✅ Users Management: WORKING');
-    console.log('✅ Vehicles Management: WORKING');
-    console.log('✅ Parking Management: WORKING');
-    console.log('✅ Bookings Management: WORKING');
-    console.log('✅ Logs Management: WORKING');
-    console.log('✅ User Creation API: WORKING & SAVING TO DB');
-    console.log('✅ Vehicle Creation API: WORKING & SAVING TO DB');
-    console.log('✅ Parking Spot Creation API: WORKING & SAVING TO DB');
-    console.log('✅ Data Persistence: CONFIRMED');
+    console.log(' Admin Server: RUNNING on http://localhost:8080');
+    console.log(' MongoDB Connection: WORKING');
+    console.log(' Admin Authentication: WORKING');
+    console.log(' Dashboard: SHOWING REAL DATA');
+    console.log(' Users Management: WORKING');
+    console.log(' Vehicles Management: WORKING');
+    console.log(' Parking Management: WORKING');
+    console.log(' Bookings Management: WORKING');
+    console.log(' Logs Management: WORKING');
+    console.log(' User Creation API: WORKING & SAVING TO DB');
+    console.log(' Vehicle Creation API: WORKING & SAVING TO DB');
+    console.log(' Parking Spot Creation API: WORKING & SAVING TO DB');
+    console.log(' Data Persistence: CONFIRMED');
     
-    console.log('\n🌐 ACCESS YOUR ADMIN PANEL:');
+    console.log('\n ACCESS YOUR ADMIN PANEL:');
     console.log('=====================================');
     console.log('URL: http://localhost:8080/admin/login');
     console.log('Email: john.manager@vayaccess.com');
@@ -225,10 +225,10 @@ async function testCompleteAdmin() {
     console.log('Password: Admin@123');
     
     await mongoose.disconnect();
-    console.log('\n✅ Test completed and database disconnected');
+    console.log('\n Test completed and database disconnected');
     
   } catch (error) {
-    console.error('❌ Admin test failed:', error.response?.data || error.message);
+    console.error(' Admin test failed:', error.response?.data || error.message);
     if (mongoose.connection.readyState === 1) {
       await mongoose.disconnect();
     }

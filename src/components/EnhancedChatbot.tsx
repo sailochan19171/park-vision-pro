@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Input } from './ui/input';
@@ -80,10 +80,10 @@ const EnhancedChatbot = () => {
       role: 'assistant',
       timestamp: new Date(),
       options: [
-        { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
-        { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
-        { id: 'call-sales', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
-        { id: 'email-sales', label: '✉️ Email Sales', action: 'email', value: COMPANY.email }
+        { id: 'products', label: ' View All Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'locations', label: ' Service Locations', action: 'message', value: 'How many locations do you serve?' },
+        { id: 'call-sales', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
+        { id: 'email-sales', label: ' Email Sales', action: 'email', value: COMPANY.email }
       ]
     }
   ]);
@@ -227,10 +227,10 @@ const EnhancedChatbot = () => {
       };
       
       await sendChatbotConversationSimple(conversation);
-      console.log('📧 Chatbot conversation sent to info@vayaccess.com');
+      console.log(' Chatbot conversation sent to info@vayaccess.com');
       
     } catch (error) {
-      console.error('❌ Failed to send chatbot conversation email:', error);
+      console.error(' Failed to send chatbot conversation email:', error);
     }
   };
 
@@ -244,14 +244,14 @@ const EnhancedChatbot = () => {
       options: productCategories
         .map(category => ({
           id: category.name.toLowerCase().replace(' ', '-'),
-          label: `🔧 ${category.name}`,
+          label: ` ${category.name}`,
           action: 'message' as const,
           value: `Tell me about ${category.name}`
         }))
         .concat([
-          { id: 'solutions', label: '🧩 Solutions', action: 'message', value: 'Show me solutions' },
-          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
-          { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
+          { id: 'solutions', label: ' Solutions', action: 'message', value: 'Show me solutions' },
+          { id: 'services', label: ' Services', action: 'navigate', value: '/services' },
+          { id: 'contact', label: ' Contact', action: 'navigate', value: '/#contact' }
         ]),
       cards: productCategories.flatMap(cat => cat.products.map(p => ({
         id: p.name.toLowerCase().replace(/\s+/g, '-'),
@@ -274,7 +274,7 @@ const EnhancedChatbot = () => {
         content: "I couldn't find that product category. Please select from our available categories.",
         options: productCategories.map(cat => ({
           id: cat.name.toLowerCase().replace(' ', '-'),
-          label: `🔧 ${cat.name}`,
+          label: ` ${cat.name}`,
           action: 'message' as const,
           value: `Tell me about ${cat.name}`
         }))
@@ -293,14 +293,14 @@ const EnhancedChatbot = () => {
       options: category.products
         .map(product => ({
           id: product.name.toLowerCase().replace(/\s+/g, '-'),
-          label: `📋 ${product.name}`,
+          label: ` ${product.name}`,
           action: 'message' as const,
           value: `Tell me about ${product.name}`
         }))
         .concat([
-          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
-          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
-          { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
+          { id: 'solutions', label: ' Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'services', label: ' Services', action: 'navigate', value: '/services' },
+          { id: 'contact', label: ' Contact', action: 'navigate', value: '/#contact' }
         ]),
       // Show product cards with images for this category
       cards: category.products.map(p => ({
@@ -354,10 +354,10 @@ const EnhancedChatbot = () => {
     return {
       content: response,
       options: [
-        { id: 'buy-yes', label: '✅ Yes', action: 'message', value: 'Yes, I want to buy' },
-        { id: 'buy-no', label: '❌ No', action: 'message', value: 'No, not now' },
-        { id: 'view-details', label: '📋 View Full Details', action: 'navigate', value: foundProduct.route },
-        { id: 'other-products', label: '🔍 Other Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'buy-yes', label: ' Yes', action: 'message', value: 'Yes, I want to buy' },
+        { id: 'buy-no', label: ' No', action: 'message', value: 'No, not now' },
+        { id: 'view-details', label: ' View Full Details', action: 'navigate', value: foundProduct.route },
+        { id: 'other-products', label: ' Other Products', action: 'message', value: 'How many products do you have?' },
       ],
       cards: [
         {
@@ -395,7 +395,7 @@ const EnhancedChatbot = () => {
     return {
       content: response,
       options: [
-        { id: 'end-conversation', label: '✅ Thank You', action: 'message', value: 'Thank you for the information' }
+        { id: 'end-conversation', label: ' Thank You', action: 'message', value: 'Thank you for the information' }
       ]
     };
   };
@@ -404,9 +404,9 @@ const EnhancedChatbot = () => {
     setConversationState('ending');
     
     return {
-      content: "Thank you for your interest in VayAccess parking solutions! Our representative will contact you soon to discuss your requirements in detail.\n\nHave a great day! 😊",
+      content: "Thank you for your interest in VayAccess parking solutions! Our representative will contact you soon to discuss your requirements in detail.\n\nHave a great day! ",
       options: [
-        { id: 'restart', label: '🔄 Start New Chat', action: 'message', value: 'Hello' }
+        { id: 'restart', label: ' Start New Chat', action: 'message', value: 'Hello' }
       ]
     };
   };
@@ -446,9 +446,9 @@ const EnhancedChatbot = () => {
       return {
         content: `Our address:\n${addr}\n\nPhone: ${COMPANY.phone}\nEmail: ${COMPANY.email}`,
         options: [
-          { id: 'open-map', label: '📍 View on Maps', action: 'link', value: 'https://maps.google.com/?q=VayAccess Hyderabad 500083' },
-          { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
-          { id: 'email', label: '✉️ Email', action: 'email', value: COMPANY.email },
+          { id: 'open-map', label: ' View on Maps', action: 'link', value: 'https://maps.google.com/?q=VayAccess Hyderabad 500083' },
+          { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
+          { id: 'email', label: ' Email', action: 'email', value: COMPANY.email },
         ],
       };
     }
@@ -480,35 +480,35 @@ const EnhancedChatbot = () => {
       return {
         content: "For pricing information and customized quotes, please contact our sales team directly. They'll provide you with detailed pricing based on your specific requirements and project scope.\n\nWould you like me to help you get in touch with them?",
         options: [
-          { id: 'contact-sales', label: '📞 Call Sales Team', action: 'phone', value: COMPANY.phone.replace(/\s+/g, '') },
-          { id: 'email-sales', label: '✉️ Email Sales Team', action: 'email', value: COMPANY.email },
-          { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'Where do you operate?' },
-          { id: 'products', label: '🏢 View Products Instead', action: 'message', value: 'How many products do you have?' }
+          { id: 'contact-sales', label: ' Call Sales Team', action: 'phone', value: COMPANY.phone.replace(/\s+/g, '') },
+          { id: 'email-sales', label: ' Email Sales Team', action: 'email', value: COMPANY.email },
+          { id: 'locations', label: ' Service Locations', action: 'message', value: 'Where do you operate?' },
+          { id: 'products', label: ' View Products Instead', action: 'message', value: 'How many products do you have?' }
         ]
       };
     }
 
-    // 3) Multi-intent and plural queries → show selectable options for disambiguation
+    // 3) Multi-intent and plural queries  show selectable options for disambiguation
     const categoryHits: SelectableOption[] = [];
     if (/(barrier|gate)s?/i.test(lowerInput)) {
-      categoryHits.push({ id: 'barrier-gates', label: '🔧 Barrier Gates', action: 'message', value: 'Tell me about Barrier Gates' });
+      categoryHits.push({ id: 'barrier-gates', label: ' Barrier Gates', action: 'message', value: 'Tell me about Barrier Gates' });
     }
     if (/(turnstiles?|pedestrian|flap)/i.test(lowerInput)) {
-      categoryHits.push({ id: 'pedestrian-gates', label: '🚶 Pedestrian Gates', action: 'message', value: 'Tell me about Pedestrian Gates' });
+      categoryHits.push({ id: 'pedestrian-gates', label: ' Pedestrian Gates', action: 'message', value: 'Tell me about Pedestrian Gates' });
     }
     if (/(parking\s*management|ticketless|guidance)/i.test(lowerInput)) {
-      categoryHits.push({ id: 'parking-management', label: '🅿️ Parking Management', action: 'message', value: 'Tell me about Parking Management' });
+      categoryHits.push({ id: 'parking-management', label: ' Parking Management', action: 'message', value: 'Tell me about Parking Management' });
     }
     if (/(access\s*control|rfid|biometric|mobile\s*access)/i.test(lowerInput)) {
-      categoryHits.push({ id: 'access-control', label: '🔐 Access Control', action: 'message', value: 'Tell me about Access Control' });
+      categoryHits.push({ id: 'access-control', label: ' Access Control', action: 'message', value: 'Tell me about Access Control' });
     }
     const pluralHint = /\b(many|multiple|several|all|list|kinds|types|options|products|solutions)\b/i.test(lowerInput);
     if (categoryHits.length >= 2 || pluralHint) {
       const defaultOptions: SelectableOption[] = [
-        { id: 'opt-products', label: '🏢 Products', action: 'message', value: 'How many products do you have?' },
-        { id: 'opt-solutions', label: '🧩 Solutions', action: 'message', value: 'Show me solutions' },
-        { id: 'opt-access', label: '🔐 Access Control', action: 'message', value: 'Tell me about Access Control' },
-        { id: 'opt-barrier', label: '🔧 Barrier Gates', action: 'message', value: 'Tell me about Barrier Gates' },
+        { id: 'opt-products', label: ' Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'opt-solutions', label: ' Solutions', action: 'message', value: 'Show me solutions' },
+        { id: 'opt-access', label: ' Access Control', action: 'message', value: 'Tell me about Access Control' },
+        { id: 'opt-barrier', label: ' Barrier Gates', action: 'message', value: 'Tell me about Barrier Gates' },
       ];
       return {
         content: 'I found multiple topics in your question. Please choose one:',
@@ -522,8 +522,8 @@ const EnhancedChatbot = () => {
       return {
         content: "Hello! I'm VayBot, your parking solutions assistant. I can help you with information about our products and service locations. How can I assist you today?",
         options: [
-          { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
-          { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' }
+          { id: 'products', label: ' View All Products', action: 'message', value: 'How many products do you have?' },
+          { id: 'locations', label: ' Service Locations', action: 'message', value: 'How many locations do you serve?' }
         ]
       };
     }
@@ -569,9 +569,9 @@ const EnhancedChatbot = () => {
       const response = {
         content: 'Here are some of our key solutions. Tap any to learn more:',
         options: [
-          { id: 'products', label: '🏢 View All Products', action: 'message' as const, value: 'How many products do you have?' },
-          { id: 'services', label: '🛠️ Services', action: 'navigate' as const, value: '/services' },
-          { id: 'contact', label: '✉️ Contact', action: 'navigate' as const, value: '/#contact' }
+          { id: 'products', label: ' View All Products', action: 'message' as const, value: 'How many products do you have?' },
+          { id: 'services', label: ' Services', action: 'navigate' as const, value: '/services' },
+          { id: 'contact', label: ' Contact', action: 'navigate' as const, value: '/#contact' }
         ],
         cards: [
           { id: 'ticketless', title: 'Ticketless Parking System', image: ticketlessImg, action: 'message' as const, value: 'Tell me about Ticketless Parking System' },
@@ -630,19 +630,19 @@ const EnhancedChatbot = () => {
       return {
         content: "I can help with Products, Solutions, Services, or Office location. What would you like to explore?",
         options: [
-          { id: 'products', label: '🏢 Products', action: 'message', value: 'How many products do you have?' },
-          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
-          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
-          { id: 'office', label: '📍 Office Location', action: 'message', value: 'Where is your office located?' },
+          { id: 'products', label: ' Products', action: 'message', value: 'How many products do you have?' },
+          { id: 'solutions', label: ' Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'services', label: ' Services', action: 'navigate', value: '/services' },
+          { id: 'office', label: ' Office Location', action: 'message', value: 'Where is your office located?' },
         ]
       };
     } else if (conversationState === 'products_shown') {
       return {
         content: "Want to navigate to Solutions, Services, or Contact?",
         options: [
-          { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
-          { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
-          { id: 'contact', label: '✉️ Contact', action: 'navigate', value: '/#contact' }
+          { id: 'solutions', label: ' Solutions', action: 'navigate', value: '/solutions' },
+          { id: 'services', label: ' Services', action: 'navigate', value: '/services' },
+          { id: 'contact', label: ' Contact', action: 'navigate', value: '/#contact' }
         ]
       };
     } else if (conversationState === 'locations_shown') {
@@ -652,10 +652,10 @@ const EnhancedChatbot = () => {
     return {
       content: "I can help with Products, Solutions, Services, or Office location. What would you like to explore?",
       options: [
-        { id: 'products', label: '🏢 Products', action: 'message', value: 'How many products do you have?' },
-        { id: 'solutions', label: '🧩 Solutions', action: 'navigate', value: '/solutions' },
-        { id: 'services', label: '🛠️ Services', action: 'navigate', value: '/services' },
-        { id: 'office', label: '📍 Office Location', action: 'message', value: 'Where is your office located?' },
+        { id: 'products', label: ' Products', action: 'message', value: 'How many products do you have?' },
+        { id: 'solutions', label: ' Solutions', action: 'navigate', value: '/solutions' },
+        { id: 'services', label: ' Services', action: 'navigate', value: '/services' },
+        { id: 'office', label: ' Office Location', action: 'message', value: 'Where is your office located?' },
       ]
     };
   };
@@ -845,10 +845,10 @@ const EnhancedChatbot = () => {
               role: 'assistant',
               timestamp: new Date(),
               options: [
-                { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
-                { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
-                { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
-                { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
+                { id: 'products', label: ' View All Products', action: 'message', value: 'How many products do you have?' },
+                { id: 'locations', label: ' Service Locations', action: 'message', value: 'How many locations do you serve?' },
+                { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
+                { id: 'email', label: ' Email Sales', action: 'email', value: COMPANY.email },
               ],
               cards: getCardsForQuery(textToSend)
             };
@@ -891,10 +891,10 @@ const EnhancedChatbot = () => {
           role: 'assistant',
           timestamp: new Date(),
           options: [
-            { id: 'products', label: '🏢 View All Products', action: 'message', value: 'How many products do you have?' },
-            { id: 'locations', label: '📍 Service Locations', action: 'message', value: 'How many locations do you serve?' },
-            { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
-            { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
+            { id: 'products', label: ' View All Products', action: 'message', value: 'How many products do you have?' },
+            { id: 'locations', label: ' Service Locations', action: 'message', value: 'How many locations do you serve?' },
+            { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
+            { id: 'email', label: ' Email Sales', action: 'email', value: COMPANY.email },
           ],
           cards: getCardsForQuery(textToSend)
         };
@@ -909,9 +909,9 @@ const EnhancedChatbot = () => {
         role: 'assistant',
         timestamp: new Date(),
         options: [
-          { id: 'retry', label: '🔄 Try Again', action: 'message', value: textToSend },
-          { id: 'call', label: '📞 Call Sales', action: 'phone', value: COMPANY.phone },
-          { id: 'email', label: '✉️ Email Sales', action: 'email', value: COMPANY.email },
+          { id: 'retry', label: ' Try Again', action: 'message', value: textToSend },
+          { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
+          { id: 'email', label: ' Email Sales', action: 'email', value: COMPANY.email },
         ]
       };
       setMessages(prev => [...prev, errorMessage]);

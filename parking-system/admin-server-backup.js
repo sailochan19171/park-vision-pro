@@ -1,4 +1,4 @@
-// Admin Dashboard Server
+﻿// Admin Dashboard Server
 // Port: 8080 (changed from 3001 to avoid conflict with AI Call Agent)
 // Serves admin dashboard with authentication and MongoDB integration
 
@@ -20,15 +20,15 @@ const Booking = require('./models/Booking');
 const app = express();
 const PORT = process.env.ADMIN_PORT || 8080;
 
-console.log('🚀 Starting MongoDB-Connected Admin Server on port:', PORT);
+console.log(' Starting MongoDB-Connected Admin Server on port:', PORT);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+.then(() => console.log(' MongoDB connected successfully'))
+.catch(err => console.error(' MongoDB connection error:', err));
 
 // Backup in-memory data storage (fallback only)
 let dataStore = {
@@ -168,15 +168,15 @@ app.get('/admin/login', (req, res) => {
 
 // Login processing (Direct authentication for development) - FIXED
 app.post('/admin/login', (req, res) => {
-  console.log('🔐 Admin login POST request received');
-  console.log('📝 Request body:', req.body);
+  console.log(' Admin login POST request received');
+  console.log(' Request body:', req.body);
 
   try {
     const { email, password, rememberMe } = req.body;
     
     // Validation
     if (!email || !password) {
-      console.log('❌ Missing email or password');
+      console.log(' Missing email or password');
       return res.render('login', {
         title: 'Admin Login - VayAccess',
         layout: 'auth',
@@ -192,7 +192,7 @@ app.post('/admin/login', (req, res) => {
     };
     
     const normalizedEmail = email.toLowerCase().trim();
-    console.log('🔍 Checking credentials for:', normalizedEmail);
+    console.log(' Checking credentials for:', normalizedEmail);
     
     if (validCredentials[normalizedEmail] && validCredentials[normalizedEmail] === password) {
       // Create admin session
@@ -207,11 +207,11 @@ app.post('/admin/login', (req, res) => {
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       }
       
-      console.log('✅ Login successful for:', normalizedEmail);
-      console.log('📊 Admin session created:', req.session.admin);
+      console.log(' Login successful for:', normalizedEmail);
+      console.log(' Admin session created:', req.session.admin);
       return res.redirect('/admin/dashboard');
     } else {
-      console.log('❌ Invalid credentials for:', normalizedEmail);
+      console.log(' Invalid credentials for:', normalizedEmail);
       return res.render('login', {
         title: 'Admin Login - VayAccess',
         layout: 'auth',
@@ -220,7 +220,7 @@ app.post('/admin/login', (req, res) => {
       });
     }
   } catch (error) {
-    console.error('💥 Admin login error:', error);
+    console.error(' Admin login error:', error);
     console.error('Stack trace:', error.stack);
     return res.render('login', {
       title: 'Admin Login - VayAccess',
@@ -486,7 +486,7 @@ app.post('/api/admin/bookings', requireAdminAuthAPI, (req, res) => {
   // Add to dataStore
   dataStore.bookings.push(newBooking);
   addLog('INFO', 'Booking', `New booking created: ${newBooking.id} for ${customerName}`, req.ip);
-  console.log('✅ Booking added to dataStore. Total bookings:', dataStore.bookings.length);
+  console.log(' Booking added to dataStore. Total bookings:', dataStore.bookings.length);
   
   res.json({ 
     success: true, 
@@ -568,7 +568,7 @@ app.post('/api/admin/vehicles', requireAdminAuthAPI, (req, res) => {
   // Add to dataStore
   dataStore.vehicles.push(newVehicle);
   addLog('INFO', 'Vehicle', `New vehicle registered: ${plateNumber} for ${owner}`, req.ip);
-  console.log('✅ Vehicle added to dataStore. Total vehicles:', dataStore.vehicles.length);
+  console.log(' Vehicle added to dataStore. Total vehicles:', dataStore.vehicles.length);
   
   res.json({ 
     success: true, 
@@ -641,7 +641,7 @@ app.post('/api/admin/payments', requireAdminAuthAPI, (req, res) => {
   // Add to dataStore
   dataStore.payments.push(newPayment);
   addLog('INFO', 'Payment', `Payment recorded: ${newPayment.id} - ₹${amount} via ${method}`, req.ip);
-  console.log('✅ Payment added to dataStore. Total payments:', dataStore.payments.length);
+  console.log(' Payment added to dataStore. Total payments:', dataStore.payments.length);
   
   res.json({ 
     success: true, 
@@ -870,7 +870,7 @@ app.post('/api/admin/users', requireAdminAuthAPI, (req, res) => {
   // Add to dataStore
   dataStore.users.push(newUser);
   addLog('INFO', 'User', `New user created: ${name} (${email})`, req.ip);
-  console.log('✅ User added to dataStore. Total users:', dataStore.users.length);
+  console.log(' User added to dataStore. Total users:', dataStore.users.length);
   
   res.json({ 
     success: true, 
@@ -1007,7 +1007,7 @@ app.post('/api/admin/parking/spots', requireAdminAuthAPI, (req, res) => {
   // Add to dataStore
   dataStore.parkingSpots.push(newSpot);
   addLog('INFO', 'Parking', `New parking spot created: ${spotId} at ${location}`, req.ip);
-  console.log('✅ Parking spot added to dataStore. Total spots:', dataStore.parkingSpots.length);
+  console.log(' Parking spot added to dataStore. Total spots:', dataStore.parkingSpots.length);
   
   res.json({ 
     success: true, 
@@ -1046,7 +1046,7 @@ app.post('/api/admin/ai-call-recordings', (req, res) => {
   try {
     const { recordings, source, syncTime } = req.body;
     
-    console.log(`📞 Received ${recordings?.length || 0} AI call recordings from ${source}`);
+    console.log(` Received ${recordings?.length || 0} AI call recordings from ${source}`);
     
     // Store recordings in memory for dashboard display
     global.aiCallRecordings = recordings || [];
@@ -1060,7 +1060,7 @@ app.post('/api/admin/ai-call-recordings', (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error receiving AI call recordings:', error);
+    console.error(' Error receiving AI call recordings:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to receive AI call recordings'
@@ -1091,7 +1091,7 @@ app.get('/api/admin/ai-call-recordings', (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Error fetching AI call recordings:', error);
+    console.error(' Error fetching AI call recordings:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch AI call recordings'
@@ -1110,7 +1110,8 @@ app.use((error, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🔧 Admin Dashboard running on http://localhost:${PORT}`);
+  console.log(` Admin Dashboard running on http://localhost:${PORT}`);
 });
 
 module.exports = app;
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -113,7 +113,7 @@ const AICallModal = ({ isOpen, onClose, customerPhone = '', customerName = '' }:
         setMessages([welcomeMessage]);
 
         toast({
-          title: "Call Connected! 🎉",
+          title: "Call Connected! ",
           description: "You're now connected with our AI parking solutions expert.",
           duration: 3000
         });
@@ -189,7 +189,7 @@ const AICallModal = ({ isOpen, onClose, customerPhone = '', customerName = '' }:
       if (result.success) {
         setIsRecording(true);
         toast({
-          title: "Recording Started 🎤",
+          title: "Recording Started ",
           description: "Speak now... I'm listening!",
           duration: 2000
         });
@@ -217,7 +217,7 @@ const AICallModal = ({ isOpen, onClose, customerPhone = '', customerName = '' }:
       const result = await aiCallService.stopVoiceRecording();
       
       toast({
-        title: "Processing Voice... 🔄",
+        title: "Processing Voice... ",
         description: "Converting your speech and generating response...",
         duration: 3000
       });
@@ -294,7 +294,7 @@ const AICallModal = ({ isOpen, onClose, customerPhone = '', customerName = '' }:
             </div>
             <div>
               <DialogTitle className="text-xl">
-                {isCallActive ? '📞 Connected with AI Agent' : '🤖 AI Parking Solutions Expert'}
+                {isCallActive ? ' Connected with AI Agent' : ' AI Parking Solutions Expert'}
               </DialogTitle>
               <DialogDescription>
                 {isCallActive 
@@ -311,7 +311,7 @@ const AICallModal = ({ isOpen, onClose, customerPhone = '', customerName = '' }:
             // Call setup form
             <div className="space-y-6 py-6">
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">🚀 What to Expect:</h3>
+                <h3 className="font-semibold text-blue-900 mb-2"> What to Expect:</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• Instant answers about our parking solutions</li>
                   <li>• Product recommendations based on your needs</li>
@@ -520,8 +520,8 @@ const AICallModal = ({ isOpen, onClose, customerPhone = '', customerName = '' }:
             <div className="flex items-center gap-2 text-yellow-800 text-sm">
               <Volume2 className="h-4 w-4" />
               {isRecording 
-                ? "🎤 Recording... Click the red button when you're done speaking"
-                : "💡 Click the microphone button and speak your question about parking solutions"
+                ? " Recording... Click the red button when you're done speaking"
+                : " Click the microphone button and speak your question about parking solutions"
               }
             </div>
           </div>

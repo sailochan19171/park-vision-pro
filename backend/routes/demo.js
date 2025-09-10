@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 
 // Demo AI call endpoint (FREE - no Twilio or OpenAI needed)
@@ -6,8 +6,8 @@ router.post('/ai-call/demo', async (req, res) => {
   try {
     const { customerPhone, customerName, question } = req.body;
     
-    console.log(`🎬 Starting FREE demo AI call for ${customerPhone}`);
-    console.log(`❓ Customer question: ${question}`);
+    console.log(` Starting FREE demo AI call for ${customerPhone}`);
+    console.log(` Customer question: ${question}`);
     
     // Generate intelligent response based on keywords (no API needed)
     let aiResponse = "";
@@ -50,10 +50,10 @@ router.post('/ai-call/demo', async (req, res) => {
       ],
       callStatus: 'completed',
       nextSteps: [
-        '✅ Free site assessment scheduled',
-        '✅ Product brochure will be emailed',
-        '✅ Our team will call within 2 hours',
-        '✅ Custom quote will be prepared'
+        ' Free site assessment scheduled',
+        ' Product brochure will be emailed',
+        ' Our team will call within 2 hours',
+        ' Custom quote will be prepared'
       ],
       contactInfo: {
         phone: '+91 720 724 4344',
@@ -62,11 +62,11 @@ router.post('/ai-call/demo', async (req, res) => {
       }
     };
     
-    console.log('✅ FREE Demo AI call completed successfully');
+    console.log(' FREE Demo AI call completed successfully');
     res.json(callSimulation);
     
   } catch (error) {
-    console.error('❌ Demo call error:', error);
+    console.error(' Demo call error:', error);
     
     // Fallback response (always works)
     const fallbackResponse = {
@@ -88,10 +88,10 @@ router.post('/ai-call/demo', async (req, res) => {
       ],
       callStatus: 'completed',
       nextSteps: [
-        '✅ Free consultation scheduled',
-        '✅ Technical team will call back',
-        '✅ Custom quote preparation',
-        '✅ Site assessment booking'
+        ' Free consultation scheduled',
+        ' Technical team will call back',
+        ' Custom quote preparation',
+        ' Site assessment booking'
       ],
       contactInfo: {
         phone: '+91 720 724 4344',

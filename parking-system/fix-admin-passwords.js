@@ -1,18 +1,18 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 
 async function fixAdminPasswords() {
   try {
-    console.log('🔧 FIXING ADMIN USER PASSWORDS');
+    console.log(' FIXING ADMIN USER PASSWORDS');
     console.log('===============================');
     
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
     
     // Define admin users with their correct passwords
     const adminCredentials = [
@@ -28,7 +28,7 @@ async function fixAdminPasswords() {
       }
     ];
     
-    console.log('\n🔄 Updating admin passwords...');
+    console.log('\n Updating admin passwords...');
     
     for (const adminData of adminCredentials) {
       try {
@@ -39,7 +39,7 @@ async function fixAdminPasswords() {
         });
         
         if (admin) {
-          console.log(`\n📝 Updating existing admin: ${admin.name}`);
+          console.log(`\n Updating existing admin: ${admin.name}`);
           
           // Hash the password manually
           const salt = await bcrypt.genSalt(12);
@@ -51,15 +51,15 @@ async function fixAdminPasswords() {
             { $set: { password: hashedPassword } }
           );
           
-          console.log(`✅ Password updated for: ${admin.name}`);
+          console.log(` Password updated for: ${admin.name}`);
           
           // Test the password
           const updatedAdmin = await User.findById(admin._id);
           const isValid = await bcrypt.compare(adminData.password, updatedAdmin.password);
-          console.log(`   Password test: ${isValid ? '✅ VALID' : '❌ INVALID'}`);
+          console.log(`   Password test: ${isValid ? ' VALID' : ' INVALID'}`);
           
         } else {
-          console.log(`\n➕ Creating new admin: ${adminData.name}`);
+          console.log(`\n Creating new admin: ${adminData.name}`);
           
           // Create new admin user
           const newAdmin = new User({
@@ -78,20 +78,20 @@ async function fixAdminPasswords() {
           });
           
           await newAdmin.save();
-          console.log(`✅ Created new admin: ${newAdmin.name}`);
+          console.log(` Created new admin: ${newAdmin.name}`);
           
           // Test the password
           const isValid = await newAdmin.comparePassword(adminData.password);
-          console.log(`   Password test: ${isValid ? '✅ VALID' : '❌ INVALID'}`);
+          console.log(`   Password test: ${isValid ? ' VALID' : ' INVALID'}`);
         }
         
       } catch (error) {
-        console.error(`❌ Error processing ${adminData.email}:`, error.message);
+        console.error(` Error processing ${adminData.email}:`, error.message);
       }
     }
     
     // Clean up test admin users
-    console.log('\n🧹 Cleaning up test admin users...');
+    console.log('\n Cleaning up test admin users...');
     const testAdmins = await User.find({ 
       email: { $regex: /admin\d+@test\.com/ },
       role: 'admin'
@@ -99,22 +99,22 @@ async function fixAdminPasswords() {
     
     for (const testAdmin of testAdmins) {
       await User.deleteOne({ _id: testAdmin._id });
-      console.log(`🗑️ Deleted test admin: ${testAdmin.email}`);
+      console.log(` Deleted test admin: ${testAdmin.email}`);
     }
     
     // Final verification
-    console.log('\n🔍 FINAL VERIFICATION:');
+    console.log('\n FINAL VERIFICATION:');
     console.log('======================');
     
     const finalAdmins = await User.find({ role: 'admin' }).select('name email password');
     
     for (const admin of finalAdmins) {
-      console.log(`\n👤 ${admin.name} (${admin.email})`);
-      console.log(`   Password hash: ${admin.password ? '✅ EXISTS' : '❌ MISSING'}`);
+      console.log(`\n ${admin.name} (${admin.email})`);
+      console.log(`   Password hash: ${admin.password ? ' EXISTS' : ' MISSING'}`);
       console.log(`   Hash length: ${admin.password ? admin.password.length : 0}`);
     }
     
-    console.log('\n🎉 ADMIN PASSWORDS FIXED!');
+    console.log('\n ADMIN PASSWORDS FIXED!');
     console.log('=========================');
     console.log('You can now login with:');
     console.log('');
@@ -129,10 +129,10 @@ async function fixAdminPasswords() {
     console.log('Password: Admin@123');
     
     await mongoose.disconnect();
-    console.log('\n✅ Password fix completed');
+    console.log('\n Password fix completed');
     
   } catch (error) {
-    console.error('❌ Fix failed:', error);
+    console.error(' Fix failed:', error);
     process.exit(1);
   }
 }

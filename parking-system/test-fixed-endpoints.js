@@ -1,11 +1,11 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const axios = require('axios');
 
 const BASE_URL = 'http://localhost:8080';
 
 async function testFixedEndpoints() {
   try {
-    console.log('🧪 Testing Fixed Admin Endpoints...');
+    console.log(' Testing Fixed Admin Endpoints...');
     
     // Login first
     const loginResponse = await axios.post(`${BASE_URL}/admin/login`, {
@@ -22,7 +22,7 @@ async function testFixedEndpoints() {
     const cookies = loginResponse.headers['set-cookie'];
     const sessionCookie = cookies ? cookies.find(cookie => cookie.startsWith('connect.sid')) : null;
     
-    console.log('✅ Login successful');
+    console.log(' Login successful');
     
     // Test 1: Create Vehicle with correct fields
     console.log('\n1. Testing Fixed Vehicle Creation...');
@@ -85,10 +85,10 @@ async function testFixedEndpoints() {
     console.log('Vehicles Count:', getVehiclesResponse.data.vehicles?.length || 0);
     console.log('Sample Vehicle:', getVehiclesResponse.data.vehicles?.[0] || 'No vehicles');
     
-    console.log('\n✅ All fixed endpoint tests completed successfully!');
+    console.log('\n All fixed endpoint tests completed successfully!');
     
   } catch (error) {
-    console.error('\n❌ Fixed Endpoint Test Error:', error.message);
+    console.error('\n Fixed Endpoint Test Error:', error.message);
     if (error.response) {
       console.error('Response Status:', error.response.status);
       console.error('Response Data:', error.response.data);

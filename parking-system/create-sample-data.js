@@ -1,4 +1,4 @@
-// Create sample parking spots and test data
+﻿// Create sample parking spots and test data
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
@@ -15,13 +15,13 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/parkin
 async function createSampleData() {
   try {
     await mongoose.connect(MONGODB_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
     
     // Create sample parking spots if they don't exist
     const existingSpots = await ParkingSpot.countDocuments();
     
     if (existingSpots < 10) {
-      console.log('📍 Creating sample parking spots...');
+      console.log(' Creating sample parking spots...');
       
       const sampleSpots = [];
       for (let i = 1; i <= 20; i++) {
@@ -42,9 +42,9 @@ async function createSampleData() {
       }
       
       await ParkingSpot.insertMany(sampleSpots);
-      console.log(`✅ Created ${sampleSpots.length} parking spots`);
+      console.log(` Created ${sampleSpots.length} parking spots`);
     } else {
-      console.log(`📍 Found ${existingSpots} existing parking spots`);
+      console.log(` Found ${existingSpots} existing parking spots`);
     }
     
     // List available data
@@ -52,15 +52,15 @@ async function createSampleData() {
     const vehicles = await Vehicle.find({}, 'licensePlate owner').populate('owner', 'name').limit(5);
     const spots = await ParkingSpot.find({}, 'spotNumber status').limit(5);
     
-    console.log('\n📊 Available Data:');
+    console.log('\n Available Data:');
     console.log('Users:', users.map(u => `${u.name} (${u.email})`));
     console.log('Vehicles:', vehicles.map(v => `${v.licensePlate} - ${v.owner?.name || 'No owner'}`));
     console.log('Parking Spots:', spots.map(s => `${s.spotNumber} (${s.status})`));
     
-    console.log('\n✅ Sample data ready!');
+    console.log('\n Sample data ready!');
     
   } catch (error) {
-    console.error('❌ Error creating sample data:', error);
+    console.error(' Error creating sample data:', error);
   } finally {
     mongoose.disconnect();
   }

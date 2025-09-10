@@ -1,4 +1,4 @@
-<div class="container-fluid py-4">
+﻿<div class="container-fluid py-4">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Booking Management</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
@@ -669,7 +669,7 @@ async function createBooking() {
                 endDateTime: document.getElementById('endDateTime').value
             };
             
-            console.log('📝 Submitting booking:', formData);
+            console.log(' Submitting booking:', formData);
             
             const response = await fetch('/api/admin/bookings', {
                 method: 'POST',
@@ -683,7 +683,7 @@ async function createBooking() {
             const data = await response.json();
             
             if (data.success) {
-                showNotification('✅ Booking created successfully!', 'success');
+                showNotification(' Booking created successfully!', 'success');
                 
                 // Close modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addBookingModal'));

@@ -1,11 +1,11 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const axios = require('axios');
 
 const BASE_URL = 'http://localhost:8080';
 
 async function testFinalAdmin() {
   try {
-    console.log('🎯 FINAL ADMIN PANEL TEST');
+    console.log(' FINAL ADMIN PANEL TEST');
     console.log('========================');
     
     // Login first
@@ -23,7 +23,7 @@ async function testFinalAdmin() {
     const cookies = loginResponse.headers['set-cookie'];
     const sessionCookie = cookies ? cookies.find(cookie => cookie.startsWith('connect.sid')) : null;
     
-    console.log('✅ Login successful');
+    console.log(' Login successful');
     
     // Test 1: Create a new user
     console.log('\n1. Testing User Creation...');
@@ -43,7 +43,7 @@ async function testFinalAdmin() {
       }
     });
     
-    console.log(`✅ User created: ${userResponse.data.user.name} (ID: ${userResponse.data.user.id})`);
+    console.log(` User created: ${userResponse.data.user.name} (ID: ${userResponse.data.user.id})`);
     const newUserId = userResponse.data.user.id;
     
     // Test 2: Create a new vehicle for this user
@@ -64,7 +64,7 @@ async function testFinalAdmin() {
       }
     });
     
-    console.log(`✅ Vehicle created: ${vehicleResponse.data.vehicle.licensePlate} (ID: ${vehicleResponse.data.vehicle.id})`);
+    console.log(` Vehicle created: ${vehicleResponse.data.vehicle.licensePlate} (ID: ${vehicleResponse.data.vehicle.id})`);
     const newVehicleId = vehicleResponse.data.vehicle.id;
     
     // Test 3: Create a new parking spot
@@ -83,7 +83,7 @@ async function testFinalAdmin() {
       }
     });
     
-    console.log(`✅ Parking spot created: ${spotResponse.data.spot.spotNumber} (ID: ${spotResponse.data.spot.id})`);
+    console.log(` Parking spot created: ${spotResponse.data.spot.spotNumber} (ID: ${spotResponse.data.spot.id})`);
     const newSpotId = spotResponse.data.spot.id;
     
     // Test 4: Create a booking
@@ -104,7 +104,7 @@ async function testFinalAdmin() {
       }
     });
     
-    console.log(`✅ Booking created: ID ${bookingResponse.data.booking.id}`);
+    console.log(` Booking created: ID ${bookingResponse.data.booking.id}`);
     
     // Test 5: Verify all data is retrievable
     console.log('\n5. Testing Data Retrieval...');
@@ -122,22 +122,22 @@ async function testFinalAdmin() {
       const response = await axios.get(`${BASE_URL}${endpoint.url}`, {
         headers: { 'Cookie': sessionCookie }
       });
-      console.log(`✅ ${endpoint.name}: ${response.status} - ${response.data.success ? 'SUCCESS' : 'FAILED'}`);
+      console.log(` ${endpoint.name}: ${response.status} - ${response.data.success ? 'SUCCESS' : 'FAILED'}`);
     }
     
-    console.log('\n🎉 ALL TESTS PASSED!');
+    console.log('\n ALL TESTS PASSED!');
     console.log('====================================');
-    console.log('✅ User creation: WORKING');
-    console.log('✅ Vehicle creation: WORKING');
-    console.log('✅ Parking spot creation: WORKING');
-    console.log('✅ Booking creation: WORKING');
-    console.log('✅ All API endpoints: WORKING');
-    console.log('✅ Data persistence: WORKING');
-    console.log('\n🚀 Your admin panel is fully functional!');
+    console.log(' User creation: WORKING');
+    console.log(' Vehicle creation: WORKING');
+    console.log(' Parking spot creation: WORKING');
+    console.log(' Booking creation: WORKING');
+    console.log(' All API endpoints: WORKING');
+    console.log(' Data persistence: WORKING');
+    console.log('\n Your admin panel is fully functional!');
     console.log('Access it at: http://localhost:8080/admin/login');
     
   } catch (error) {
-    console.error('\n❌ Test Failed:', error.message);
+    console.error('\n Test Failed:', error.message);
     if (error.response) {
       console.error('Status:', error.response.status);
       console.error('Data:', error.response.data);

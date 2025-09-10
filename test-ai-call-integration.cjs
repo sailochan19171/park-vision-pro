@@ -1,4 +1,4 @@
-// Test AI Call Recording Integration
+﻿// Test AI Call Recording Integration
 // This script sends sample AI call data to the parking system admin dashboard
 
 const axios = require('axios');
@@ -137,8 +137,8 @@ const sampleCallRecordings = [
 
 async function testAICallIntegration() {
   try {
-    console.log('🧪 Testing AI Call Recording Integration...');
-    console.log(`📞 Sending ${sampleCallRecordings.length} sample call recordings to parking system...`);
+    console.log(' Testing AI Call Recording Integration...');
+    console.log(` Sending ${sampleCallRecordings.length} sample call recordings to parking system...`);
 
     // Send sample data to parking system admin dashboard
     const response = await axios.post('http://localhost:8080/api/admin/ai-call-recordings', {
@@ -147,14 +147,14 @@ async function testAICallIntegration() {
       syncTime: new Date().toISOString()
     });
 
-    console.log('✅ Integration test successful!');
-    console.log('📊 Response:', response.data);
-    console.log('\n🎯 Now check the admin dashboard:');
-    console.log('🔗 http://localhost:8080/admin/dashboard');
-    console.log('\n📋 Login credentials:');
-    console.log('👤 Username: admin');
-    console.log('🔑 Password: admin123');
-    console.log('\n🎉 You should see:');
+    console.log(' Integration test successful!');
+    console.log(' Response:', response.data);
+    console.log('\n Now check the admin dashboard:');
+    console.log(' http://localhost:8080/admin/dashboard');
+    console.log('\n Login credentials:');
+    console.log(' Username: admin');
+    console.log(' Password: admin123');
+    console.log('\n You should see:');
     console.log('   • 3 AI call recordings in the dashboard');
     console.log('   • Call analytics (total, today, duration, status)');
     console.log('   • Detailed conversation transcripts');
@@ -162,13 +162,13 @@ async function testAICallIntegration() {
     console.log('   • Export functionality for call transcripts');
 
   } catch (error) {
-    console.error('❌ Integration test failed:', error.message);
+    console.error(' Integration test failed:', error.message);
     
     if (error.response) {
-      console.error('📝 Server Response:', error.response.data);
+      console.error(' Server Response:', error.response.data);
     }
     
-    console.log('\n🔧 Troubleshooting:');
+    console.log('\n Troubleshooting:');
     console.log('1. Make sure parking system server is running on port 8080');
     console.log('2. Check that the admin dashboard API endpoints are working');
     console.log('3. Verify the admin server logs for any errors');
