@@ -974,11 +974,17 @@ app.post('/api/send-brochure', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide name, valid email, phone, and city.' });
     }
 
-    // Build attachment path for brochure (attach only if file is reasonably small)
-    const brochurePath = path.resolve(__dirname, '../public/vay-gate-brochure.pdf');
+    // Build attachment path for brochure: prefer compressed, then original, then fallback
+    const compressedPath = path.resolve(__dirname, '../public/Vay Gate_compressed.pdf');
+    const originalPath = path.resolve(__dirname, '../public/Vay Gate.pdf');
+    const fallbackPath = path.resolve(__dirname, '../public/vay-gate-brochure.pdf');
+    let brochurePath = compressedPath;
     let brochureExists = false;
     let attachBrochure = false;
     try {
+      if (!fs.existsSync(brochurePath)) {
+        brochurePath = fs.existsSync(originalPath) ? originalPath : fallbackPath;
+      }
       brochureExists = fs.existsSync(brochurePath);
       if (brochureExists) {
         const stat = fs.statSync(brochurePath);
@@ -993,7 +999,13 @@ app.post('/api/send-brochure', async (req, res) => {
     const fromName = process.env.EMAIL_FROM_NAME || 'VayAccess';
     const fromEmail = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'info@vayaccess.com';
 
-    const brochureUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/vay-gate-brochure.pdf`;
+    // Build a public URL that matches the selected file (spaces must be URL-encoded)
+    const selectedPublicName = brochurePath.endsWith('Vay Gate_compressed.pdf')
+      ? 'Vay%20Gate_compressed.pdf'
+      : brochurePath.endsWith('Vay Gate.pdf')
+        ? 'Vay%20Gate.pdf'
+        : 'vay-gate-brochure.pdf';
+    const brochureUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/${selectedPublicName}`;
     const customerHtml = withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <p>Hi ${n.split(' ')[0]},</p>
@@ -1015,7 +1027,7 @@ app.post('/api/send-brochure', async (req, res) => {
       subject: 'VayAccess Brochure',
       html: customerHtml,
       attachments: attachBrochure ? [
-        { filename: 'VAY-Gate-Brochure.pdf', path: brochurePath, contentType: 'application/pdf', contentDisposition: 'attachment' }
+        { filename: path.basename(brochurePath), path: brochurePath, contentType: 'application/pdf', contentDisposition: 'attachment' }
       ] : []
     });
 
