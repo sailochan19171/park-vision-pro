@@ -244,12 +244,12 @@ const Products: React.FC<ProductsProps> = ({ showPrices = true }) => {
         {/* Header Section */}
         <div className="text-center mb-16 sm:mb-20 md:mb-24 lg:mb-28 xl:mb-32">
           <div className="inline-block mb-4 sm:mb-6">
-            <span className="text-orange-700 text-[20px] sm:text-[22px] font-semibold tracking-[0.2em] uppercase">
+            <span className="text-orange-700 text-2xl md:text-3xl lg:text-4xl font-semibold tracking-[0.2em] uppercase">
               OUR PRODUCTS
             </span>
           </div>
           
-          <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 leading-tight">
+          <h1 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
             Make Your Parking
             <br />
             <span className="text-blue-900">Seamless</span>

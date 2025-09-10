@@ -142,7 +142,8 @@ const Contact = () => {
       details: [
         "Plot No. 34, TIF MSME Green Industrial Park",
         "Dandumalkapur(V), Choutuppal (M)",
-        "Yadagiri District, Telangana, India - 508252"
+        "Yadagiri District, Telangana, India - 508252",
+        "M - 7013799462"
       ]
     },
     // {

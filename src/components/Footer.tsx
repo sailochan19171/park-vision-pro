@@ -115,7 +115,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 rounded-lg overflow-hidden">
+              <div className="w-20 h-20 rounded-lg overflow-hidden">
                 <img src={logo} alt="VayAccess Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-2xl font-bold">VayAccess Parking Solutions</span>
@@ -130,14 +130,17 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 text-tech-blue-light mt-1" />
-                <div className="text-sm text-white font-white font-semibold">
-                  <p>Plot No. 26, Road No.1, West Gandhi Nagar</p>
-                  <p>Hyderabad - 500083, TS, India</p>
+                <div className="text-sm text-white font-semibold">
+                  <p className="text-white">Plot No. 26, Road No.1, West Gandhi Nagar</p>
+                  <p className="text-white">Hyderabad - 500083, TS, India</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-tech-blue-light" />
-                <span className="text-sm text-gray-300">+91 720 724 4344</span>
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm text-gray-300">L - +91 720 724 4344</span>
+                  <span className="text-sm text-gray-300">M - 9154703116</span>
+                </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-tech-blue-light" />

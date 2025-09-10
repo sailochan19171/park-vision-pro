@@ -170,8 +170,8 @@ const Products = () => {
       <section className="py-12 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-6xl">
           <div className="text-center mb-10">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 font-poppins">
-              Our Products
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-gray-900 mb-6 font-poppins">
+              OUR PRODUCTS
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-poppins font-normal">
               Complete range of parking and access control solutions designed for modern businesses.
