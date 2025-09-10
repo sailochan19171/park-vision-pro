@@ -1,23 +1,11 @@
 import { Button } from "./ui/button";
-import { ArrowRight, Download, Building, Car, Scan, CheckCircle } from "lucide-react";
+import { Car, Scan, CheckCircle } from "lucide-react";
 import vay3DModel from "../assets/vay-3d-model.jpg";
 
 const Hero = () => {
   // No complex animation needed - using static 3D model
 
-  const handleExploreSolutions = () => {
-    const solutionsElement = document.querySelector('#solutions');
-    if (solutionsElement) {
-      const headerHeight = 80;
-      const elementPosition = solutionsElement.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   const handleDownloadBrochure = () => {
     try {
@@ -47,7 +35,7 @@ const Hero = () => {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 min-h-screen flex items-center py-20">
+      <div className="relative z-10 flex items-center pt-14 pb-10 lg:pt-20 lg:pb-16 xl:pt-24 xl:pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl w-full">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             
@@ -109,25 +97,81 @@ const Hero = () => {
                 </div>
               </div>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4" data-aos="fade-up" data-aos-delay="600">
-                <Button 
-                  onClick={handleExploreSolutions}
-                  size="lg"
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg font-poppins"
+              {/* Brochure Request Form (stacked, responsive) */}
+              <div className="pt-0" data-aos="fade-up" data-aos-delay="550">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget as HTMLFormElement;
+                    const fd = new FormData(form);
+                    const name = String(fd.get('name') || '').trim();
+                    const email = String(fd.get('email') || '').trim();
+                    const phone = String(fd.get('phone') || '').trim();
+                    const countryCode = String(fd.get('countryCode') || '').trim();
+                    const city = String(fd.get('city') || '').trim();
+                    if (!name || !/[^@\s]+@[^@\s]+\.[^@\s]+/.test(email) || !phone || !city) {
+                      alert('Please enter name, valid email, phone, and city.');
+                      return;
+                    }
+                    try {
+                      const res = await fetch('/api/send-brochure', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, phone, countryCode, city })
+                      });
+                      const j = await res.json().catch(() => ({ success: false, message: 'Invalid response' }));
+                      if (j.success) {
+                        alert('Brochure sent to your email. Our team will contact you shortly.');
+                        form.reset();
+                      } else {
+                        alert(j.message || 'Failed to send brochure');
+                      }
+                    } catch (err) {
+                      alert('Network error. Please try again.');
+                    }
+                  }}
+                  className="w-full max-w-lg bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 flex flex-col gap-3"
                 >
-                  <ArrowRight className="mr-2 h-5 w-5" />
-                  Explore Solutions
-                </Button>
-                <Button 
-                  onClick={handleDownloadBrochure}
-                  variant="outline" 
-                  size="lg"
-                  className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg font-poppins"
-                >
-                  <Download className="mr-2 h-5 w-5" />
-                  Download Brochure
-                </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input name="name" required placeholder="Full Name" className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input name="email" required type="email" placeholder="Email" className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex gap-2 min-w-0">
+                      <select name="countryCode" defaultValue="+91" className="w-28 min-w-24 shrink-0 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+61">+61 (AU)</option>
+                        <option value="+65">+65 (SG)</option>
+                        <option value="+91">+91 (IN)</option>
+                        <option value="+971">+971 (AE)</option>
+                      </select>
+                      <input name="phone" required placeholder="Phone Number" className="flex-1 min-w-0 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="flex gap-2 min-w-0">
+                      <input
+                        name="city"
+                        required
+                        placeholder="City (type to search)"
+                        list="city-options"
+                        className="flex-1 min-w-0 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <datalist id="city-options">
+                        <option value="Hyderabad" />
+                        <option value="Bengaluru" />
+                        <option value="Mumbai" />
+                        <option value="Delhi" />
+                        <option value="Chennai" />
+                        <option value="Pune" />
+                      </datalist>
+                    </div>
+                  </div>
+                  <div className="flex justify-start">
+                    <Button type="submit" size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 text-base font-semibold rounded-lg">
+                      Send Brochure
+                    </Button>
+                  </div>
+                </form>
               </div>
 
               {/* Statistics */}
@@ -144,16 +188,16 @@ const Hero = () => {
             </div>
 
             {/* Right Column - 3D VAY Access Control System */}
-            <div className="relative mt-8 lg:mt-0">
+            <div className="relative mt-10 lg:mt-0">
               {/* 3D Model Container */}
-              <div className="relative w-full h-[500px] bg-gradient-to-br from-gray-50 via-white to-blue-50/30 rounded-[2rem] overflow-hidden border-2 border-gray-300/30">
+              <div className="relative w-full h-[360px] sm:h-[420px] md:h-[480px] lg:h-[520px] xl:h-[560px] bg-gradient-to-br from-gray-50 via-white to-blue-50/30 rounded-[2rem] overflow-hidden border-2 border-gray-300/30">
                 
                 {/* Polished Inner Highlight */}
                 <div className="absolute inset-1 rounded-[1.75rem] border border-white/40 pointer-events-none"></div>
 
                 {/* 3D Model Image */}
-                <div className="relative w-full h-full flex items-center justify-center p-8">
-                  <div className="relative w-full h-full max-w-md mx-auto">
+                <div className="relative w-full h-full flex items-center justify-center p-6 lg:p-5">
+                  <div className="relative w-full h-full max-w-md mx-auto -translate-y-2 lg:-translate-y-3">
                     <img
                       src={vay3DModel}
                       alt="VAY Access Control System - 3D Model"
@@ -163,8 +207,6 @@ const Hero = () => {
                         imageRendering: 'crisp-edges'
                       }}
                     />
-                    
-
                   </div>
                 </div>
 

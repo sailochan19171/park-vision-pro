@@ -51,10 +51,12 @@ const Footer = () => {
       });
       const json = await res.json().catch(() => ({ success:false, message:'Invalid response' }));
       if (res.ok && json.success) {
-        setMessage('Subscribed successfully!');
+        // Show backend-provided message (handles both new and existing subscribers)
+        // setMessa // Clear inputs but keep selected frequency (it may have been updated)
+       // Show backend-pronpm vided message (handles both new and existing subscribers)
+        setMessage(json.message || 'Subscribed successfully!');
+        // Clear inputs but keep selected frequency (it may have been updated)
         setName('');
-        setEmail('');
-        setFrequency('weekly');
       } else {
         setMessage(json.message || 'Subscription failed.');
       }
@@ -63,7 +65,15 @@ const Footer = () => {
     }
   };
 
-  const footerLinks = {
+  type FooterLink = { name: string; href: string };
+  type FooterLinks = {
+    solutions: FooterLink[];
+    products?: FooterLink[]; // optional; can be omitted
+    support: FooterLink[];
+    company: FooterLink[];
+  };
+
+  const footerLinks: FooterLinks = {
     solutions: [
       { name: "Smart Turnstiles", href: "#solutions" },
       { name: "Security Systems", href: "#solutions" },
@@ -142,7 +152,7 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Solutions</h3>
             <ul className="space-y-3">
-              {footerLinks.solutions.map((link, index) => (
+              {footerLinks.solutions.map((link: FooterLink, index: number) => (
                 <li key={index}>
                   <a
                     href={link.href}
@@ -159,7 +169,7 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Products</h3>
             <ul className="space-y-3">
-              {(footerLinks.products || []).map((link, index) => (
+              {(footerLinks.products ?? []).map((link: FooterLink, index: number) => (
                 <li key={index}>
                   <a
                     href={link.href}
@@ -176,7 +186,7 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Support</h3>
             <ul className="space-y-3 mb-6">
-              {footerLinks.support.map((link, index) => (
+              {footerLinks.support.map((link: FooterLink, index: number) => (
                 <li key={index}>
                   <a
                     href={link.href}
@@ -190,7 +200,7 @@ const Footer = () => {
 
             <h3 className="font-bold text-lg mb-4">Company</h3>
             <ul className="space-y-3">
-              {footerLinks.company.map((link, index) => (
+              {footerLinks.company.map((link: FooterLink, index: number) => (
                 <li key={index}>
                   <a
                     href={link.href}
@@ -234,31 +244,43 @@ const Footer = () => {
               )}
             </div>
             <div className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
-                />
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
-                />
-                <div className="flex items-center md:justify-end gap-4 text-sm">
+              {/* Responsive row: two inputs grow, frequency stays compact on the right */}
+              <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
+                  />
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
+                  />
+                </div>
+                <div className="flex items-center md:justify-end gap-4 text-sm whitespace-nowrap">
                   {(['hourly','daily','weekly'] as const).map((f) => (
                     <label key={f} className="inline-flex items-center gap-1">
-                      <input type="radio" name="frequency" value={f} checked={frequency===f} onChange={() => setFrequency(f)} />
+                      <input
+                        type="radio"
+                        name="frequency"
+                        value={f}
+                        checked={frequency===f}
+                        onChange={() => setFrequency(f)}
+                        className="accent-tech-blue-light"
+                      />
                       <span className="capitalize">{f}</span>
                     </label>
                   ))}
                 </div>
               </div>
-              <div className="flex space-x-4">
+              <div className="flex">
                 <Button onClick={handleSubscribe} className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
                   Subscribe
                   <ArrowRight className="ml-2 h-4 w-4" />

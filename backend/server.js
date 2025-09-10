@@ -219,33 +219,36 @@ app.post('/api/subscribe', async (req, res) => {
     if (!mongoDb) return res.status(503).json({ success:false, message:'DB not ready' });
 
     const now = new Date();
-    await mongoDb.collection('subscribers').updateOne(
+    const result = await mongoDb.collection('subscribers').updateOne(
       { email: em },
       { $setOnInsert: { createdAt: now, subscribedAt: now }, $set: { name: n, frequency: freq, active: true, updatedAt: now } },
       { upsert: true }
     );
 
-    // Send welcome email
-    const headers = buildUnsubscribeHeaders(em);
-    const firstName = n ? n.split(' ')[0] : 'there';
-    const html = withFooter(`
-      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
-        <p>Hi ${firstName},</p>
-        <p>Thanks for subscribing to VayAccess updates (${freq}). You'll receive ${freq} digests with our latest articles.</p>
-      </div>
-    `);
-    await emailHelper.sendCategorizedEmail({
-      category: 'newsletter_welcome',
-      to: em,
-      subject: 'Welcome to VayAccess Updates',
-      html,
-      headers
-    });
+    // If newly inserted, send a welcome email. If already exists, return a friendly message.
+    if (result && (result.upsertedCount || (result.upsertedId ? 1 : 0))) {
+      const headers = buildUnsubscribeHeaders(em);
+      const firstName = n ? n.split(' ')[0] : 'there';
+      const html = withFooter(`
+        <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+          <p>Hi ${firstName},</p>
+          <p>Thanks for subscribing to VayAccess updates (${freq}). You'll receive ${freq} digests with our latest articles.</p>
+        </div>
+      `);
+      await emailHelper.sendCategorizedEmail({
+        category: 'newsletter_welcome',
+        to: em,
+        subject: 'Welcome to VayAccess Updates',
+        html,
+        headers
+      });
+      return res.json({ success:true, message:`Subscribed! You'll receive ${freq} live updates.` });
+    }
 
-    return res.json({ success:true, message:'Subscribed' });
+    // Existing subscriber: confirm and avoid duplicate welcome
+    return res.json({ success:true, message:`You're already subscribed. You'll receive ${freq} live updates with the latest products and solutions.` });
   } catch (e) {
-    const msg = e?.code === 11000 ? 'Already subscribed' : (e?.message || 'Server error');
-    return res.status(500).json({ success:false, message: msg });
+    return res.status(500).json({ success:false, message: e?.message || 'Server error' });
   }
 });
 
@@ -268,10 +271,19 @@ app.post('/api/newsletter/update-preferences', async (req, res) => {
 // Articles: create & list
 app.post('/api/articles', async (req, res) => {
   try {
-    const { title, summary, content, tags } = req.body || {};
+    const { title, summary, content, tags, image, link } = req.body || {};
     if (!title || !summary) return res.status(400).json({ success:false, message:'Missing title/summary' });
     if (!mongoDb) return res.status(503).json({ success:false, message:'DB not ready' });
-    const doc = { title: String(title), summary: String(summary), content: String(content||''), tags: Array.isArray(tags)? tags.map(String):[], createdAt: new Date() };
+    const doc = {
+      title: String(title),
+      summary: String(summary),
+      content: String(content||''),
+      tags: Array.isArray(tags)? tags.map(String):[],
+      // Optional rich fields used in digests
+      image: image ? String(image) : undefined,
+      link: link ? String(link) : undefined,
+      createdAt: new Date()
+    };
     const result = await mongoDb.collection('articles').insertOne(doc);
     return res.json({ success:true, id: result.insertedId, article: doc });
   } catch (e) {
@@ -369,9 +381,20 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT) || 587,
     secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false otherwise
+    requireTLS: process.env.SMTP_REQUIRE_TLS !== 'false',
+    connectionTimeout: Number(process.env.SMTP_CONN_TIMEOUT || 15000),
+    greetingTimeout: Number(process.env.SMTP_GREET_TIMEOUT || 15000),
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT || 20000),
     auth: {
       user: process.env.SMTP_USER, // info@vayaccess.com
       pass: process.env.SMTP_PASS  // App-specific password
+    },
+    tls: {
+      // Use TLSv1.2+ to avoid old OpenSSL issues on Windows
+      minVersion: process.env.SMTP_MIN_TLS || 'TLSv1.2',
+      servername: process.env.SMTP_HOST || 'smtp.gmail.com',
+      // Allow disabling strict cert verification via env for local testing behind intercepting proxies/AV
+      rejectUnauthorized: (process.env.SMTP_TLS_REJECT_UNAUTH === 'false') ? false : true,
     }
   });
 
@@ -489,6 +512,8 @@ function buildDigestText(snapshot) {
 }
 
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
+// Base for serving raw assets in emails. Prefer backend/API origin if set, else fall back.
+const ASSETS_BASE_URL = process.env.ASSETS_BASE_URL || process.env.BACKEND_PUBLIC_URL || PUBLIC_BASE_URL;
 // Use admin token for signing unsubscribe tokens (fallback to legacy secret if present)
 const NEWSLETTER_SECRET = process.env.NEWSLETTER_ADMIN_TOKEN || process.env.NEWSLETTER_SECRET || 'change-me';
 
@@ -679,7 +704,7 @@ function toAssetUrl(relPath) {
   if (!relPath) return null;
   try {
     const file = path.basename(relPath);
-    return `${PUBLIC_BASE_URL}/assets/${file}`;
+    return `${ASSETS_BASE_URL}/assets/${file}`;
   } catch (_) { return null; }
 }
 
@@ -724,8 +749,9 @@ function parseProductsDetailed(content) {
 }
 
 function parseSolutionsDetailed(content) {
-  // Solutions currently don't have image assets; add a generic illustrative image
-  const placeholder = `${PUBLIC_BASE_URL}/assets/parking-system-architecture.jpg`;
+  // Parse imports to resolve image variables to filenames
+  const imports = parseImportsMap(content);
+  const placeholder = `${ASSETS_BASE_URL}/assets/parking-system-architecture.jpg`;
   const items = [];
   const arrMatch = content.match(/const\s+solutions\s*=\s*\[([\s\S]*?)\];/);
   if (!arrMatch) return items;
@@ -736,7 +762,12 @@ function parseSolutionsDetailed(content) {
     const obj = om[1];
     const title = (obj.match(/title:\s*["'`]([^"'`]+)["'`]/) || [])[1];
     const desc = (obj.match(/description:\s*["'`]([\s\S]*?)["'`](?:,|\n|\r|\s*\})/) || [])[1];
-    if (title) items.push({ type: 'solution', title, description: (desc || '').trim(), image: placeholder });
+    const imageVar = (obj.match(/image:\s*(\w+)/) || [])[1];
+    let image = placeholder;
+    if (imageVar && imports[imageVar]) {
+      image = toAssetUrl(imports[imageVar]) || placeholder;
+    }
+    if (title) items.push({ type: 'solution', title, description: (desc || '').trim(), image });
   }
   return items;
 }
@@ -769,12 +800,16 @@ function buildArticleDigestHtml(articles) {
 }
 
 function buildProductsDigestHtml(products) {
-  const list = products.map(a => `
+  const list = products.map(a => {
+    const url = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/ai/learn-more?type=product&title=${encodeURIComponent(a.title)}&desc=${encodeURIComponent(a.description || '')}${a.image ? `&image=${encodeURIComponent(a.image)}` : ''}`;
+    return `
     <div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;background:#ffffff;">
       ${a.image ? `<img src="${a.image}" alt="${a.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" />` : ''}
       <h3 style="margin:0 0 8px 0;color:#111827;">${a.title}</h3>
       <p style="margin:0;color:#374151;line-height:1.6;">${a.description || ''}</p>
-    </div>`).join('');
+      <p style="margin-top:8px;"><a href="${url}" style="color:#2563eb;text-decoration:none;">Learn more →</a></p>
+    </div>`;
+  }).join('');
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:12px;">
       <h2 style="margin:8px 0 12px 0;">VayAccess Product Highlights</h2>
@@ -783,18 +818,125 @@ function buildProductsDigestHtml(products) {
 }
 
 function buildSolutionsDigestHtml(solutions) {
-  const list = solutions.map(a => `
+  const list = solutions.map(a => {
+    const url = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/ai/learn-more?type=solution&title=${encodeURIComponent(a.title)}&desc=${encodeURIComponent(a.description || '')}${a.image ? `&image=${encodeURIComponent(a.image)}` : ''}`;
+    return `
     <div style="border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:14px 0;background:#ffffff;">
       ${a.image ? `<img src="${a.image}" alt="${a.title}" style="max-width:100%;height:auto;border-radius:8px;margin-bottom:10px;" />` : ''}
       <h3 style="margin:0 0 8px 0;color:#111827;">${a.title}</h3>
       <p style="margin:0;color:#374151;line-height:1.6;">${a.description || ''}</p>
-    </div>`).join('');
+      <p style="margin-top:8px;"><a href="${url}" style="color:#2563eb;text-decoration:none;">Learn more →</a></p>
+    </div>`;
+  }).join('');
   return `
     <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#f9fafb;padding:12px;">
       <h2 style="margin:8px 0 12px 0;">VayAccess Solutions Spotlight</h2>
       ${list || '<p>No solutions today.</p>'}
     </div>`;
 }
+
+// --- AI Learn More Endpoint ---
+// Renders a simple HTML page that uses AI to expand on the item details when user clicks from email
+app.get('/ai/learn-more', async (req, res) => {
+  try {
+    const type = String(req.query.type || 'item');
+    const title = String(req.query.title || '');
+    const desc = String(req.query.desc || '');
+    const image = String(req.query.image || '');
+
+    const page = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${title} — VayAccess</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 0; background:#f9fafb; color:#111827; }
+  .container { max-width: 860px; margin: 0 auto; padding: 18px; }
+  .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px; }
+  .hero { display:flex; gap:16px; align-items:flex-start; }
+  .hero img { max-width: 360px; width:100%; height:auto; border-radius:10px; }
+  .title { margin:0 0 8px 0; font-size: 22px; font-weight: 700; }
+  .subtitle { margin:0 0 16px 0; color:#374151; }
+  .ai { margin-top:16px; padding-top:16px; border-top:1px solid #e5e7eb; }
+  .muted { color:#6b7280; font-size: 12px; }
+  .btn { background:#2563eb; color:#fff; text-decoration:none; padding:10px 14px; border-radius:8px; display:inline-block; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="hero">
+        ${image ? `<img src="${image}" alt="${title}" />` : ''}
+        <div>
+          <h1 class="title">${title}</h1>
+          <p class="subtitle">${desc}</p>
+          <p><a class="btn" href="/products">Browse all ${type === 'solution' ? 'solutions' : 'products'}</a></p>
+        </div>
+      </div>
+      <div class="ai">
+        <h3 style="margin:0 0 8px 0;">Detailed overview</h3>
+        <div id="ai-content" class="subtitle">Generating detailed information...</div>
+      </div>
+      <p class="muted">This page uses AI to generate more details based on our product catalog and knowledge base.</p>
+    </div>
+  </div>
+  <script>
+    (async () => {
+      try {
+        const qs = new URLSearchParams({ title: '${'${title}'.replace(/'/g, "\\'")}', desc: '${'${desc}'.replace(/'/g, "\\'")}', type: '${'${type}'.replace(/'/g, "\\'")}' });
+        const r = await fetch('/api/ai/expand-item?' + qs.toString());
+        const j = await r.json();
+        const el = document.getElementById('ai-content');
+        el.textContent = j.success ? j.text : (j.message || 'Failed to load details.');
+      } catch (e) {
+        const el = document.getElementById('ai-content');
+        el.textContent = 'Failed to load details.';
+      }
+    })();
+  </script>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.send(page);
+  } catch (e) {
+    return res.status(500).send('Failed to render page');
+  }
+});
+
+// Backend AI endpoint that expands a single item using existing knowledge base
+app.get('/api/ai/expand-item', async (req, res) => {
+  try {
+    const OpenAI = require('openai');
+    if (!process.env.OPENAI_API_KEY) {
+      return res.json({ success: false, message: 'AI is not configured.' });
+    }
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const type = String(req.query.type || 'item');
+    const title = String(req.query.title || '').slice(0, 200);
+    const desc = String(req.query.desc || '').slice(0, 1000);
+
+    const system = `You are an expert copywriter for VayAccess, specializing in ${type}s.`;
+    const user = `Write a concise, helpful overview for website visitors about: "${title}".\n\nBase description: ${desc}\n\nInclude:\n- Key benefits\n- Typical use-cases\n- Compatibility/integration notes\n- A short closing CTA`;
+
+    const resp = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      max_tokens: 280,
+      temperature: 0.7,
+    });
+
+    const text = resp?.choices?.[0]?.message?.content || 'Details coming soon.';
+    return res.json({ success: true, text });
+  } catch (e) {
+    return res.json({ success: false, message: e?.message || 'AI request failed' });
+  }
+});
 
 function buildMarketingDigestHtml() {
   return `
@@ -815,6 +957,94 @@ app.get('/api/content/articles', (req, res) => {
     res.json({ success: true, count: snap.articles.length, articles: snap.articles });
   } catch (e) {
     res.status(500).json({ success: false, message: e?.message || 'Failed to build articles' });
+  }
+});
+
+// Send brochure to user via email and notify admin
+app.post('/api/send-brochure', async (req, res) => {
+  try {
+    const { name, email, phone, countryCode, city } = req.body || {};
+    const n = String(name || '').trim();
+    const em = String(email || '').trim().toLowerCase();
+    const ph = String(phone || '').trim();
+    const cc = String(countryCode || '').trim();
+    const cy = String(city || '').trim();
+
+    if (!n || !/.+@.+\..+/.test(em) || !ph || !cy) {
+      return res.status(400).json({ success: false, message: 'Please provide name, valid email, phone, and city.' });
+    }
+
+    // Build attachment path for brochure (attach only if file is reasonably small)
+    const brochurePath = path.resolve(__dirname, '../public/vay-gate-brochure.pdf');
+    let brochureExists = false;
+    let attachBrochure = false;
+    try {
+      brochureExists = fs.existsSync(brochurePath);
+      if (brochureExists) {
+        const stat = fs.statSync(brochurePath);
+        const maxAttachBytes = Number(process.env.BROCHURE_MAX_ATTACH_BYTES || 9 * 1024 * 1024); // 9MB safety limit
+        attachBrochure = stat.size <= maxAttachBytes && (process.env.BROCHURE_ATTACH !== 'false');
+      }
+    } catch {
+      brochureExists = false;
+      attachBrochure = false;
+    }
+
+    const fromName = process.env.EMAIL_FROM_NAME || 'VayAccess';
+    const fromEmail = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'info@vayaccess.com';
+
+    const brochureUrl = `${PUBLIC_BASE_URL.replace(/\/$/, '')}/vay-gate-brochure.pdf`;
+    const customerHtml = withFooter(`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <p>Hi ${n.split(' ')[0]},</p>
+        <p>Thanks for your interest in VayAccess.</p>
+        ${attachBrochure ? `<p>We've attached our brochure for your review.</p>` : `<p>You can download our brochure here: <a href="${brochureUrl}" style="color:#2563eb;">Download brochure</a></p>`}
+        <p><strong>Details you provided:</strong><br/>
+        Name: ${n}<br/>
+        Email: ${em}<br/>
+        Phone: ${cc ? cc + ' ' : ''}${ph}<br/>
+        City: ${cy}</p>
+        <p>Our team will contact you shortly.</p>
+      </div>
+    `);
+
+    // Send to customer (attach only when size is safe)
+    await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: em,
+      subject: 'VayAccess Brochure',
+      html: customerHtml,
+      attachments: attachBrochure ? [
+        { filename: 'VAY-Gate-Brochure.pdf', path: brochurePath, contentType: 'application/pdf', contentDisposition: 'attachment' }
+      ] : []
+    });
+
+    // Notify admin with details
+    const adminTo = (process.env.BROCHURE_ADMIN_EMAIL || 'info@vayaccess.com');
+    const adminHtml = withFooter(`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
+        <p><strong>New brochure request</strong></p>
+        <ul>
+          <li>Name: ${n}</li>
+          <li>Email: ${em}</li>
+          <li>Phone: ${cc ? cc + ' ' : ''}${ph}</li>
+          <li>City: ${cy}</li>
+          <li>Timestamp: ${new Date().toISOString()}</li>
+        </ul>
+      </div>
+    `);
+
+    await transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to: adminTo,
+      subject: 'New Brochure Request',
+      html: adminHtml
+    });
+
+    return res.json({ success: true, message: 'Brochure sent successfully.' });
+  } catch (e) {
+    console.error('send-brochure error:', e);
+    return res.status(500).json({ success: false, message: e?.message || 'Failed to send brochure' });
   }
 });
 
@@ -2519,20 +2749,30 @@ async function sendArticleDigestFor(freq, since) {
   const subs = await mongoDb.collection('subscribers').find({ active: { $ne: false }, frequency: freq }).toArray();
   if (!subs.length) return;
   const articles = await mongoDb.collection('articles').find({ createdAt: { $gte: sinceDate } }).sort({ createdAt: -1 }).limit(50).toArray();
-  const items = articles.map(a => ({ title: a.title, summary: a.summary, link: a.link || '/news' }));
+  const items = articles.map(a => ({ title: a.title, summary: a.summary, image: a.image, link: a.link || '/news' }));
 
   for (const s of subs) {
     const headers = buildUnsubscribeHeaders(s.email);
     const name = s.name ? s.name.split(' ')[0] : 'there';
-    const list = items.map(i => `<li style="margin-bottom:10px"><div style="font-weight:600">${i.title}</div><div style="color:#4b5563">${i.summary || ''}</div><a href="${PUBLIC_BASE_URL}${i.link}" style="color:#2563eb">Read more</a></li>`).join('');
+    const list = items.map(i => `
+      <li style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;">
+        ${i.image ? `<img src="${i.image}" alt="${i.title}" width="72" height="72" style="border-radius:8px;object-fit:cover;border:1px solid #e5e7eb"/>` : ''}
+        <div>
+          <div style="font-weight:600;font-size:15px;color:#111827;">${i.title}</div>
+          <div style="color:#4b5563;font-size:13px;line-height:1.5;margin-top:4px;">${i.summary || ''}</div>
+          <a href="${PUBLIC_BASE_URL}${i.link}" style="color:#2563eb;font-size:13px;text-decoration:none;display:inline-block;margin-top:6px;">Read more →</a>
+        </div>
+      </li>
+    `).join('');
     const html = withFooter(`
       <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;">
         <p>Hi ${name},</p>
-        <p>Here are the latest articles for you:</p>
-        <ul style="padding-left:16px">${list || '<li>No new articles.</li>'}</ul>
+        <p>Here are the latest products & solutions for you:</p>
+        <ul style="padding-left:0;list-style:none;margin:0;">${list || '<li>No new items.</li>'}</ul>
       </div>
     `);
-    await emailHelper.send({
+    await emailHelper.sendCategorizedEmail({
+      category: 'content_digest',
       to: s.email,
       subject: freq === 'hourly' ? 'Hourly Digest' : freq === 'daily' ? 'Daily Digest' : 'Weekly Newsletter',
       html,
@@ -2562,6 +2802,92 @@ if (ENABLE_DIGEST_SCHEDULES) {
     }
   }, 60 * 1000);
   console.log('[digest] Frequency-based article digests enabled');
+}
+
+// --- Website Snapshot Category Digests by Subscriber Frequency (additive) ---
+const ENABLE_WEBSITE_FREQUENCY_DIGESTS = (process.env.ENABLE_WEBSITE_FREQUENCY_DIGESTS || 'true').toLowerCase() === 'true';
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function weekOfYear(d = new Date()) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+function freqWindowKey(freq, d = new Date()) {
+  if (freq === 'hourly') return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}-${pad2(d.getHours())}`;
+  if (freq === 'daily') return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  if (freq === 'weekly') return `${d.getFullYear()}-W${pad2(weekOfYear(d))}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+
+async function sendWebsiteSnapshotCategoryDigestsFor(freq) {
+  try {
+    if (!mongoDb) return;
+    const subs = await mongoDb.collection('subscribers')
+      .find({ active: { $ne: false }, frequency: freq }, { projection: { email: 1 } })
+      .toArray();
+    if (!subs.length) return;
+
+    const { products, solutions } = getArticlesSnapshot();
+    const emails = subs.map(s => String(s.email || '').toLowerCase()).filter(e => /.+@.+\..+/.test(e));
+    const key = freqWindowKey(freq);
+
+    for (const to of emails) {
+      const headers = buildUnsubscribeHeaders(to);
+
+      if (products?.length) {
+        try {
+          await emailHelper.sendCategorizedEmail({
+            category: 'content_digest_products',
+            to,
+            subject: (freq === 'hourly') ? 'Hourly — Products' : (freq === 'daily') ? 'Daily — Product Highlights' : 'Weekly — Product Highlights',
+            html: withFooter(buildProductsDigestHtml(products)),
+            text: products.map(a => `${a.title}\n${a.description || ''}`).join('\n\n'),
+            headers,
+            dedupeKey: `websnap:products:${freq}:${key}:${to}`,
+            meta: { source: 'website_snapshot', freq },
+          });
+        } catch (_) { /* continue other recipients/categories */ }
+      }
+
+      if (solutions?.length) {
+        try {
+          await emailHelper.sendCategorizedEmail({
+            category: 'content_digest_solutions',
+            to,
+            subject: (freq === 'hourly') ? 'Hourly — Solutions' : (freq === 'daily') ? 'Daily — Solutions Spotlight' : 'Weekly — Solutions Spotlight',
+            html: withFooter(buildSolutionsDigestHtml(solutions)),
+            text: solutions.map(a => `${a.title}\n${a.description || ''}`).join('\n\n'),
+            headers,
+            dedupeKey: `websnap:solutions:${freq}:${key}:${to}`,
+            meta: { source: 'website_snapshot', freq },
+          });
+        } catch (_) { /* continue */ }
+      }
+    }
+  } catch (e) {
+    console.warn('[website-frequency-digest] Failed:', e?.message || e);
+  }
+}
+
+if (ENABLE_WEBSITE_FREQUENCY_DIGESTS) {
+  setInterval(async () => {
+    const now = new Date();
+    try {
+      if (now.getMinutes() === 0) {
+        await sendWebsiteSnapshotCategoryDigestsFor('hourly');
+      }
+      if (now.getHours() === 8 && now.getMinutes() === 0) {
+        await sendWebsiteSnapshotCategoryDigestsFor('daily');
+      }
+      if (now.getDay() === 1 && now.getHours() === 9 && now.getMinutes() === 0) {
+        await sendWebsiteSnapshotCategoryDigestsFor('weekly');
+      }
+    } catch (_) { /* ignore */ }
+  }, 60 * 1000);
+  console.log('[digest] Website category digests (by frequency) enabled');
 }
 
 // Start the HTTP server (guard to avoid double-listen when imported or re-evaluated)

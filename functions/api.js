@@ -93,6 +93,82 @@ app.post("/api/contact", async (req, res) => {
   }
 });
 
+// Send brochure
+app.post("/api/send-brochure", async (req, res) => {
+  try {
+    const { name, email, phone, countryCode, city } = req.body || {};
+    if (!name || !/.+@.+\..+/.test(String(email || "")) || !phone || !city) {
+      return res.status(400).json({ success: false, message: "Missing or invalid fields" });
+    }
+
+    // Notify internal recipient with lead details
+    try {
+      await transporter.sendMail({
+        from: `"VayAccess" <${process.env.SMTP_USER || "no-reply@vayaccess.com"}>`,
+        to: process.env.CONTACT_RECEIVER || process.env.SMTP_USER || "owner@example.com",
+        subject: `Brochure Request - ${name}`,
+        text: `Name: ${name}\nEmail: ${email}\nPhone: ${countryCode || ""} ${phone}\nCity: ${city}`,
+      });
+    } catch (_) {}
+
+    // Send brochure link to the user (best-effort)
+    const base = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
+    const brochureUrl = `${base}/vay-gate-brochure.pdf`;
+    try {
+      await transporter.sendMail({
+        from: `"VayAccess" <${process.env.SMTP_USER || "no-reply@vayaccess.com"}>`,
+        to: email,
+        subject: "Your VayAccess brochure",
+        text: `Thank you for your interest. Download your brochure here: ${brochureUrl}`,
+        html: `<p>Thank you for your interest.</p><p>Download your brochure here: <a href="${brochureUrl}">${brochureUrl}</a></p>`,
+        headers: buildUnsubscribeHeaders(email),
+      });
+    } catch (_) {}
+
+    return res.json({ success: true, message: "Brochure sent" });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: "Failed to send brochure" });
+  }
+});
+
+// Send brochure
+app.post("/api/send-brochure", async (req, res) => {
+  try {
+    const { name, email, phone, countryCode, city } = req.body || {};
+    if (!name || !/.+@.+\..+/.test(String(email || "")) || !phone || !city) {
+      return res.status(400).json({ success: false, message: "Missing or invalid fields" });
+    }
+
+    // Notify internal recipient with lead details
+    try {
+      await transporter.sendMail({
+        from: `"VayAccess" <${process.env.SMTP_USER || "no-reply@vayaccess.com"}>`,
+        to: process.env.CONTACT_RECEIVER || process.env.SMTP_USER || "owner@example.com",
+        subject: `Brochure Request - ${name}`,
+        text: `Name: ${name}\nEmail: ${email}\nPhone: ${countryCode || ""} ${phone}\nCity: ${city}`,
+      });
+    } catch (_) {}
+
+    // Send brochure link to the user (best-effort)
+    const base = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
+    const brochureUrl = `${base}/vay-gate-brochure.pdf`;
+    try {
+      await transporter.sendMail({
+        from: `"VayAccess" <${process.env.SMTP_USER || "no-reply@vayaccess.com"}>`,
+        to: email,
+        subject: "Your VayAccess brochure",
+        text: `Thank you for your interest. Download your brochure here: ${brochureUrl}`,
+        html: `<p>Thank you for your interest.</p><p>Download your brochure here: <a href="${brochureUrl}">${brochureUrl}</a></p>`,
+        headers: buildUnsubscribeHeaders(email),
+      });
+    } catch (_) {}
+
+    return res.json({ success: true, message: "Brochure sent" });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: "Failed to send brochure" });
+  }
+});
+
 // One-click unsubscribe endpoint (best-effort; no DB persistence here)
 app.post("/api/newsletter/unsubscribe", async (req, res) => {
   try {

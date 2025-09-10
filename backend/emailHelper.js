@@ -58,9 +58,11 @@ module.exports = function createEmailHelper(transporter, getMongoDb) {
 
     // Dedupe (optional)
     if (dedupeKey && db) {
-      // Only treat as duplicate if a previous SEND succeeded
-      const exists = await db.collection('email_events').findOne({ dedupeKey, result: 'sent' });
-      if (exists) return { skipped: true, reason: 'duplicate' };
+      try {
+        // Only treat as duplicate if a previous SEND succeeded
+        const exists = await db.collection('email_events').findOne({ dedupeKey, result: 'sent' });
+        if (exists) return { skipped: true, reason: 'duplicate' };
+      } catch (_) { /* ignore DB errors on dedupe when disconnected */ }
     }
 
     await ensureIndexes();
@@ -106,30 +108,34 @@ module.exports = function createEmailHelper(transporter, getMongoDb) {
       });
 
       if (db) {
-        await db.collection('email_events').insertOne({
-          category,
-          to: String(to || '').toLowerCase(),
-          subject,
-          meta,
-          dedupeKey: dedupeKey || null,
-          createdAt: new Date(),
-          result: 'sent',
-        });
+        try {
+          await db.collection('email_events').insertOne({
+            category,
+            to: String(to || '').toLowerCase(),
+            subject,
+            meta,
+            dedupeKey: dedupeKey || null,
+            createdAt: new Date(),
+            result: 'sent',
+          });
+        } catch (_) { /* ignore DB errors when disconnected */ }
       }
 
       return { success: true, info };
     } catch (e) {
       if (db) {
-        await db.collection('email_events').insertOne({
-          category,
-          to: String(to || '').toLowerCase(),
-          subject,
-          meta,
-          dedupeKey: dedupeKey || null,
-          createdAt: new Date(),
-          result: 'failed',
-          error: e?.message || String(e),
-        });
+        try {
+          await db.collection('email_events').insertOne({
+            category,
+            to: String(to || '').toLowerCase(),
+            subject,
+            meta,
+            dedupeKey: dedupeKey || null,
+            createdAt: new Date(),
+            result: 'failed',
+            error: e?.message || String(e),
+          });
+        } catch (_) { /* ignore DB errors when disconnected */ }
       }
       return { success: false, error: e?.message || String(e) };
     }
