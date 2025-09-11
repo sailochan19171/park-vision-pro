@@ -1,0 +1,82 @@
+[
+  {
+    "id": "hybrid-anpr-fastag",
+    "title": "Hybrid ANPR/FASTAG System",
+    "description": "Seamless vehicle access using license plate recognition integrated with FASTAG.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/vehicle-barrier-gate.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-09T08:00:00.000Z",
+    "views": 520
+  },
+  {
+    "id": "ticketless-parking",
+    "title": "Ticketless Parking Management System",
+    "description": "Modern digital parking flow with app integration and cashless payments.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/parking-payment-kiosk-18.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-07T11:00:00.000Z",
+    "views": 470
+  },
+  {
+    "id": "ticket-based-parking",
+    "title": "Ticket Based Parking Management System",
+    "description": "Reliable ticket dispensing and validation for high-traffic facilities.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/33.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-05T12:30:00.000Z",
+    "views": 360
+  },
+  {
+    "id": "anpr-access-control",
+    "title": "ANPR Based Vehicle Access Control",
+    "description": "Automated camera-based access with high-accuracy recognition.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/vay-parking-guidance-display-23.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-04T09:00:00.000Z",
+    "views": 390
+  },
+  {
+    "id": "parking-guidance",
+    "title": "Parking Guidance System",
+    "description": "Smart indicators with real-time space availability.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/parking-payment-kiosk-18.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-08T10:00:00.000Z",
+    "views": 415
+  },
+  {
+    "id": "parking-information",
+    "title": "Parking Information System",
+    "description": "Digital displays showing availability, pricing, and facility info.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/vay-tripod-turnstile-premium.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-02T10:30:00.000Z",
+    "views": 280
+  },
+  {
+    "id": "pedestrian-access-control",
+    "title": "Pedestrian Access Control System",
+    "description": "Turnstiles and biometrics for secure people flow.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/tripod-turnstiles-24.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-01T07:30:00.000Z",
+    "views": 300
+  },
+  {
+    "id": "anpr-toll",
+    "title": "ANPR Camera System For Toll Applications",
+    "description": "High-accuracy toll plaza camera systems.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/vehicle-barrier-gate.jpg",
+    "link": "/solutions",
+    "category": "Solutions",
+    "updatedAt": "2025-09-03T06:30:00.000Z",
+    "views": 335
+  }
+]

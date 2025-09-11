@@ -1,0 +1,82 @@
+[
+  {
+    "id": "barrier-gates-heavy-duty",
+    "title": "Heavy Duty Barrier Gates",
+    "description": "Reinforced vehicle barriers with high reliability for industrial and high-traffic sites.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/vehicle-barrier-gate.jpg",
+    "link": "/products/barrier-gates",
+    "category": "Products",
+    "updatedAt": "2025-09-08T06:00:00.000Z",
+    "views": 320
+  },
+  {
+    "id": "tripod-turnstiles",
+    "title": "Tripod Turnstiles",
+    "description": "Compact and secure pedestrian access control for offices and transit.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/tripod-turnstiles-24.jpg",
+    "link": "/products/turnstiles",
+    "category": "Products",
+    "updatedAt": "2025-09-07T10:00:00.000Z",
+    "views": 210
+  },
+  {
+    "id": "flap-barrier-turnstiles",
+    "title": "Flap Barrier Turnstiles",
+    "description": "Premium glass flap barriers for modern entrances.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/swing-gates-26.jpg",
+    "link": "/products/turnstiles",
+    "category": "Products",
+    "updatedAt": "2025-09-05T08:00:00.000Z",
+    "views": 265
+  },
+  {
+    "id": "rfid-card-reader",
+    "title": "RFID Card Reader",
+    "description": "Fast and reliable card-based access control.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/rfid-card-reader.jpg",
+    "link": "/products/access-control",
+    "category": "Products",
+    "updatedAt": "2025-09-04T14:00:00.000Z",
+    "views": 190
+  },
+  {
+    "id": "facial-recognition-terminal",
+    "title": "Facial Recognition Terminal",
+    "description": "Advanced biometric access terminal for high security zones.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/facial-recognition-terminal.jpg",
+    "link": "/products/access-control",
+    "category": "Products",
+    "updatedAt": "2025-09-02T12:00:00.000Z",
+    "views": 405
+  },
+  {
+    "id": "parking-guidance-display",
+    "title": "VAY Parking Guidance Display",
+    "description": "Real-time LED guidance displays to reduce search time and congestion.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/vay-parking-guidance-display-23.jpg",
+    "link": "/solutions",
+    "category": "Products",
+    "updatedAt": "2025-09-09T09:30:00.000Z",
+    "views": 380
+  },
+  {
+    "id": "mobile-access-control",
+    "title": "Mobile Access Control",
+    "description": "Smartphone-based entry with cloud management and auditing.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/mobile-access-control.jpg",
+    "link": "/products/access-control/mobile-system",
+    "category": "Products",
+    "updatedAt": "2025-09-01T09:30:00.000Z",
+    "views": 295
+  },
+  {
+    "id": "premium-barrier-gate",
+    "title": "Premium Barrier Gate",
+    "description": "High-speed, LED-enhanced barrier for premium deployments.",
+    "image": "https://vayaccess-59fdd.web.app/newsletter-assets/vay-parking-barrier-gate-10.jpg",
+    "link": "/products/barrier-gates",
+    "category": "Products",
+    "updatedAt": "2025-08-30T08:00:00.000Z",
+    "views": 255
+  }
+]

@@ -602,20 +602,69 @@ app.post('/api/events/track', async (req, res) => {
 // Test digest builder for a single address
 app.post('/api/newsletter/digest-test', async (req, res) => {
   try {
-    const { to } = req.body || {};
+    const { to, frequency = 'weekly' } = req.body || {};
     if (!to || !/.+@.+\..+/.test(to)) return res.status(400).json({ success: false, message: 'Valid to required' });
     const base = process.env.PUBLIC_BASE_URL || 'https://vayaccess-59fdd.web.app';
-    const html = buildEdxStyleTemplate({
-      subject: 'VayAccess — Sample Digest',
-      introTitle: 'Unlock Smart Access & Parking',
-      introBody: 'Here is a sample digest with featured items.',
-      cards: [
-        { title: 'Barrier Gates', description: 'Heavy-duty vehicle access control', url: `${base}/products/barrier-gates`, image: `${base}/barrier-gate-10.jpg`, tag: 'Featured' },
-        { title: 'Parking Guidance', description: 'Real-time indicators & analytics', url: `${base}/products/parking-guidance`, image: `${base}/parking-guidance-23.jpg`, tag: 'New' },
-      ],
+
+    // Fetch static feeds from Hosting
+    async function fetchJson(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`Fetch failed ${url}: ${r.status}`);
+      return r.json();
+    }
+    const [products, solutions] = await Promise.all([
+      fetchJson(`${base}/products.json`).catch(() => []),
+      fetchJson(`${base}/solutions.json`).catch(() => []),
+    ]);
+
+    // Helpers
+    const now = new Date();
+    const withinDays = (iso, days) => {
+      const d = new Date(iso || 0).getTime();
+      return now.getTime() - d <= days * 24 * 60 * 60 * 1000;
+    };
+    const shuffle = (arr) => arr.map(v => ({ v, r: Math.random() })).sort((a,b)=>a.r-b.r).map(x=>x.v);
+    const byViewsDesc = (a,b) => (b.views||0) - (a.views||0);
+    const byUpdatedDesc = (a,b) => new Date(b.updatedAt||0).getTime() - new Date(a.updatedAt||0).getTime();
+
+    let cards = [];
+    if (frequency === 'hourly') {
+      const prodPick = shuffle(products).slice(0,2);
+      const solPick = shuffle(solutions).slice(0,2);
+      cards = [...prodPick, ...solPick];
+    } else if (frequency === 'daily') {
+      const recent = [
+        ...products.filter(p => withinDays(p.updatedAt, 7)),
+        ...solutions.filter(s => withinDays(s.updatedAt, 7)),
+      ].sort(byUpdatedDesc).slice(0, 6);
+      cards = recent;
+    } else { // weekly
+      const all = [...products, ...solutions];
+      const topViewed = [...all].sort(byViewsDesc).slice(0, 6);
+      // Include all new (updated last 30 days) plus top viewed
+      const fresh = all.filter(i => withinDays(i.updatedAt, 30));
+      const map = new Map();
+      [...fresh, ...topViewed].forEach(i => map.set(i.id, i));
+      cards = Array.from(map.values());
+    }
+
+    // Normalize cards to template format with absolute images
+    const normalize = (item) => ({
+      title: item.title,
+      description: item.description || '',
+      url: item.link ? (item.link.startsWith('http') ? item.link : `${base}${item.link}`) : base,
+      image: item.image && item.image.startsWith('http') ? item.image : `${base}/logo.png`,
+      tag: item.category || 'Update',
     });
-    await transporter.sendMail({ from: `"VayAccess Updates" <${process.env.SMTP_USER || 'no-reply@vayaccess.com'}>`, to, subject: 'VayAccess — Sample Digest', html, headers: buildUnsubscribeHeaders(to) });
-    res.json({ success: true });
+    const html = buildEdxStyleTemplate({
+      subject: `VayAccess — ${frequency.charAt(0).toUpperCase()+frequency.slice(1)} Digest`,
+      introTitle: 'Latest from VayAccess',
+      introBody: frequency === 'hourly' ? 'Quick hourly highlights picked for you.' : frequency === 'daily' ? 'Top changes from the last 7 days.' : 'All new items and top viewed highlights.',
+      cards: cards.map(normalize),
+    });
+
+    await transporter.sendMail({ from: `"VayAccess Updates" <${process.env.SMTP_USER || 'no-reply@vayaccess.com'}>`, to, subject: `VayAccess — ${frequency.charAt(0).toUpperCase()+frequency.slice(1)} Digest`, html, headers: buildUnsubscribeHeaders(to) });
+    res.json({ success: true, count: cards.length });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Failed to send test digest' });
   }
