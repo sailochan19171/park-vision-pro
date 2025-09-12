@@ -17,7 +17,6 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [frequency, setFrequency] = useState<'hourly'|'daily'|'weekly'>("weekly");
   const [message, setMessage] = useState("");
   const [articles, setArticles] = useState<{ title: string; description?: string; image?: string; type: 'product'|'solution'; }[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -47,16 +46,13 @@ const Footer = () => {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, frequency })
+        body: JSON.stringify({ name, email })
       });
       const json = await res.json().catch(() => ({ success:false, message:'Invalid response' }));
       if (res.ok && json.success) {
-        // Show backend-provided message (handles both new and existing subscribers)
-        // setMessa // Clear inputs but keep selected frequency (it may have been updated)
-       // Show backend-pronpm vided message (handles both new and existing subscribers)
         setMessage(json.message || 'Subscribed successfully!');
-        // Clear inputs but keep selected frequency (it may have been updated)
         setName('');
+        setEmail('');
       } else {
         setMessage(json.message || 'Subscription failed.');
       }
@@ -118,28 +114,34 @@ const Footer = () => {
               <div className="w-20 h-20 rounded-lg overflow-hidden">
                 <img src={logo} alt="VayAccess Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-bold">VayAccess Parking Solutions</span>
+              <span className="text-2xl font-bold">Access Parking Solutions</span>
             </div>
             
-            <p className="text-gray-300 max-w-md">
-              Leading provider of smart parking solutions, access control systems, and traffic management 
-              technologies. Making parking smarter, safer, and more convenient worldwide.
-            </p>
+            {/* Corporate Office (replaces description) */}
+            <div className="flex items-start space-x-3">
+              <MapPin className="h-5 w-5 text-tech-blue-light mt-1" />
+              <div className="text-sm text-white font-semibold">
+                <p className="text-white">Corporate Office</p>
+                <p className="text-white">Plot No. 26, Road No.1, West Gandhi Nagar</p>
+                <p className="text-white">Rampally X Road, Nagaram, Keesara (M)</p>
+                <p className="text-white">Hyderabad - 500083, TS, India</p>
+              </div>
+            </div>
 
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 text-tech-blue-light mt-1" />
                 <div className="text-sm text-white font-semibold">
-                  <p className="text-white">Plot No. 26, Road No.1, West Gandhi Nagar</p>
-                  <p className="text-white">Hyderabad - 500083, TS, India</p>
+                  <p className="text-white">TIF, MSME, Green Industrial Park, Dandu Malkapur Village, Choutuppal Mandal,</p>
+                  <p className="text-white">Yadadri - Bhuvanagiri District-508252</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-tech-blue-light" />
                 <div className="flex items-center justify-between w-full">
                   <span className="text-sm text-gray-300">L - +91 720 724 4344</span>
-                  <span className="text-sm text-gray-300">M - 9154703116</span>
+                  <span className="text-sm text-gray-300">M - +91 9154703116</span>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -267,21 +269,7 @@ const Footer = () => {
                     className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
                   />
                 </div>
-                <div className="flex items-center md:justify-end gap-4 text-sm whitespace-nowrap">
-                  {(['hourly','daily','weekly'] as const).map((f) => (
-                    <label key={f} className="inline-flex items-center gap-1">
-                      <input
-                        type="radio"
-                        name="frequency"
-                        value={f}
-                        checked={frequency===f}
-                        onChange={() => setFrequency(f)}
-                        className="accent-tech-blue-light"
-                      />
-                      <span className="capitalize">{f}</span>
-                    </label>
-                  ))}
-                </div>
+
               </div>
               <div className="flex">
                 <Button onClick={handleSubscribe} className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">

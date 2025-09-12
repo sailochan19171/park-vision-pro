@@ -108,17 +108,8 @@ const Contact = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handlePhoneCall = () => {
-    // Traditional phone call as fallback
-    window.location.href = 'tel:+917207244344';
-  };
-
   const handleAICall = () => {
     setIsAICallModalOpen(true);
-  };
-
-  const handleEmailContact = () => {
-    window.location.href = 'mailto:sales@vayaccess.com?subject=Sales%20Inquiry%20-%20Parking%20Solutions';
   };
 
   const handleWhatsAppContact = () => {
@@ -140,10 +131,9 @@ const Contact = () => {
       title: "Factory",
       icon: <Factory className="h-5 w-5" />,
       details: [
-        "Plot No. 34, TIF MSME Green Industrial Park",
-        "Dandumalkapur(V), Choutuppal (M)",
-        "Yadagiri District, Telangana, India - 508252",
-        "M - 7013799462"
+        "TIF, MSME, Green Industrial Park, Dandu Malkapur Village, Choutuppal Mandal,",
+        "Yadadri - Bhuvanagiri District-508252",
+        "M - 9154703116"
       ]
     },
     // {
@@ -164,15 +154,7 @@ const Contact = () => {
     //   //   "support@vayaccess.com"
     //   // ]
     // },
-    {
-      title: "Business Hours",
-      icon: <Clock className="h-5 w-5" />,
-      details: [
-        "Monday - Friday: 9:00 AM - 6:00 PM",
-        "Saturday: 9:00 AM - 2:00 PM",
-        // "Sunday: Emergency Support Only"
-      ]
-    }
+
   ];
 
   return (
@@ -195,9 +177,9 @@ const Contact = () => {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Contact Form */}
-          <div className="bg-white p-6 rounded-lg shadow-sm image-container" data-aos="fade-right" data-aos-delay="200">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Contact Form - Full Width */}
+          <div className="bg-white p-6 rounded-lg shadow-sm image-container w-full" data-aos="fade-right" data-aos-delay="200">
             <h3 className="text-lg font-bold text-gray-900 mb-3 font-poppins">
               Send us a Message
             </h3>
@@ -269,98 +251,6 @@ const Contact = () => {
                 )}
               </Button>
             </form>
-          </div>
-
-          {/* Contact Information */}
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3 font-poppins">
-              Get In Touch
-            </h3>
-            
-            {/* <p className="text-gray-600 mb-5 text-sm font-poppins font-normal">
-              Connect with our parking solution experts through multiple channels. Our team provides comprehensive 
-              support from initial consultation through installation, training, and ongoing maintenance. We're 
-              committed to ensuring your parking infrastructure operates at peak efficiency.
-            </p> */}
-            
-            {/* <div className="bg-blue-50 p-3 rounded-lg mb-5">
-              <h4 className="font-semibold text-gray-900 mb-2 font-poppins text-sm">Free Consultation Available</h4>
-              <p className="text-xs text-gray-600 font-poppins font-normal">
-                Schedule a complimentary site assessment and consultation with our technical experts. 
-                We'll evaluate your current infrastructure and provide detailed recommendations for 
-                optimization and upgrades at no cost.
-              </p>
-            </div> */}
-            
-            <div className="space-y-4">
-              {contactInfo.map((info, index) => (
-                <div key={index} className="space-y-1">
-                  <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2 font-poppins">
-                    <span className="text-tech-blue">{info.icon}</span>
-                    {info.title}
-                  </h4>
-                  <div className="ml-7 space-y-1">
-                    {info.details.map((detail, detailIndex) => (
-                      <p key={detailIndex} className="text-gray-600 text-sm font-poppins font-normal">{detail}</p>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Quick Action Buttons */}
-            <div className="space-y-3 mt-6">
-              {/* AI Call - Featured */}
-              <Button 
-                onClick={handleAICall}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2.5 text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300 font-poppins"
-              >
-                <Bot className="h-4 w-4 mr-2" />
-                 Talk to AI Expert - Instant Answers!
-              </Button>
-              
-              {/* Traditional options */}
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  onClick={handlePhoneCall}
-                  variant="outline"
-                  className="border-blue-200 hover:bg-blue-50 text-blue-700 py-2 text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-poppins"
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  Call Sales
-                </Button>
-                <Button 
-                  onClick={handleEmailContact}
-                  variant="outline"
-                  className="border-amber-200 hover:bg-amber-50 text-amber-700 py-2 text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300 font-poppins"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Email Sales
-                </Button>
-              </div>
-
-              {/* Quick selectable queries */}
-              {/* <div className="flex flex-wrap gap-2 pt-1">
-                {[
-                  'Barrier gates options',
-                  'Turnstiles for office lobby',
-                  'Parking guidance system',
-                  'Ticketless parking with LPR',
-                  'Access control with RFID/biometric',
-                  'Site visit and quotation',
-                ].map((q) => (
-                  <Button
-                    key={q}
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setFormData({ ...formData, message: q })}
-                    className="h-8 px-3 text-xs font-poppins"
-                  >
-                    {q}
-                  </Button>
-                ))}
-              </div> */}
-            </div>
           </div>
         </div>
 
