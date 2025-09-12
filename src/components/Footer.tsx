@@ -142,6 +142,7 @@ const Footer = () => {
                 <div className="flex items-center justify-between w-full">
                   <span className="text-sm text-gray-300">L - +91 720 724 4344</span>
                   <span className="text-sm text-gray-300">M - +91 9154703116</span>
+                  <span className="text-sm text-gray-300">M - +91 7013799462</span>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
