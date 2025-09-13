@@ -114,7 +114,7 @@ const Footer = () => {
               <div className="w-20 h-20 rounded-lg overflow-hidden">
                 <img src={logo} alt="VayAccess Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-bold">Access Parking Solutions</span>
+              <span className="text-2xl font-bold leading-none">Control Systems</span>
             </div>
             
             {/* Corporate Office (replaces description) */}
@@ -139,10 +139,37 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-tech-blue-light" />
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm text-gray-300">L - +91 720 724 4344</span>
-                  <span className="text-sm text-gray-300">M - +91 9154703116</span>
-                  <span className="text-sm text-gray-300">M - +91 7013799462</span>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2 md:gap-4">
+                  <a
+                    href="https://wa.me/917207244344"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-300 hover:text-tech-blue-light transition-colors"
+                    aria-label="WhatsApp Landline +91 720 724 4344"
+                    title="Chat on WhatsApp: +91 720 724 4344"
+                  >
+                    L - +91 720 724 4344
+                  </a>
+                  <a
+                    href="https://wa.me/919154703116"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-300 hover:text-tech-blue-light transition-colors"
+                    aria-label="WhatsApp Mobile +91 9154703116"
+                    title="Chat on WhatsApp: +91 9154703116"
+                  >
+                    M - +91 9154703116
+                  </a>
+                  <a
+                    href="https://wa.me/917013799462"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-gray-300 hover:text-tech-blue-light transition-colors"
+                    aria-label="WhatsApp Mobile +91 7013799462"
+                    title="Chat on WhatsApp: +91 7013799462"
+                  >
+                    M - +91 7013799462
+                  </a>
                 </div>
               </div>
               <div className="flex items-center space-x-3">

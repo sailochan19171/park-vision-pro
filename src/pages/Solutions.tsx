@@ -117,7 +117,7 @@ const Solutions = () => {
       features: ["AI-Powered Facial Recognition", "Contactless Authentication", "Temperature Screening", "Mask Detection Technology", "High-Resolution Imaging", "Privacy Protection Compliance"]
     },
     {
-      title: "Multi-Color LED Access Control Devices",
+      title: "Infrared photoelectric sensors",
       description: "Advanced access control devices featuring multi-color LED indicators for clear status communication and enhanced security management.",
       content: "Our multi-color LED access control devices provide intuitive visual feedback through sophisticated LED indicator systems. These devices feature blue, green, and red LED configurations that clearly communicate access status, system health, and security alerts. The robust construction ensures reliable operation in demanding environments while the sleek design complements modern architectural aesthetics. Advanced sensor technology provides precise detection and authentication capabilities for enhanced security management.",
       image: integratedAccessDevices,
@@ -131,7 +131,7 @@ const Solutions = () => {
       features: ["Advanced Facial Recognition AI", "High-Resolution Touchscreen Display", "Temperature Screening Capability", "Real-Time User Feedback", "Health Monitoring Integration", "Sleek Modern Design"]
     },
     {
-      title: "Smart Turnstile Gate System",
+      title: "Smart Barrier Gate System",
       description: "Professional-grade smart turnstile system with LED display integration and advanced access control for high-security pedestrian management.",
       content: "Our smart turnstile gate system represents the pinnacle of pedestrian access control technology. The system features integrated LED displays for real-time status communication and user guidance. The robust stainless steel construction with blue accent lighting provides both durability and modern aesthetics. Advanced sensor technology ensures smooth operation while preventing unauthorized access through sophisticated anti-tailgating mechanisms.",
       image: smartTurnstileGate,

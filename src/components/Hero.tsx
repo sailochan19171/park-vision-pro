@@ -24,7 +24,7 @@ const Hero = () => {
   };
 
   return (
-    <section id="home" className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 overflow-x-hidden scroll-mt-20">
+    <section id="home" className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 overflow-x-hidden overflow-y-visible scroll-mt-20">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{

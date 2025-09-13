@@ -47,58 +47,60 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden w-full max-w-full no-scrollbar">
+    <div className="min-h-screen bg-white overflow-x-hidden w-full max-w-full">
       <Header />
-      <main className="overflow-x-hidden w-full max-w-full px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <section className="relative">
-          <Hero />
-        </section>
-        
-        {/* Core Solutions Overview */}
-        <section className="relative bg-gradient-to-b from-white to-gray-50">
-          <Solutions />
-        </section>
-        
-        {/* Section Divider */}
-        <div className="h-16 bg-gradient-to-b from-gray-50 to-white"></div>
-        
-        {/* Featured Products Showcase */}
-        <section className="relative bg-white">
-          <FeaturedProducts />
-        </section>
-        
-        {/* Section Divider */}
-        <div className="h-12 bg-gradient-to-b from-white to-gray-50"></div>
-        
-        {/* Complete Product Catalog */}
-        <section className="relative bg-gradient-to-b from-gray-50 to-white">
-          <ProductsGrid />
-        </section>
-        
-        {/* Section Divider */}
-        <div className="h-16 bg-gradient-to-b from-white to-gray-50"></div>
-        
-        {/* Company Information */}
-        <section className="relative bg-white">
-          <About />
-        </section>
-        
-        {/* Section Divider */}
-        <div className="h-12 bg-gradient-to-b from-white to-gray-50"></div>
-        
-        {/* Call to Action */}
-        <section className="relative bg-gradient-to-b from-gray-50 to-white">
-          <CTASection />
-        </section>
-        
-        {/* Section Divider */}
-        <div className="h-12 bg-gradient-to-b from-white to-gray-50"></div>
-        
-        {/* Contact Information */}
-        <section className="relative bg-white pb-8">
-          <Contact />
-        </section>
+      <main className="overflow-x-hidden w-full max-w-full">
+        <div className="container mx-auto px-6 lg:px-10">
+          {/* Hero Section */}
+          <section className="relative py-6 lg:py-8">
+            <Hero />
+          </section>
+          
+          {/* Core Solutions Overview */}
+          <section className="relative bg-gradient-to-b from-white to-gray-50 py-8 lg:py-12">
+            <Solutions />
+          </section>
+          
+          {/* Section Divider */}
+          <div className="h-16 bg-gradient-to-b from-gray-50 to-white"></div>
+          
+          {/* Featured Products Showcase */}
+          <section className="relative bg-white py-8 lg:py-12">
+            <FeaturedProducts />
+          </section>
+          
+          {/* Section Divider */}
+          <div className="h-12 bg-gradient-to-b from-white to-gray-50"></div>
+          
+          {/* Complete Product Catalog */}
+          <section className="relative bg-gradient-to-b from-gray-50 to-white py-8 lg:py-12">
+            <ProductsGrid />
+          </section>
+          
+          {/* Section Divider */}
+          <div className="h-16 bg-gradient-to-b from-white to-gray-50"></div>
+          
+          {/* Company Information */}
+          <section className="relative bg-white py-8 lg:py-12">
+            <About />
+          </section>
+          
+          {/* Section Divider */}
+          <div className="h-12 bg-gradient-to-b from-white to-gray-50"></div>
+          
+          {/* Call to Action */}
+          <section className="relative bg-gradient-to-b from-gray-50 to-white py-8 lg:py-12">
+            <CTASection />
+          </section>
+          
+          {/* Section Divider */}
+          <div className="h-12 bg-gradient-to-b from-white to-gray-50"></div>
+          
+          {/* Contact Information */}
+          <section className="relative bg-white pb-8 lg:pb-12">
+            <Contact />
+          </section>
+        </div>
       </main>
       <Footer />
       <EnhancedChatbot />

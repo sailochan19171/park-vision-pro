@@ -109,7 +109,7 @@ const Header = () => {
   return (
     <>
       {/* Dynamic spacer div that adjusts with header size */}
-      <div className="h-24"></div>
+      <div className="h-16 md:h-20"></div>
       <header
         className={cn(
           "fixed top-0 w-full z-50 bg-white shadow-lg border-b transition-transform duration-300",
@@ -117,11 +117,11 @@ const Header = () => {
           isMobileMenuOpen && "transform-none"
         )}
       >
-      <div className="container mx-auto px-4 py-2 relative">
-        <div className="flex items-center justify-between h-16 md:h-24">
+      <div className="container mx-auto px-6 lg:px-8 py-0 relative">
+        <div className="flex items-center justify-between h-20 md:h-28">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <div className="flex items-center justify-center w-16 h-16 md:w-24 md:h-24">
+            <div className="flex items-center justify-center w-20 h-20 md:w-28 md:h-28">
               <img 
                 src={logoImage} 
                 alt="Company Logo" 
@@ -131,7 +131,7 @@ const Header = () => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                   const fallbackDiv = document.createElement('div');
-                  fallbackDiv.className = 'w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-tech-blue to-blue-400 rounded-lg flex items-center justify-center';
+                  fallbackDiv.className = 'w-20 h-20 md:w-28 md:h-28 bg-gradient-to-br from-tech-blue to-blue-400 rounded-lg flex items-center justify-center';
                   fallbackDiv.innerHTML = '<span class="text-white font-bold text-lg md:text-xl">VAY</span>';
                   target.parentElement?.appendChild(fallbackDiv);
                 }}
