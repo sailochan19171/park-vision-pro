@@ -8,7 +8,16 @@ export interface ApiResponse {
 }
 
 // Prefer relative /api during dev so Vite proxy can be used; fallback to env for direct access
-const RAW_API_BASE = (import.meta.env as any).VITE_API_BASE_URL || (import.meta.env as any).VITE_API_URL || '';
+const HOST = (typeof window !== 'undefined' && window.location && window.location.hostname)
+  ? window.location.hostname
+  : '';
+const PROD_DEFAULT = (HOST === 'vayaccess.com' || HOST === 'www.vayaccess.com')
+  ? 'https://be.vayaccess.com'
+  : '';
+const RAW_API_BASE = (import.meta.env as any).VITE_API_BASE_URL
+  || (import.meta.env as any).VITE_API_URL
+  || PROD_DEFAULT
+  || '';
 const API_BASE_URL = RAW_API_BASE
   ? (RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`)
   : '/api';

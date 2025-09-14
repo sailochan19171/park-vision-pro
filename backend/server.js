@@ -161,7 +161,14 @@ const PORT = process.env.PORT || 3002;
 // Initialize Socket.IO for real-time call communication
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8000', 'https://vayaccess.com', 'https://vayaccess-59fdd.web.app'],
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:8000',
+      'http://localhost:4173',
+      'https://vayaccess.com',
+      'https://www.vayaccess.com'
+    ],
     credentials: true
   }
 });
@@ -174,9 +181,21 @@ const upload = multer({
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8000', 'https://vayaccess.com', 'https://vayaccess-59fdd.web.app'],
-  credentials: true
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://localhost:4173',
+    'https://vayaccess.com',
+    'https://www.vayaccess.com'
+  ],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-admin-token'],
+  credentials: false
 }));
+
+// Handle CORS preflight
+app.options('*', cors());
 app.use(express.json());
 
 // Serve assets with stable URLs for emails and previews
