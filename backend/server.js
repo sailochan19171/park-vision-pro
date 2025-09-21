@@ -169,7 +169,9 @@ const io = new Server(server, {
       'http://localhost:8000',
       'http://localhost:4173',
       'https://vayaccess.com',
-      'https://www.vayaccess.com'
+      'https://www.vayaccess.com',
+      'https://vayaccess-59fdd.web.app',
+      'https://vayaccess-59fdd.firebaseapp.com'
     ],
     credentials: true
   }
@@ -189,7 +191,9 @@ app.use(cors({
     'http://localhost:8000',
     'http://localhost:4173',
     'https://vayaccess.com',
-    'https://www.vayaccess.com'
+    'https://www.vayaccess.com',
+    'https://vayaccess-59fdd.web.app',
+    'https://vayaccess-59fdd.firebaseapp.com'
   ],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-admin-token'],
