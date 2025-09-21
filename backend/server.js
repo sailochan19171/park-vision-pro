@@ -2,6 +2,8 @@
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+
+const axios = require('axios');
 const http = require('http');
 const { Server } = require('socket.io');
 const multer = require('multer');
@@ -391,11 +393,74 @@ io.on('connection', (socket) => {
   });
 });
 
-// Email configuration using SMTP (Gmail/Outlook/Custom SMTP)
+// Email configuration with Resend (preferred) or SMTP fallback
 let transporter;
+let mailProvider = 'none';
 let smtpReady = false;
 let smtpError = null;
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+
+
+
+// Resend transport using HTTP API
+function createResendTransport(apiKey) {
+  const httpClient = axios.create({
+    baseURL: 'https://api.resend.com',
+    timeout: Number(process.env.RESEND_TIMEOUT || 20000),
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+  });
+
+  return {
+    sendMail: async (opts) => {
+      const toList = Array.isArray(opts.to) ? opts.to : [opts.to];
+      const from = opts.from; // e.g., "Name <email@domain>"
+
+      // Build attachments compatible with Resend API
+      let attachments = [];
+      if (Array.isArray(opts.attachments) && opts.attachments.length) {
+        attachments = await Promise.all(opts.attachments.map(async (att) => {
+          try {
+            // If path provided, read and base64 encode
+            if (att.path && fs.existsSync(att.path)) {
+              const buf = fs.readFileSync(att.path);
+              return { filename: att.filename || path.basename(att.path), content: buf.toString('base64') };
+            }
+            // If content provided as Buffer/string
+            if (att.content) {
+              const buf = Buffer.isBuffer(att.content) ? att.content : Buffer.from(String(att.content));
+              return { filename: att.filename || 'attachment', content: buf.toString('base64') };
+            }
+          } catch (_) { /* skip invalid attachment */ }
+          return null;
+        }));
+        attachments = attachments.filter(Boolean);
+      }
+
+      const payload = {
+        from,
+        to: toList,
+        subject: opts.subject,
+        html: opts.html,
+        text: opts.text,
+        headers: opts.headers || {},
+        attachments: attachments.length ? attachments : undefined,
+      };
+
+      const resp = await httpClient.post('/emails', payload);
+      if (!resp || resp.status >= 300) {
+        throw new Error(`Resend send failed: status ${resp?.status}`);
+      }
+      return { accepted: toList, response: 'sent-via-resend', id: resp.data?.id };
+    },
+  };
+}
+
+if (process.env.RESEND_API_KEY) {
+  transporter = createResendTransport(process.env.RESEND_API_KEY);
+  mailProvider = 'resend';
+  smtpReady = true;
+  smtpError = null;
+  console.log(' Email provider: Resend');
+} else if (process.env.SMTP_USER && process.env.SMTP_PASS) {
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT) || 587,
@@ -429,17 +494,24 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       console.log(' Email server is ready to send messages');
     }
   });
+  mailProvider = 'smtp';
 } else {
-  // Fallback to JSON transport: no actual SMTP connection; prevents runtime EAUTH errors
+  // Fallback to JSON transport: no actual provider connection; prevents runtime errors
   transporter = nodemailer.createTransport({ jsonTransport: true });
   smtpReady = false;
-  smtpError = 'SMTP_USER/SMTP_PASS missing (jsonTransport)';
-  console.log(' Email disabled: missing SMTP_USER/SMTP_PASS (using jsonTransport)');
+  smtpError = 'No Resend key, Postmark token, or SMTP credentials (jsonTransport)';
+  console.log(' Email disabled: missing RESEND_API_KEY/POSTMARK_TOKEN and SMTP_USER/SMTP_PASS (using jsonTransport)');
 }
 
-// SMTP status endpoint
+// Email provider status endpoint
 app.get('/api/admin/smtp-status', (req, res) => {
-  res.json({ ready: smtpReady, error: smtpError, user: process.env.SMTP_USER || null, host: process.env.SMTP_HOST || 'smtp.gmail.com' });
+  res.json({
+    provider: mailProvider,
+    ready: smtpReady,
+    error: smtpError,
+    user: process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || null,
+    host: mailProvider === 'smtp' ? (process.env.SMTP_HOST || 'smtp.gmail.com') : mailProvider,
+  });
 });
 
 // Email helper (categorized sending with flags + tracking)
@@ -544,7 +616,7 @@ function buildUnsubscribeHeaders(email) {
   const e = encodeURIComponent(String(email).toLowerCase());
   const t = signUnsubToken(email);
   const httpUrl = `${PUBLIC_BASE_URL}/api/newsletter/unsubscribe?e=${e}&t=${t}`;
-  const mailto = `mailto:${process.env.SMTP_USER || 'no-reply@vayaccess.com'}?subject=unsubscribe`;
+  const mailto = `mailto:${process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'no-reply@vayaccess.com'}?subject=unsubscribe`;
   const base = {
     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     'List-Id': 'VayAccess Newsletter <newsletter.vayaccess.com>',
