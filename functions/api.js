@@ -10,6 +10,9 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
+// Export app for Firebase Functions entry
+module.exports = app;
+
 // Health
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, status: "healthy" });

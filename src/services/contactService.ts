@@ -12,9 +12,20 @@ export interface ApiResponse {
   message: string;
 }
 
-// Backend API configuration (same resolution logic)
-const RAW_API_BASE = (import.meta.env as any).VITE_API_BASE_URL || (import.meta.env as any).VITE_API_URL || 'http://localhost:3001';
-const API_BASE_URL = RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`;
+// Backend API configuration (aligned with newsletterBackend resolution)
+const HOST = (typeof window !== 'undefined' && window.location && window.location.hostname)
+  ? window.location.hostname
+  : '';
+const PROD_DEFAULT = (HOST === 'vayaccess.com' || HOST === 'www.vayaccess.com' || HOST.endsWith('web.app'))
+  ? '' // use relative /api on Firebase Hosting and prod domains
+  : '';
+const RAW_API_BASE = (import.meta.env as any).VITE_API_BASE_URL
+  || (import.meta.env as any).VITE_API_URL
+  || PROD_DEFAULT
+  || '';
+const API_BASE_URL = RAW_API_BASE
+  ? (RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`)
+  : '/api';
 
 // Submit contact form with live email automation
 export const submitContactForm = async (formData: ContactFormData): Promise<ApiResponse> => {
