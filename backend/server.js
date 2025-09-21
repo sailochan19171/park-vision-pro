@@ -212,6 +212,11 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, status: 'healthy', mongo: !!mongoDb });
 });
 
+// Root OK route for uptime checks
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // One-click unsubscribe (for List-Unsubscribe-Post)
 app.post('/api/newsletter/unsubscribe', express.urlencoded({ extended: true }), async (req, res) => {
   try {
