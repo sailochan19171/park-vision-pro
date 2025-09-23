@@ -30,3 +30,8 @@ dist-ssr
 *.sln
 *.sw?
 # "src/assets/vay-common-brochure.pdf" 
+
+# Additional ignores
+.history/
+**/.env
+backend/.env
