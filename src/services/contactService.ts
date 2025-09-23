@@ -27,27 +27,30 @@ const API_BASE_URL = RAW_API_BASE
   ? (RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`)
   : '/api';
 
-// Submit contact form with live email automation
+// Submit contact form via Formspree (client-side)
 export const submitContactForm = async (formData: ContactFormData): Promise<ApiResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/contact`, {
+    const endpoint = (import.meta.env as any).VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/meorqoaq';
+    const response = await fetch(endpoint, {
       method: 'POST',
-      headers: getDefaultHeaders({
-        'Content-Type': 'application/json',
+      headers: getDefaultHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify({
+        _subject: 'New Contact Message from VayAccess',
+        _replyto: formData.email,
+        form: 'contact',
+        ...formData,
       }),
-      body: JSON.stringify(formData),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    // Formspree returns JSON like { ok: true } on success
+    const json = await response.json().catch(() => ({} as any));
+    if (!response.ok || json?.ok === false) {
+      throw new Error(json?.error || `HTTP ${response.status}`);
     }
 
-    const result: ApiResponse = await response.json();
-    return result;
-
+    return { success: true, message: 'Thanks! Your message has been sent.' };
   } catch (error) {
-    console.error(' Contact form API error:', error);
+    console.error(' Contact form (Formspree) error:', error);
     return {
       success: false,
       message: 'Sorry, there was an error sending your message. Please try again or contact us directly at info@vayaccess.com or +91 720 724 4344.'

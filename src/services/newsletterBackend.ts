@@ -22,21 +22,25 @@ const API_BASE_URL = RAW_API_BASE
   ? (RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`)
   : '/api';
 
-export const subscribeToNewsletter = async (email: string, source: string = 'footer'): Promise<ApiResponse> => {
+export const subscribeToNewsletter = async (email: string, source: string = 'footer', name: string = ''): Promise<ApiResponse> => {
   try {
-    // Backward compatibility: keep old call working by mapping to new /api/subscribe
-    const response = await fetch(`${API_BASE_URL.replace(/\/api$/, '')}/api/subscribe`, {
+    const endpoint = (import.meta.env as any).VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/meorqoaq';
+    const res = await fetch(endpoint, {
       method: 'POST',
-      headers: getDefaultHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ email, source, name: '', frequency: 'weekly' }),
+      headers: getDefaultHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify({
+        _subject: 'Newsletter Subscription',
+        form: 'newsletter',
+        email,
+        name,
+        source,
+      }),
     });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
+    const json = await res.json().catch(() => ({} as any));
+    if (!res.ok || json?.ok === false) throw new Error(json?.error || `HTTP ${res.status}`);
+    return { success: true, message: 'Subscribed successfully! Please check your inbox.' };
   } catch (error) {
-    console.error(' Newsletter subscribe API error:', error);
+    console.error(' Newsletter subscribe (Formspree) error:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Failed to subscribe' };
   }
 };
