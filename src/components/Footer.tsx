@@ -1,12 +1,13 @@
 import { Button } from "./ui/button";
-import { 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Facebook, 
-  Twitter, 
-  Linkedin, 
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Facebook,
+  Twitter,
+  Linkedin,
   Youtube,
+  Instagram,
   ArrowRight
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -100,7 +101,8 @@ const Footer = () => {
     { icon: <Facebook className="h-5 w-5" />, href: "#", name: "Facebook" },
     { icon: <Twitter className="h-5 w-5" />, href: "#", name: "Twitter" },
     { icon: <Linkedin className="h-5 w-5" />, href: "#", name: "LinkedIn" },
-    { icon: <Youtube className="h-5 w-5" />, href: "#", name: "YouTube" }
+    { icon: <Youtube className="h-5 w-5" />, href: "#", name: "YouTube" },
+    { icon: <Instagram className="h-5 w-5" />, href: "https://www.instagram.com/vayaccess?igsh=MWd3MmNvODk2NTZpNw==", name: "Instagram" }
   ];
 
   return (
@@ -178,7 +180,21 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Social Links removed as requested */}
+            {/* Social Links */}
+            <div className="flex space-x-4">
+              {socialLinks.map((link, index) => (
+                <a
+                  key={index}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-300 hover:text-tech-blue-light transition-colors duration-300"
+                  aria-label={link.name}
+                >
+                  {link.icon}
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Solutions */}
