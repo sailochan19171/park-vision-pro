@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Input } from './ui/input';
@@ -155,7 +155,7 @@ const EnhancedChatbot = () => {
       name: 'Parking Management',
       products: [
         {
-          name: 'Ticketless Parking System',
+          name: 'Parking Guidance System',
           description: 'Modern parking management with mobile app integration',
           features: ['Mobile App Integration', 'Real-time Monitoring', 'Digital Payments', 'License Plate Recognition'],
           applications: ['Smart Cities', 'Commercial Complexes', 'Airports', 'Hospitals'],
@@ -163,7 +163,7 @@ const EnhancedChatbot = () => {
           image: ticketlessImg
         },
         {
-          name: 'Parking Guidance System',
+          name: 'Ticketless Parking System',
           description: 'Intelligent parking space detection and guidance',
           features: ['Space Detection', 'LED Indicators', 'Analytics Dashboard', 'Real-time Updates'],
           applications: ['Multi-level Parking', 'Shopping Malls', 'Airports', 'Office Complexes'],
@@ -564,7 +564,7 @@ const EnhancedChatbot = () => {
       return generateCategoryProductsResponse('Parking Management');
     }
 
-    // Solutions intent (show a curated set of solution cards)
+    // Solutions intent (show a curated set of solution cards) 
     if (lowerInput.includes('solution') || lowerInput.includes('solutions')) {
       const response = {
         content: 'Here are some of our key solutions. Tap any to learn more:',
@@ -574,8 +574,8 @@ const EnhancedChatbot = () => {
           { id: 'contact', label: ' Contact', action: 'navigate' as const, value: '/#contact' }
         ],
         cards: [
-          { id: 'ticketless', title: 'Ticketless Parking System', image: ticketlessImg, action: 'message' as const, value: 'Tell me about Ticketless Parking System' },
-          { id: 'guidance', title: 'Parking Guidance System', image: guidanceImg, action: 'message' as const, value: 'Tell me about Parking Guidance System' },
+          { id: 'ticketless', title: 'Parking Guidance System', image: ticketlessImg, action: 'message' as const, value: 'Tell me about Parking Guidance System' },
+          { id: 'guidance', title: 'Ticketless Parking System', image: guidanceImg, action: 'message' as const, value: 'Tell me about Ticketless Parking System' },
           { id: 'barrier', title: 'Smart Barrier Gate System', image: barrierGateImg, action: 'message' as const, value: 'Tell me about Smart Barrier Gate System' },
           { id: 'turnstiles', title: 'Flap Barrier Turnstiles', image: flapBarrierImg, action: 'message' as const, value: 'Tell me about Flap Barrier Turnstiles' },
         ]
@@ -600,10 +600,10 @@ const EnhancedChatbot = () => {
       return generateProductDetailsResponse('Flap Barrier Turnstiles');
     }
     if (lowerInput.includes('ticketless parking') || lowerInput.includes('ticketless system')) {
-      return generateProductDetailsResponse('Ticketless Parking System');
+      return generateProductDetailsResponse('Parking Guidance System');
     }
     if (lowerInput.includes('parking guidance') || lowerInput.includes('guidance system')) {
-      return generateProductDetailsResponse('Parking Guidance System');
+      return generateProductDetailsResponse('Ticketless Parking System');
     }
     if (lowerInput.includes('rfid card') || lowerInput.includes('card readers')) {
       return generateProductDetailsResponse('RFID Card Readers');

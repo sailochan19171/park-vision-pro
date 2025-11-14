@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { ArrowRight, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import QuoteRequestModal from "./QuoteRequestModal";
+import BrochureRequestModal from "./BrochureRequestModal";
 import { useToast } from "../hooks/use-toast";
 
 import smartTrafficSystem29 from "../assets/29.jpg";
@@ -22,6 +23,7 @@ const FeaturedProducts = () => {
   const { toast } = useToast();
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isBrochureModalOpen, setIsBrochureModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
 
   const featuredProducts: FeaturedProduct[] = [
@@ -157,14 +159,17 @@ const FeaturedProducts = () => {
                   )}
 
                   <div className="flex justify-center gap-3 mt-4">
-                    {/* <Button
-                      onClick={() => handleRequestQuote(product.name)}
-                      size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white flex items-center gap-2 text-base px-4 py-2 rounded-lg font-semibold hover:scale-105 transition-transform duration-300"
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setSelectedProduct(product.name);
+                        setIsBrochureModalOpen(true);
+                        toast({ title: "Send Brochure", description: `We will email the brochure for ${product.name}.` });
+                      }}
+                      className="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white flex items-center gap-2 text-xs px-3 py-1.5 rounded-md font-semibold transition-transform duration-300"
                     >
-                      <MessageSquare className="w-4 h-4" />
-                      Request Quote
-                    </Button> */}
+                      Send Brochure
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -206,6 +211,11 @@ const FeaturedProducts = () => {
       <QuoteRequestModal
         isOpen={isQuoteModalOpen}
         onClose={handleCloseModal}
+        productName={selectedProduct}
+      />
+      <BrochureRequestModal
+        isOpen={isBrochureModalOpen}
+        onClose={() => setIsBrochureModalOpen(false)}
         productName={selectedProduct}
       />
     </section>

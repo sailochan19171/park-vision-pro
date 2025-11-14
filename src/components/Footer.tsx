@@ -43,19 +43,18 @@ const Footer = () => {
 
   const handleSubscribe = async () => {
     try {
-      const endpoint = (import.meta.env as any).VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/meorqoaq';
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ form: 'newsletter', _subject: 'Footer Newsletter Subscription', name, email }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email })
       });
-      const json = await res.json().catch(() => ({ ok:false }));
-      if (res.ok && json.ok !== false) {
-        setMessage('Subscribed successfully!');
+      const json = await res.json().catch(() => ({ success:false, message:'Invalid response' }));
+      if (res.ok && json.success) {
+        setMessage(json.message || 'Subscribed successfully!');
         setName('');
         setEmail('');
       } else {
-        setMessage('Subscription failed.');
+        setMessage(json.message || 'Subscription failed.');
       }
     } catch (error) {
       setMessage('Subscription failed. Please try again.');

@@ -114,14 +114,23 @@ const Hero = () => {
                       return;
                     }
                     try {
-                      const res = await fetch('/api/send-brochure', {
+                      const endpoint = (import.meta.env as any).VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/meorqoaq';
+                      const res = await fetch(endpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, email, phone, countryCode, city })
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                          form: 'brochure',
+                          _subject: 'Brochure Request',
+                          product: 'Hero Form',
+                          fullName: name,
+                          email,
+                          phone: countryCode ? `${countryCode} ${phone}` : phone,
+                          city
+                        })
                       });
-                      const j = await res.json().catch(() => ({ success: false, message: 'Invalid response' }));
-                      if (j.success) {
-                        alert('Brochure sent to your email. Our team will contact you shortly.');
+                      const j = await res.json().catch(() => ({ ok: res.ok }));
+                      if (res.ok && j.ok !== false) {
+                        alert('Brochure request sent. We will email you shortly.');
                         form.reset();
                       } else {
                         alert(j.message || 'Failed to send brochure');

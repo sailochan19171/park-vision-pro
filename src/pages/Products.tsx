@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import QuoteRequestModal from "@/components/QuoteRequestModal";
+import BrochureRequestModal from "@/components/BrochureRequestModal";
 
 // Import product images
 import vayParkingBarrierGate10 from "@/assets/vay-parking-barrier-gate-10.jpg";
@@ -38,6 +39,7 @@ interface ProductCategory {
 const Products = () => {
   const { toast } = useToast();
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isBrochureModalOpen, setIsBrochureModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
 
   // Scroll to top when component mounts
@@ -265,13 +267,25 @@ const Products = () => {
                               <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                           </Link>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleRequestQuote(product.name)}
-                            className="flex-1 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-poppins text-sm py-2"
-                          >
-                            Get Quote
-                          </Button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleRequestQuote(product.name)}
+                              className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-poppins text-sm py-2"
+                            >
+                              Get Quote
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setSelectedProduct(product.name);
+                                setIsBrochureModalOpen(true);
+                                toast({ title: "Send Brochure", description: `We will email the brochure for ${product.name}.` });
+                              }}
+                              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-poppins text-sm py-2"
+                            >
+                              Send Brochure
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -339,6 +353,11 @@ const Products = () => {
       <QuoteRequestModal
         isOpen={isQuoteModalOpen}
         onClose={handleCloseModal}
+        productName={selectedProduct}
+      />
+      <BrochureRequestModal
+        isOpen={isBrochureModalOpen}
+        onClose={() => setIsBrochureModalOpen(false)}
         productName={selectedProduct}
       />
     </div>

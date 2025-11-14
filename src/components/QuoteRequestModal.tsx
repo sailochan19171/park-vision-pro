@@ -76,41 +76,8 @@ const QuoteRequestModal: React.FC<QuoteRequestModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Build payload for Formspree
-      const endpoint = (import.meta.env as any).VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/meorqoaq';
-      const hasFile = !!formData.file;
-      let res: Response;
-
-      if (hasFile) {
-        const form = new FormData();
-        form.append('form', 'quote');
-        form.append('_subject', `Quote Request: ${productName}`);
-        form.append('product', productName);
-        form.append('fullName', formData.fullName);
-        form.append('company', formData.company);
-        form.append('email', formData.email);
-        form.append('phone', formData.phone);
-        form.append('location', formData.location);
-        form.append('solutionType', formData.solutionType);
-        form.append('numberOfLocations', String(formData.numberOfLocations || ''));
-        form.append('message', formData.message);
-        if (formData.file) form.append('attachment', formData.file, formData.file.name);
-        res = await fetch(endpoint, { method: 'POST', body: form });
-      } else {
-        res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({
-            form: 'quote',
-            _subject: `Quote Request: ${productName}`,
-            product: productName,
-            ...formData,
-          }),
-        });
-      }
-
-      const json = await res.json().catch(() => ({ ok: res.ok }));
-      if (!res.ok || json.ok === false) throw new Error(json.error || `HTTP ${res.status}`);
+      // Simulate API call (replace with actual API endpoint)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Success feedback
       toast({
