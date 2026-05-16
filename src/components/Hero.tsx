@@ -1,6 +1,7 @@
 import { Button } from "./ui/button";
 import { Car, Scan, CheckCircle } from "lucide-react";
 import vay3DModel from "../assets/vay-3d-model.jpg";
+import { sendBrochureRequestNotification, sendBrochureToUser } from "../services/realEmailService";
 import { useToast } from "../hooks/use-toast";
 
 const Hero = () => {
@@ -119,32 +120,41 @@ const Hero = () => {
                     };
 
                     try {
-                      // POST to the Vercel serverless function which uses Resend to
-                      // send the brochure PDF as a real attachment to both the
-                      // visitor and info@vayaccess.com.
-                      const res = await fetch('/api/send-brochure', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                      });
-                      const json = await res.json().catch(() => ({ ok: res.ok }));
+                      // Send both emails via EmailJS in parallel:
+                      //   1) Brochure email TO the visitor (with download link;
+                      //      becomes a real attachment if the EmailJS template
+                      //      is configured to attach {{attachment_url}})
+                      //   2) Notification TO info@vayaccess.com with the lead details
+                      const [userEmailSent, teamNotified] = await Promise.all([
+                        sendBrochureToUser(payload),
+                        sendBrochureRequestNotification(payload),
+                      ]);
 
-                      // Always trigger the local download too — the visitor gets the
-                      // file immediately regardless of email delivery status.
+                      // Always trigger the local download — visitor gets the
+                      // file immediately regardless of email delivery.
                       triggerBrochureDownload();
 
-                      if (res.ok && json.ok) {
+                      if (userEmailSent && teamNotified) {
                         toast({
                           title: 'Brochure sent!',
-                          description: `Thanks ${name}! The brochure PDF has been emailed to ${email} and downloaded to your device.`,
+                          description: `Thanks ${name}! The brochure has been emailed to ${email} and downloaded to your device.`,
                         });
                         form.reset();
+                      } else if (userEmailSent) {
+                        toast({
+                          title: 'Brochure sent',
+                          description: `Emailed to ${email}. (Internal notification failed — please follow up.)`,
+                        });
+                        form.reset();
+                      } else if (teamNotified) {
+                        toast({
+                          title: 'Brochure downloaded',
+                          description: `Our team has been notified. The brochure is downloaded to your device — emailing to ${email} failed.`,
+                        });
                       } else {
                         toast({
                           title: 'Brochure downloaded',
-                          description: json?.error
-                            ? `Saved to your device. Email send failed: ${json.error}`
-                            : 'Saved to your device. We could not reach our email service right now.',
+                          description: 'Saved to your device. We could not reach the email service right now.',
                           variant: 'destructive',
                         });
                       }
