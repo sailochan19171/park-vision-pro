@@ -240,14 +240,15 @@ export interface BrochureRequestData {
   city: string;
 }
 
-// Public URL where the brochure PDF can be downloaded.
-// In production this should resolve to https://vayaccess.com/vay-gate-brochure.pdf.
+// Public URL where the brochure PDF is hosted (must be reachable from
+// the visitor's email client, so always use the deployed production URL —
+// localhost links won't work in Gmail / Outlook / Apple Mail).
+const PROD_BROCHURE_URL = 'https://park-vision-pro.vercel.app/vay-gate-brochure.pdf';
 const BROCHURE_URL = (() => {
-  if (typeof window === 'undefined') return 'https://vayaccess.com/vay-gate-brochure.pdf';
+  if (typeof window === 'undefined') return PROD_BROCHURE_URL;
   const host = window.location.hostname;
-  // Use absolute prod URL whenever we're not on localhost so links work in mail clients.
   if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.')) {
-    return 'https://vayaccess.com/vay-gate-brochure.pdf';
+    return PROD_BROCHURE_URL;
   }
   return `${window.location.origin}/vay-gate-brochure.pdf`;
 })();
@@ -266,7 +267,8 @@ export const sendBrochureToUser = async (data: BrochureRequestData): Promise<boo
       message:
         `Hi ${data.name},\n\n` +
         `Thanks for your interest in VayAccess Control Systems!\n\n` +
-        `You can download our complete brochure here:\n${BROCHURE_URL}\n\n` +
+        `📄 DOWNLOAD YOUR BROCHURE:\n${BROCHURE_URL}\n\n` +
+        `(Click the link above to view or save the PDF.)\n\n` +
         `Our product range includes:\n` +
         `• Smart Parking & Access Control Systems\n` +
         `• Barrier Gates, Turnstiles, Pedestrian Gates\n` +
@@ -287,6 +289,10 @@ export const sendBrochureToUser = async (data: BrochureRequestData): Promise<boo
       customer_name: data.name,
       customer_email: data.email,
       brochure_url: BROCHURE_URL,
+      // If you upgrade EmailJS to Personal plan and add an attachment slot to
+      // the template that reads {{attachment_url}}, the PDF will be attached
+      // automatically — no further code change needed.
+      attachment_url: BROCHURE_URL,
     };
 
     const result = await emailjs.send(
