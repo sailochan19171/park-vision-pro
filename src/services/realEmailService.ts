@@ -243,7 +243,7 @@ export interface BrochureRequestData {
 // Public URL where the brochure PDF is hosted (must be reachable from
 // the visitor's email client, so always use the deployed production URL —
 // localhost links won't work in Gmail / Outlook / Apple Mail).
-const PROD_BROCHURE_URL = 'https://park-vision-pro.vercel.app/vay-gate-brochure.pdf';
+const PROD_BROCHURE_URL = 'https://vayaccess.vercel.app/vay-gate-brochure.pdf';
 const BROCHURE_URL = (() => {
   if (typeof window === 'undefined') return PROD_BROCHURE_URL;
   const host = window.location.hostname;
