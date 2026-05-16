@@ -3,14 +3,12 @@ import {
   MapPin,
   Phone,
   Mail,
-  Facebook,
-  Twitter,
   Linkedin,
-  Youtube,
   Instagram,
   ArrowRight
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { subscribeToNewsletter } from "../services/newsletterBackend";
 import logo from "../assets/logo.png";
 
@@ -19,176 +17,137 @@ const Footer = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [articles, setArticles] = useState<{ title: string; description?: string; image?: string; type: 'product'|'solution'; }[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const intervalRef = useRef<number | null>(null);
-
-  // Auto-rotate articles every 3 seconds
-  useEffect(() => {
-    // Fetch available articles from backend (public, no auth; only shows public content)
-    fetch('/api/content/articles')
-      .then(r => r.json())
-      .then(data => {
-        if (data?.success && Array.isArray(data.articles)) setArticles(data.articles);
-      })
-      .catch(() => {});
-
-    // start rotation
-    intervalRef.current = window.setInterval(() => {
-      setActiveIndex((i) => (articles.length ? (i + 1) % articles.length : 0));
-    }, 3000);
-    return () => {
-      if (intervalRef.current) window.clearInterval(intervalRef.current);
-    };
-  }, [articles.length]);
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   const handleSubscribe = async () => {
+    if (!email) {
+      setMessage('Please enter your email.');
+      return;
+    }
+    setIsSubscribing(true);
+    setMessage('');
     try {
-      const res = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email })
-      });
-      const json = await res.json().catch(() => ({ success:false, message:'Invalid response' }));
-      if (res.ok && json.success) {
-        setMessage(json.message || 'Subscribed successfully!');
+      const res = await subscribeToNewsletter(email, 'footer');
+      setMessage(res.success ? (res.message || 'Subscribed successfully!') : (res.message || 'Subscription failed.'));
+      if (res.success) {
         setName('');
         setEmail('');
-      } else {
-        setMessage(json.message || 'Subscription failed.');
       }
-    } catch (error) {
+    } catch {
       setMessage('Subscription failed. Please try again.');
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
-  type FooterLink = { name: string; href: string };
-  type FooterLinks = {
-    solutions: FooterLink[];
-    products?: FooterLink[]; // optional; can be omitted
-    support: FooterLink[];
-    company: FooterLink[];
-  };
+  type FooterLink = { name: string; to: string; external?: boolean };
 
-  const footerLinks: FooterLinks = {
-    solutions: [
-      { name: "Smart Turnstiles", href: "#solutions" },
-      { name: "Security Systems", href: "#solutions" },
-      { name: "Mobile Solutions", href: "#solutions" },
-      { name: "Analytics Dashboard", href: "#solutions" }
-    ],
-    // products: [
-    //   { name: "ParkGate Pro X1", href: "#products" },
-    //   { name: "SmartBarrier Elite", href: "#products" },
-    //   { name: "ParkVision Dashboard", href: "#products" },
-    //   { name: "PayPark Mobile", href: "#products" }
-    // ],
-    support: [
-      { name: "Documentation", href: "#" },
-      { name: "API Reference", href: "#" },
-      { name: "Support Center", href: "#" },
-      { name: "Training", href: "#" }
-    ],
-    company: [
-      { name: "About Us", href: "#about" },
-      { name: "Careers", href: "#" },
-      { name: "News & Events", href: "#" },
-      { name: "Partners", href: "#" }
-    ]
-  };
-
-  const socialLinks = [
-    { icon: <Facebook className="h-5 w-5" />, href: "#", name: "Facebook" },
-    { icon: <Twitter className="h-5 w-5" />, href: "#", name: "Twitter" },
-    { icon: <Linkedin className="h-5 w-5" />, href: "#", name: "LinkedIn" },
-    { icon: <Youtube className="h-5 w-5" />, href: "#", name: "YouTube" },
-    { icon: <Instagram className="h-5 w-5" />, href: "https://www.instagram.com/vayaccess?igsh=MWd3MmNvODk2NTZpNw==", name: "Instagram" }
+  const productLinks: FooterLink[] = [
+    { name: "Access Control Systems", to: "/products/access-control" },
+    { name: "Barrier Gates", to: "/products/barrier-gates" },
+    { name: "Pedestrian Gates", to: "/products/pedestrian-gates" },
+    { name: "Parking Management", to: "/products/parking-management" },
   ];
 
+  const solutionLinks: FooterLink[] = [
+    { name: "ANPR Technology", to: "/solutions/anpr-technology" },
+    { name: "Cloud Platform", to: "/solutions/cloud-platform" },
+    { name: "Analytics & Reporting", to: "/solutions/analytics-reporting" },
+    { name: "Revenue Management", to: "/solutions/revenue-management" },
+  ];
+
+  const companyLinks: FooterLink[] = [
+    { name: "About Us", to: "/about" },
+    { name: "Services", to: "/services" },
+    { name: "Features", to: "/features" },
+    { name: "Contact", to: "/contact" },
+  ];
+
+  const phoneNumbers = [
+    { label: "Landline", number: "+91 720 724 4344", wa: "917207244344" },
+    { label: "Mobile", number: "+91 9154703116", wa: "919154703116" },
+    { label: "Mobile", number: "+91 7013799462", wa: "917013799462" },
+  ];
+
+  const socialLinks = [
+    { icon: <Linkedin className="h-4 w-4" />, href: "https://www.linkedin.com/company/vayaccess", name: "LinkedIn" },
+    { icon: <Instagram className="h-4 w-4" />, href: "https://www.instagram.com/vayaccess?igsh=MWd3MmNvODk2NTZpNw==", name: "Instagram" },
+  ];
+
+  const renderLink = (link: FooterLink) => {
+    const className = "text-sm text-gray-300 hover:text-white transition-colors duration-200";
+    if (link.external) {
+      return <a href={link.to} target="_blank" rel="noopener noreferrer" className={className}>{link.name}</a>;
+    }
+    return <Link to={link.to} className={className}>{link.name}</Link>;
+  };
+
   return (
-    <footer className="bg-tech-gray text-white">
+    <footer className="bg-gradient-to-b from-gray-900 to-gray-950 text-white">
       {/* Main Footer */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid lg:grid-cols-5 md:grid-cols-3 gap-8">
-          {/* Company Info */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center space-x-2">
-              <div className="w-20 h-20 rounded-lg overflow-hidden">
-                <img src={logo} alt="VayAccess Logo" className="w-full h-full object-contain" />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
+          {/* Brand + Contact */}
+          <div className="lg:col-span-5 space-y-6">
+            <Link to="/" className="inline-flex items-center gap-3 group">
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 p-1 ring-1 ring-white/10 transition-transform group-hover:scale-105">
+                <img src={logo} alt="VayAccess" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-bold leading-none">Control Systems</span>
-            </div>
-            
-            {/* Corporate Office (replaces description) */}
-            <div className="flex items-start space-x-3">
-              <MapPin className="h-5 w-5 text-tech-blue-light mt-1" />
-              <div className="text-sm text-white font-semibold">
-                <p className="text-white">Corporate Office</p>
-                <p className="text-white">Plot No. 26, Road No.1, West Gandhi Nagar</p>
-                <p className="text-white">Rampally X Road, Nagaram, Keesara (M)</p>
-                <p className="text-white">Hyderabad - 500083, TS, India</p>
+              <div className="leading-tight">
+                <div className="text-xl font-bold">VayAccess</div>
+                <div className="text-xs text-gray-400">Smart Access. Safer Future.</div>
+              </div>
+            </Link>
+
+            <p className="text-sm text-gray-400 max-w-md leading-relaxed">
+              Industry-leading parking and access control solutions — engineered in Hyderabad, deployed across India.
+            </p>
+
+            {/* Address */}
+            <div className="flex items-start gap-3 text-sm">
+              <MapPin className="h-4 w-4 text-tech-blue-light mt-0.5 flex-shrink-0" />
+              <div className="text-gray-300 leading-relaxed">
+                <p className="font-medium text-white mb-0.5">Corporate Office</p>
+                <p>Plot No. 26, Road No. 1, West Gandhi Nagar,</p>
+                <p>Rampally X Road, Nagaram, Keesara (M),</p>
+                <p>Hyderabad - 500083, Telangana, India</p>
               </div>
             </div>
 
-            {/* Contact Info */}
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <MapPin className="h-5 w-5 text-tech-blue-light mt-1" />
-                <div className="text-sm text-white font-semibold">
-                  <p className="text-white">TIF, MSME, Green Industrial Park, Dandu Malkapur Village, Choutuppal Mandal,</p>
-                  <p className="text-white">Yadadri - Bhuvanagiri District-508252</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Phone className="h-5 w-5 text-tech-blue-light" />
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2 md:gap-4">
+            {/* Phone numbers */}
+            <div className="flex items-start gap-3 text-sm">
+              <Phone className="h-4 w-4 text-tech-blue-light mt-0.5 flex-shrink-0" />
+              <div className="flex flex-col gap-1">
+                {phoneNumbers.map((p) => (
                   <a
-                    href="https://wa.me/917207244344"
+                    key={p.wa}
+                    href={`https://wa.me/${p.wa}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-gray-300 hover:text-tech-blue-light transition-colors"
-                    aria-label="WhatsApp Landline +91 720 724 4344"
-                    title="Chat on WhatsApp: +91 720 724 4344"
+                    className="text-gray-300 hover:text-white transition-colors"
+                    title={`Chat on WhatsApp: ${p.number}`}
                   >
-                    L - +91 720 724 4344
+                    <span className="text-gray-500 mr-1">{p.label}</span>{p.number}
                   </a>
-                  <a
-                    href="https://wa.me/919154703116"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-gray-300 hover:text-tech-blue-light transition-colors"
-                    aria-label="WhatsApp Mobile +91 9154703116"
-                    title="Chat on WhatsApp: +91 9154703116"
-                  >
-                    M - +91 9154703116
-                  </a>
-                  <a
-                    href="https://wa.me/917013799462"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-gray-300 hover:text-tech-blue-light transition-colors"
-                    aria-label="WhatsApp Mobile +91 7013799462"
-                    title="Chat on WhatsApp: +91 7013799462"
-                  >
-                    M - +91 7013799462
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Mail className="h-5 w-5 text-tech-blue-light" />
-                <span className="text-sm text-gray-300">info@vayaccess.com</span>
+                ))}
               </div>
             </div>
+
+            {/* Email */}
+            <a href="mailto:info@vayaccess.com" className="flex items-center gap-3 text-sm text-gray-300 hover:text-white transition-colors w-fit">
+              <Mail className="h-4 w-4 text-tech-blue-light" />
+              info@vayaccess.com
+            </a>
 
             {/* Social Links */}
-            <div className="flex space-x-4">
-              {socialLinks.map((link, index) => (
+            <div className="flex items-center gap-3 pt-2">
+              {socialLinks.map((link) => (
                 <a
-                  key={index}
+                  key={link.name}
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-300 hover:text-tech-blue-light transition-colors duration-300"
+                  className="w-9 h-9 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 hover:ring-white/20 transition-all"
                   aria-label={link.name}
                 >
                   {link.icon}
@@ -197,156 +156,79 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Solutions */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Solutions</h3>
-            <ul className="space-y-3">
-              {footerLinks.solutions.map((link: FooterLink, index: number) => (
-                <li key={index}>
-                  <a
-                    href={link.href}
-                    className="text-gray-300 hover:text-tech-blue-light transition-colors duration-300"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
           {/* Products */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Products</h3>
-            <ul className="space-y-3">
-              {(footerLinks.products ?? []).map((link: FooterLink, index: number) => (
-                <li key={index}>
-                  <a
-                    href={link.href}
-                    className="text-gray-300 hover:text-tech-blue-light transition-colors duration-300"
-                  >
-                    {link.name}
-                  </a>
-                </li>
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Products</h3>
+            <ul className="space-y-2.5">
+              {productLinks.map((link) => (
+                <li key={link.to}>{renderLink(link)}</li>
               ))}
             </ul>
           </div>
 
-          {/* Support & Company */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Support</h3>
-            <ul className="space-y-3 mb-6">
-              {footerLinks.support.map((link: FooterLink, index: number) => (
-                <li key={index}>
-                  <a
-                    href={link.href}
-                    className="text-gray-300 hover:text-tech-blue-light transition-colors duration-300"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-
-            <h3 className="font-bold text-lg mb-4">Company</h3>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link: FooterLink, index: number) => (
-                <li key={index}>
-                  <a
-                    href={link.href}
-                    className="text-gray-300 hover:text-tech-blue-light transition-colors duration-300"
-                  >
-                    {link.name}
-                  </a>
-                </li>
+          {/* Solutions */}
+          <div className="lg:col-span-2">
+            <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Solutions</h3>
+            <ul className="space-y-2.5">
+              {solutionLinks.map((link) => (
+                <li key={link.to}>{renderLink(link)}</li>
               ))}
             </ul>
           </div>
-        </div>
 
-        {/* Newsletter & Live Articles Carousel for subscribers */}
-        <div className="mt-12 pt-8 border-t border-white/10">
-          <div className="grid md:grid-cols-2 gap-8 items-start">
+          {/* Company + Newsletter */}
+          <div className="lg:col-span-3 space-y-8">
             <div>
-              <h3 className="text-xl font-bold mb-2">Stay Updated</h3>
-              <p className="text-gray-300">
-                Subscribe to our newsletter for the latest products and solutions. Subscribers receive automated, image-rich articles by email.
-              </p>
-              {/* Live rotating preview of available products/solutions */}
-              {articles.length > 0 && (
-                <div className="mt-6 bg-white/5 border border-white/10 rounded-lg p-4">
-                  <div className="text-sm text-gray-300 mb-3">Live products & solutions (auto-rotates every 3s)</div>
-                  {articles.slice(activeIndex, activeIndex + 1).map((a, i) => (
-                    <div key={`${a.title}-${i}`} className="flex items-start space-x-4">
-                      {a.image ? (
-                        <img src={a.image} alt={a.title} className="w-20 h-20 object-cover rounded-md border border-white/10" />
-                      ) : (
-                        <div className="w-20 h-20 rounded-md bg-white/10" />
-                      )}
-                      <div>
-                        <div className="text-white font-semibold leading-tight">{a.title}</div>
-                        <div className="text-gray-300 text-sm line-clamp-3 mt-1">{a.description}</div>
-                        <div className="mt-1 text-[11px] uppercase tracking-wide text-tech-blue-light">{a.type}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h3>
+              <ul className="space-y-2.5">
+                {companyLinks.map((link) => (
+                  <li key={link.to}>{renderLink(link)}</li>
+                ))}
+              </ul>
             </div>
-            <div className="space-y-3">
-              {/* Responsive row: two inputs grow, frequency stays compact on the right */}
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
-                  />
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-tech-blue-light"
-                  />
-                </div>
 
-              </div>
-              <div className="flex">
-                <Button onClick={handleSubscribe} className="bg-gradient-to-r from-tech-blue to-tech-blue-light hover:opacity-90">
-                  Subscribe
-                  <ArrowRight className="ml-2 h-4 w-4" />
+            <div>
+              <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Newsletter</h3>
+              <p className="text-xs text-gray-400 mb-3 leading-relaxed">
+                Get product updates and announcements in your inbox.
+              </p>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSubscribing}
+                  className="w-full px-3 py-2 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-tech-blue-light focus:bg-white/10 transition disabled:opacity-50"
+                />
+                <Button
+                  onClick={handleSubscribe}
+                  disabled={isSubscribing}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-sm font-semibold py-2 rounded-lg transition disabled:opacity-50"
+                >
+                  {isSubscribing ? 'Subscribing...' : 'Subscribe'}
+                  {!isSubscribing && <ArrowRight className="ml-2 h-3.5 w-3.5" />}
                 </Button>
+                {message && (
+                  <p className="text-xs text-tech-blue-light mt-1">{message}</p>
+                )}
               </div>
             </div>
           </div>
-          {message && (
-            <div className="text-sm text-green-400 mt-3">{message}</div>
-          )}
         </div>
       </div>
 
-      {/* Bottom Footer */}
+      {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-sm text-gray-400">
-              Copyright © {currentYear} VayAccess Control Systems - All Rights Reserved.
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div className="text-xs text-gray-500">
+              © {currentYear} VayAccess Control Systems. All rights reserved.
             </div>
-            
-            <div className="flex space-x-6 text-sm">
-              <a href="#" className="text-gray-400 hover:text-tech-blue-light transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-gray-400 hover:text-tech-blue-light transition-colors">
-                Terms of Service
-              </a>
-              <a href="#" className="text-gray-400 hover:text-tech-blue-light transition-colors">
-                Cookie Policy
-              </a>
+            <div className="flex items-center gap-5 text-xs text-gray-500">
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <Link to="/cookies" className="hover:text-white transition-colors">Cookie Policy</Link>
             </div>
           </div>
         </div>

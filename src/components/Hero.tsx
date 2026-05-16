@@ -1,69 +1,68 @@
 import { Button } from "./ui/button";
 import { Car, Scan, CheckCircle } from "lucide-react";
 import vay3DModel from "../assets/vay-3d-model.jpg";
+import { sendBrochureRequestNotification, sendBrochureToUser } from "../services/realEmailService";
+import { useToast } from "../hooks/use-toast";
 
 const Hero = () => {
-  // No complex animation needed - using static 3D model
+  const { toast } = useToast();
 
-
-
-  const handleDownloadBrochure = () => {
-    try {
-      const link = document.createElement('a');
-      link.href = '/vay-gate-brochure.pdf'; // served from public/
-      link.download = 'VAY-Gate-Brochure.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      console.log('Brochure download started successfully');
-    } catch (error) {
-      console.error('Error downloading brochure:', error);
-      alert('Sorry, there was an error downloading the brochure. Please contact us directly.');
-    }
+  const triggerBrochureDownload = () => {
+    const link = document.createElement('a');
+    link.href = '/vay-gate-brochure.pdf';
+    link.download = 'VAY-Access-Control-Brochure.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <section id="home" className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 overflow-x-hidden overflow-y-visible scroll-mt-20">
+    <section id="home" className="relative bg-gradient-to-br from-gray-50 via-white to-blue-50/30 scroll-mt-20 py-12 md:py-16 lg:py-20 overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
+      <div
+        className="absolute inset-0 opacity-5 pointer-events-none"
+        style={{
           backgroundImage: `radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
                            radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                           radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`
-        }} />
-      </div>
+                           radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`,
+        }}
+      />
 
       {/* Main Content */}
-      <div className="relative z-10 flex items-center pt-14 pb-10 lg:pt-20 lg:pb-16 xl:pt-24 xl:pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl w-full">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center">
             
             {/* Left Column - Content */}
             <div className="space-y-8">
+              {/* Eyebrow */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-blue-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700 backdrop-blur-sm" data-aos="fade-up">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                Smart Access Systems
+              </div>
+
               {/* Main Heading */}
-              <div className="space-y-2">
-                <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight font-poppins">
+              <div className="space-y-1">
+                <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-[1.05] tracking-tight font-poppins">
                   Vay Access
                 </h1>
-                <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-blue-700 leading-tight font-poppins">
-                  <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] [background-clip:text]" style={{
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                  }}>
+                <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight font-poppins">
+                  <span className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 bg-clip-text text-transparent">
                     Control Systems
                   </span>
                 </h1>
               </div>
 
               {/* Subtitle */}
-              <h2 className="text-2xl lg:text-3xl font-semibold text-gray-700 font-poppins">
-                Industry Experts
-              </h2>
+              <div className="flex items-center gap-3">
+                <span className="h-px w-10 bg-gradient-to-r from-blue-600 to-transparent"></span>
+                <h2 className="text-2xl lg:text-3xl font-semibold text-gray-800 font-poppins">
+                  Industry Experts
+                </h2>
+              </div>
 
               {/* Description */}
-              <div className="space-y-4 text-gray-600 text-sm leading-relaxed font-poppins font-normal" data-aos="fade-up" data-aos-delay="400">
+              <div className="space-y-4 text-gray-600 text-base leading-relaxed font-poppins font-normal max-w-xl" data-aos="fade-up" data-aos-delay="400">
                 <p>
                   Building tomorrow's infrastructure with our cutting-edge vehicular access management solutions. Transform your parking operations, enhance security, and provide effortless convenience to your users.
                 </p>
@@ -74,27 +73,19 @@ const Hero = () => {
 
               {/* Features */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8" data-aos="fade-up" data-aos-delay="500">
-                <div className="text-center group" data-aos="zoom-in" data-aos-delay="600">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform duration-300">
-                    <Scan className="w-8 h-8 text-blue-600" />
+                {[
+                  { Icon: Scan, title: "Smart Automation", desc: "AI-powered solutions", delay: 600 },
+                  { Icon: CheckCircle, title: "Secure Access", desc: "99.9% reliability", delay: 700 },
+                  { Icon: Car, title: "User Friendly", desc: "Intuitive interface", delay: 800 },
+                ].map(({ Icon, title, desc, delay }) => (
+                  <div key={title} className="text-center group cursor-default" data-aos="zoom-in" data-aos-delay={delay}>
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-blue-100 ring-1 ring-blue-200/50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:ring-blue-300/70">
+                      <Icon className="w-7 h-7 text-blue-600 transition-transform duration-300 group-hover:scale-110" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-1 text-base font-poppins">{title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed font-poppins font-normal">{desc}</p>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2 text-lg font-poppins">Smart Automation</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed font-poppins font-normal">AI-powered solutions</p>
-                </div>
-                <div className="text-center group" data-aos="zoom-in" data-aos-delay="700">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform duration-300">
-                    <CheckCircle className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2 text-lg font-poppins">Secure Access</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed font-poppins font-normal">99.9% reliability</p>
-                </div>
-                <div className="text-center group" data-aos="zoom-in" data-aos-delay="800">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform duration-300">
-                    <Car className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2 text-lg font-poppins">User Friendly</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed font-poppins font-normal">Intuitive interface</p>
-                </div>
+                ))}
               </div>
 
               {/* Brochure Request Form (stacked, responsive) */}
@@ -109,45 +100,82 @@ const Hero = () => {
                     const phone = String(fd.get('phone') || '').trim();
                     const countryCode = String(fd.get('countryCode') || '').trim();
                     const city = String(fd.get('city') || '').trim();
+                    const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+
                     if (!name || !/[^@\s]+@[^@\s]+\.[^@\s]+/.test(email) || !phone || !city) {
-                      alert('Please enter name, valid email, phone, and city.');
+                      toast({
+                        title: 'Missing information',
+                        description: 'Please enter your name, a valid email, phone, and city.',
+                        variant: 'destructive',
+                      });
                       return;
                     }
+
+                    if (submitBtn) submitBtn.disabled = true;
+                    const payload = {
+                      name,
+                      email,
+                      phone: countryCode ? `${countryCode} ${phone}` : phone,
+                      city,
+                    };
+
                     try {
-                      const endpoint = (import.meta.env as any).VITE_FORMSPREE_ENDPOINT || 'https://formspree.io/f/meorqoaq';
-                      const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify({
-                          form: 'brochure',
-                          _subject: 'Brochure Request',
-                          product: 'Hero Form',
-                          fullName: name,
-                          email,
-                          phone: countryCode ? `${countryCode} ${phone}` : phone,
-                          city
-                        })
-                      });
-                      const j = await res.json().catch(() => ({ ok: res.ok }));
-                      if (res.ok && j.ok !== false) {
-                        alert('Brochure request sent. We will email you shortly.');
+                      // Fire both emails in parallel:
+                      //  1) Brochure email TO the visitor (with download link)
+                      //  2) Notification email TO info@vayaccess.com (with visitor's details)
+                      const [userEmailSent, teamNotified] = await Promise.all([
+                        sendBrochureToUser(payload),
+                        sendBrochureRequestNotification(payload),
+                      ]);
+
+                      // Always also trigger the PDF download in the visitor's browser so
+                      // they get the file immediately, regardless of email delivery.
+                      triggerBrochureDownload();
+
+                      if (userEmailSent && teamNotified) {
+                        toast({
+                          title: 'Brochure sent!',
+                          description: `Thanks ${name}! The brochure has been emailed to ${email} and downloaded to your device.`,
+                        });
                         form.reset();
+                      } else if (userEmailSent) {
+                        toast({
+                          title: 'Brochure sent',
+                          description: `Emailed to ${email}. (Internal notification failed — please follow up.)`,
+                        });
+                        form.reset();
+                      } else if (teamNotified) {
+                        toast({
+                          title: 'Brochure downloaded',
+                          description: `Our team has been notified. The brochure is downloaded to your device — emailing to ${email} failed.`,
+                        });
                       } else {
-                        alert(j.message || 'Failed to send brochure');
+                        toast({
+                          title: 'Brochure downloaded',
+                          description: 'Saved to your device. We could not reach our email service right now.',
+                          variant: 'destructive',
+                        });
                       }
                     } catch (err) {
-                      alert('Network error. Please try again.');
+                      triggerBrochureDownload();
+                      toast({
+                        title: 'Brochure downloaded',
+                        description: 'Saved to your device. Network issue while sending emails.',
+                        variant: 'destructive',
+                      });
+                    } finally {
+                      if (submitBtn) submitBtn.disabled = false;
                     }
                   }}
-                  className="w-full max-w-lg bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 flex flex-col gap-3"
+                  className="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-2xl p-5 border border-gray-200/70 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] flex flex-col gap-3"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input name="name" required placeholder="Full Name" className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <input name="email" required type="email" placeholder="Email" className="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input name="name" required placeholder="Full Name" className="border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-sm placeholder:text-gray-400 transition focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                    <input name="email" required type="email" placeholder="Email" className="border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-sm placeholder:text-gray-400 transition focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="flex gap-2 min-w-0">
-                      <select name="countryCode" defaultValue="+91" className="w-28 min-w-24 shrink-0 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <select name="countryCode" defaultValue="+91" className="w-28 min-w-24 shrink-0 border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-sm transition focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                         <option value="+1">+1 (US)</option>
                         <option value="+44">+44 (UK)</option>
                         <option value="+61">+61 (AU)</option>
@@ -155,7 +183,7 @@ const Hero = () => {
                         <option value="+91">+91 (IN)</option>
                         <option value="+971">+971 (AE)</option>
                       </select>
-                      <input name="phone" required placeholder="Phone Number" className="flex-1 min-w-0 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input name="phone" required placeholder="Phone Number" className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-sm placeholder:text-gray-400 transition focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
                     </div>
                     <div className="flex gap-2 min-w-0">
                       <input
@@ -163,7 +191,7 @@ const Hero = () => {
                         required
                         placeholder="City (type to search)"
                         list="city-options"
-                        className="flex-1 min-w-0 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2.5 bg-white text-sm placeholder:text-gray-400 transition focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       />
                       <datalist id="city-options">
                         <option value="Hyderabad" />
@@ -175,34 +203,26 @@ const Hero = () => {
                       </datalist>
                     </div>
                   </div>
-                  <div className="flex justify-start">
-                    <Button type="submit" size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 text-base font-semibold rounded-lg">
+                  <div className="flex justify-start pt-1">
+                    <Button type="submit" size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 text-base font-semibold rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
                       Send Brochure
                     </Button>
                   </div>
                 </form>
               </div>
 
-              {/* Statistics */}
-              <div className="flex gap-12 pt-6 border-t border-gray-200">
-                <div>
-                  {/* <div className="text-4xl font-bold text-gray-900">500+</div> */}
-                  {/* <div className="text-gray-600 font-medium">Projects</div> */}
-                </div>
-                <div>
-                  {/* <div className="text-4xl font-bold text-gray-900">50+</div> */}
-                  {/* <div className="text-gray-600 font-medium">Cities</div> */}
-                </div>
-              </div>
             </div>
 
             {/* Right Column - 3D VAY Access Control System */}
             <div className="relative mt-10 lg:mt-0">
+              {/* Soft glow halo behind container */}
+              <div className="absolute -inset-6 bg-gradient-to-tr from-blue-200/30 via-transparent to-blue-100/40 blur-2xl rounded-[3rem] pointer-events-none"></div>
+
               {/* 3D Model Container */}
-              <div className="relative w-full h-[360px] sm:h-[420px] md:h-[480px] lg:h-[520px] xl:h-[560px] bg-gradient-to-br from-gray-50 via-white to-blue-50/30 rounded-[2rem] overflow-hidden border-2 border-gray-300/30">
-                
+              <div className="relative w-full h-[360px] sm:h-[420px] md:h-[480px] lg:h-[520px] xl:h-[560px] bg-gradient-to-br from-gray-50 via-white to-blue-50/40 rounded-[2rem] overflow-hidden border border-gray-200/70 shadow-[0_25px_60px_-20px_rgba(15,23,42,0.18)]">
+
                 {/* Polished Inner Highlight */}
-                <div className="absolute inset-1 rounded-[1.75rem] border border-white/40 pointer-events-none"></div>
+                <div className="absolute inset-1 rounded-[1.75rem] border border-white/50 pointer-events-none"></div>
 
                 {/* 3D Model Image */}
                 <div className="relative w-full h-full flex items-center justify-center p-6 lg:p-5">

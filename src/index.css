@@ -7,60 +7,48 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 80px;
-    /* Do not reserve space for scrollbar to avoid visible gutter */
+    scroll-padding-top: 96px;
     scrollbar-gutter: auto;
-    /* Disable scroll chaining/rubber banding */
-    overscroll-behavior: none;
+    /* Prevent only horizontal overflow. `clip` does NOT create a scroll
+       container, so the document keeps its normal vertical scroll. */
+    overflow-x: clip;
+    width: 100%;
+    /* Hide scrollbar UI but keep scrolling */
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE/Edge legacy */
   }
-  
+
   body {
-    overflow-x: hidden !important;
-    /* Disable scroll chaining/rubber banding */
-    overscroll-behavior: none;
+    overflow-x: clip;
+    margin: 0;
+    padding: 0;
+    width: 100%;
     font-smoothing: antialiased;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    margin: 0;
-    padding: 0;
-    max-width: 100vw;
-    width: 100%;
   }
 
   /* Hide scrollbar UI globally while keeping scroll functionality */
-  * {
-    scrollbar-width: none; /* Firefox */
-  }
   *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
     width: 0;
     height: 0;
   }
 
   /* Utility class to force-hide scrollbars for specific containers */
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE/Edge */
-    scrollbar-width: none;    /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   .no-scrollbar::-webkit-scrollbar {
-    display: none;            /* Chrome/Safari */
-  }
-  
-  html {
-    overflow-x: hidden !important;
-    max-width: 100vw;
-    width: 100%;
-    /* Hide scrollbar UI but keep scrolling */
-    scrollbar-width: none;       /* Firefox */
-    -ms-overflow-style: none;    /* IE/Edge legacy */
-  }
-  
-  html::-webkit-scrollbar,      /* Chrome/Safari */
-  body::-webkit-scrollbar {
-    width: 0;
-    height: 0;
+    display: none;
   }
 
-  /* Ensure no scrollbar appears during loading */
+  /* Loading-state scroll lock (cleared when LoadingScreen unmounts) */
   body.loading {
     overflow: hidden !important;
     height: 100vh !important;
@@ -69,51 +57,17 @@
     top: 0 !important;
     left: 0 !important;
   }
-  
+
   html.loading {
     overflow: hidden !important;
     height: 100vh !important;
   }
 
-  /* Prevent horizontal scrollbar only */
-  body {
-    overflow-x: hidden !important;
-  }
-  
-  html {
-    overflow-x: hidden !important;
-  }
-
-  /* Prevent horizontal scroll due to large containers */
-  .container,
-  section,
-  main,
-  header,
-  footer,
-  div[class*="px-"],
-  div[class*="mx-"],
-  .w-screen,
-  .max-w-screen,
-  .max-w-full {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-  }
-  
-  /* Additional overflow prevention */
-  #root,
-  .min-h-screen {
-    overflow-x: hidden !important;
-    max-width: 100vw !important;
-    width: 100% !important;
-  }
-
-  /* Ensure root container is properly constrained */
   #root {
     position: relative;
     min-height: 100vh;
     width: 100%;
-    max-width: 100vw;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   
   /* Mobile-specific product image enhancements - No white spaces */
@@ -186,53 +140,11 @@
     background-color: transparent !important;
   }
   
-  /* Force all elements to respect viewport boundaries */
-  * {
-    max-width: 100vw;
-    box-sizing: border-box;
-  }
-
-  /* Prevent any element from causing horizontal scroll */
-  body, html, #root {
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-  }
-
-  /* Ensure main container never overflows */
-  main, section, div {
-    max-width: 100% !important;
-  }
-  
-  /* Prevent wide elements from causing horizontal scroll */
-  .w-screen,
-  .max-w-screen-xl,
-  .max-w-screen-lg,
-  .max-w-screen-md,
-  .max-w-screen-sm {
-    max-width: 100vw !important;
-  }
-
-  /* Ensure no element causes overflow */
+  /* Box-sizing for all elements (does not cap width) */
   * {
     box-sizing: border-box;
   }
-  
-  /* Prevent any absolute positioned elements from causing overflow */
-  .absolute {
-    max-width: 100vw !important;
-  }
-  
-  /* Ensure all containers respect viewport width */
-  [class*="container"],
-  [class*="mx-auto"] {
-    max-width: 100% !important;
-  }
-  
-  /* Smooth section transitions and polished effects */
-  section {
-    transition: all 0.3s ease-in-out;
-  }
-  
+
   /* Improved button interactions */
   button {
     transition: all 0.2s ease-in-out;

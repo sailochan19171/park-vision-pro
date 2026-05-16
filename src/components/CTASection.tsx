@@ -48,7 +48,7 @@ const CTASection = () => {
   };
 
   return (
-    <section className="py-24 bg-gradient-to-br from-gray-900 to-blue-900 relative overflow-x-hidden">
+    <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-900 to-blue-900 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent transform skew-y-6"></div>
@@ -136,13 +136,6 @@ const CTASection = () => {
               </div>
             </div>
 
-            {/* Guarantee Badge */}
-            {/* <div className="mt-12 inline-flex items-center gap-3 bg-green-500/10 border border-green-400/30 px-6 py-3 rounded-full"> */}
-              {/* <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div> */}
-              {/* <span className="text-green-300 font-medium"> */}
-                {/*  Free Consultation •  Custom Design •  2-Year Warranty */}
-              {/* </span> */}
-            {/* </div> */}
           </div>
         </div>
       </div>

@@ -38,8 +38,8 @@ const CookieConsent = () => {
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50" />
+      {/* Backdrop (visual only — don't block scroll/clicks on the page behind) */}
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 pointer-events-none" />
 
       {/* Cookie Consent Banner */}
       <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6">

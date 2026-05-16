@@ -38,7 +38,6 @@ import CloudPlatform from "./pages/solutions/CloudPlatform";
 import AnalyticsReporting from "./pages/solutions/AnalyticsReporting";
 import RevenueManagement from "./pages/solutions/RevenueManagement";
 import CookieConsent from "./components/CookieConsent";
-import FloatingAIButton from "./components/FloatingAIButton";
 import Contact from "./components/Contact";
 import LoadingScreen from "./components/LoadingScreen";
 // import NearbyParkingLocations from './components/NearbyParkingLocations';
@@ -133,17 +132,9 @@ const App = () => {
           <Route path="/services" element={<Services />} />
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/products" element={<Products />} />
-          <Route path="/solutions" element={<Solutions />} />
           <Route path="/features" element={<Features />} />
           <Route path="/about" element={<About />} />
-
           <Route path="/contact" element={<Contact />} />
-          <Route path="/vayaccess" element={<VayAccess />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/solutions" element={<Solutions />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/about" element={<About />} />
           <Route path="/mockups" element={<Mockups />} />
           <Route path="/features/smart-parking" element={<SmartParking />} />
           <Route path="/features/community-access" element={<CommunityAccess />} />
@@ -166,12 +157,12 @@ const App = () => {
           
           {/* Admin routes removed: auto-publish flow handles newsletters without UI */}
 
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
           <Route path="/real-time-newsletter" element={<RealTimeNewsletter />} />
+
+          {/* Catch-all must be last */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
           <CookieConsent />
-          <FloatingAIButton />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

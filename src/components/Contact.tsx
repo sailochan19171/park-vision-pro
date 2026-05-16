@@ -136,29 +136,10 @@ const Contact = () => {
         "M - 9154703116"
       ]
     },
-    // {
-    //   title: "Phone Numbers",
-    //   icon: <Phone className="h-5 w-5" />,
-    //   details: [
-    //     "+91 720 724 4344 (Primary)",
-    //     "+91 720 724 4345 (Support)",
-    //     "+91 720 724 4346 (Sales)"
-    //   ]
-    // },
-    // {
-    //   title: "Email",
-    //   icon: <Mail className="h-5 w-5" />,
-    //   // details: [
-    //   //   "info@vayaccess.com",
-    //   //   "sales@vayaccess.com",
-    //   //   "support@vayaccess.com"
-    //   // ]
-    // },
-
   ];
 
   return (
-    <section id="contact" className="py-16 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 scroll-mt-20 relative overflow-x-hidden">
+    <section id="contact" className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 scroll-mt-20 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-20 right-20 w-72 h-72 bg-blue-600 rounded-full blur-3xl"></div>

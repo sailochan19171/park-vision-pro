@@ -1,10 +1,6 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ArrowRight, Car, CreditCard, Receipt, Camera, Navigation, Info, Users, Scan } from "lucide-react";
-
-// Mobile app mockup image - you may need to add this asset
-const mobileAppMockup = "/api/placeholder/300/600"; // Placeholder - replace with actual mobile app image
+import { ArrowRight, Car, Receipt, Camera, Navigation, Info, Users, Scan } from "lucide-react";
 
 const Solutions = () => {
   const navigate = useNavigate();
@@ -57,7 +53,7 @@ const Solutions = () => {
   ];
 
   return (
-    <section id="solutions" className="py-16 bg-gradient-to-b from-white to-gray-50 overflow-x-hidden">
+    <section id="solutions" className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-white to-gray-50 scroll-mt-20">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
         
         {/* Section Header */}
@@ -220,25 +216,6 @@ const Solutions = () => {
           </Button>
         </div>
 
-        {/* Quick Stats */}
-        {/* <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16"> */}
-          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
-            {/* <div className="text-3xl font-bold text-blue-600 mb-2">500+</div> */}
-            {/* <div className="text-gray-600">Projects</div> */}
-          {/* </div> */}
-          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
-            {/* <div className="text-3xl font-bold text-blue-600 mb-2">50+</div> */}
-            {/* <div className="text-gray-600">Cities</div> */}
-          {/* </div> */}
-          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
-            {/* <div className="text-3xl font-bold text-blue-600 mb-2">99.9%</div> */}
-            {/* <div className="text-gray-600">Uptime</div> */}
-          {/* </div> */}
-          {/* <div className="text-center bg-white rounded-lg p-6 shadow-sm border"> */}
-            {/* <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div> */}
-            {/* <div className="text-gray-600">Support</div> */}
-          {/* </div> */}
-        {/* </div> */}
       </div>
     </section>
   );

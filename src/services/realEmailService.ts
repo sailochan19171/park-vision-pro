@@ -11,9 +11,9 @@ export interface EmailJSConfig {
 
 // EmailJS configuration for real email sending
 export const EMAIL_JS_CONFIG: EmailJSConfig = {
-  serviceID: 'service_yvf3f9e', 
-  templateID: 'template_wg7m9ed', 
-  userID: '3BzCzdoKZbyqzub2D' 
+  serviceID: 'service_fiye637',
+  templateID: 'template_oz6aqm2',
+  userID: 'c4aTz4i6jK-TI-L-z'
 };
 
 // Real email sending function using EmailJS
@@ -227,6 +227,124 @@ For further questions, contact us at info@vayaccess.com`,
     
   } catch (error) {
     console.error(' Failed to send auto-reply:', error);
+    return false;
+  }
+};
+
+// Brochure download request — notify info@vayaccess.com when a visitor
+// requests the brochure via the Hero form.
+export interface BrochureRequestData {
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+}
+
+// Public URL where the brochure PDF can be downloaded.
+// In production this should resolve to https://vayaccess.com/vay-gate-brochure.pdf.
+const BROCHURE_URL = (() => {
+  if (typeof window === 'undefined') return 'https://vayaccess.com/vay-gate-brochure.pdf';
+  const host = window.location.hostname;
+  // Use absolute prod URL whenever we're not on localhost so links work in mail clients.
+  if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.')) {
+    return 'https://vayaccess.com/vay-gate-brochure.pdf';
+  }
+  return `${window.location.origin}/vay-gate-brochure.pdf`;
+})();
+
+// Send the brochure (as a download link) directly to the visitor who requested it.
+export const sendBrochureToUser = async (data: BrochureRequestData): Promise<boolean> => {
+  try {
+    console.log(`Sending brochure email to ${data.email}...`);
+
+    const templateParams = {
+      to_email: data.email,
+      from_email: 'info@vayaccess.com',
+      from_name: 'VayAccess Team',
+      reply_to: 'info@vayaccess.com',
+      subject: 'Your VAY Access Control Systems Brochure',
+      message:
+        `Hi ${data.name},\n\n` +
+        `Thanks for your interest in VayAccess Control Systems!\n\n` +
+        `You can download our complete brochure here:\n${BROCHURE_URL}\n\n` +
+        `Our product range includes:\n` +
+        `• Smart Parking & Access Control Systems\n` +
+        `• Barrier Gates, Turnstiles, Pedestrian Gates\n` +
+        `• ANPR / License Plate Recognition\n` +
+        `• Biometric & RFID Access\n` +
+        `• Cloud Platform & Analytics\n\n` +
+        `One of our specialists will reach out to you shortly to understand your requirements and share customized recommendations.\n\n` +
+        `Need to talk to someone right away?\n` +
+        `• Phone: +91 720 724 4344\n` +
+        `• WhatsApp: +91 9154703116\n` +
+        `• Email: info@vayaccess.com\n` +
+        `• Website: https://vayaccess.com\n\n` +
+        `Best regards,\n` +
+        `VayAccess Team\n` +
+        `Plot No. 26, Road No.1, West Gandhi Nagar,\n` +
+        `Rampally X Road, Nagaram, Keesara (M),\n` +
+        `Hyderabad - 500083, Telangana, India`,
+      customer_name: data.name,
+      customer_email: data.email,
+      brochure_url: BROCHURE_URL,
+    };
+
+    const result = await emailjs.send(
+      EMAIL_JS_CONFIG.serviceID,
+      EMAIL_JS_CONFIG.templateID,
+      templateParams,
+      EMAIL_JS_CONFIG.userID
+    );
+
+    console.log(`Brochure email sent to ${data.email}:`, result);
+    return true;
+  } catch (error) {
+    console.error('Failed to send brochure email to user:', error);
+    return false;
+  }
+};
+
+export const sendBrochureRequestNotification = async (data: BrochureRequestData): Promise<boolean> => {
+  try {
+    console.log('Sending brochure request notification to info@vayaccess.com...');
+
+    const submittedAt = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+    const templateParams = {
+      to_email: 'info@vayaccess.com',
+      from_email: data.email,
+      from_name: data.name,
+      reply_to: data.email,
+      subject: `New Brochure Download — ${data.name} (${data.city})`,
+      message:
+        `NEW BROCHURE DOWNLOAD\n\n` +
+        `${data.name} from ${data.city} just downloaded the VAY Access Control Systems brochure from the website.\n\n` +
+        `Visitor Details:\n` +
+        `• Name: ${data.name}\n` +
+        `• Email: ${data.email}\n` +
+        `• Phone: ${data.phone}\n` +
+        `• City: ${data.city}\n` +
+        `• Downloaded At: ${submittedAt}\n\n` +
+        `Action: Please follow up within 2 hours during business hours to convert this lead.\n\n` +
+        `— Automated notification from VayAccess website (Hero brochure form)`,
+      customer_name: data.name,
+      customer_email: data.email,
+      customer_phone: data.phone,
+      customer_city: data.city,
+      customer_message: `Brochure download from ${data.name} (${data.city}). Phone: ${data.phone}`,
+    };
+
+    const result = await emailjs.send(
+      EMAIL_JS_CONFIG.serviceID,
+      EMAIL_JS_CONFIG.templateID,
+      templateParams,
+      EMAIL_JS_CONFIG.userID
+    );
+
+    console.log('Brochure notification sent successfully:', result);
+    return true;
+  } catch (error) {
+    console.error('Failed to send brochure notification:', error);
     return false;
   }
 };

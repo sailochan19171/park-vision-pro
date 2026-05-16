@@ -1,46 +1,8 @@
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { useToast } from "../hooks/use-toast";
-
 import parkingGarage from "../assets/parking-garage.jpg";
-import pic6 from "../assets/PIC_6-removebg-preview.png";
 import missionImage from "../assets/innovation-mission.jpg";
-import smartParkingGuidance from "../assets/smart-parking-guidance.jpg";
 import qtq20 from "../assets/qtq20.jpg";
 
 const About = () => {
-  const { toast } = useToast();
-
-  const handleStartProject = () => {
-    // Scroll to contact section with proper header offset
-    const contactElement = document.querySelector('#contact');
-    if (contactElement) {
-      const headerHeight = 80;
-      const elementPosition = contactElement.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-      
-      // Pre-fill the message field with project inquiry
-      setTimeout(() => {
-        const messageTextarea = document.querySelector('textarea[name="message"]');
-        if (messageTextarea) {
-          const textareaElement = messageTextarea as HTMLTextAreaElement;
-          textareaElement.value = "Hi! I'm interested in starting a parking solution project. Please contact me to discuss my requirements and get a comprehensive proposal.";
-          textareaElement.focus();
-        }
-      }, 1000);
-    }
-    
-    toast({
-      title: "Redirecting to Contact Form",
-      description: "Please fill out the form below to start your project inquiry.",
-    });
-  };
-
   const values = [
     {
       title: "Innovation",
@@ -61,7 +23,7 @@ const About = () => {
   ];
 
   return (
-    <section id="about" className="py-18 bg-white scroll-mt-20 relative overflow-x-hidden">
+    <section id="about" className="py-12 md:py-16 lg:py-20 bg-white scroll-mt-20 relative overflow-hidden">
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative w-full">
         {/* Section Header */}
@@ -133,14 +95,9 @@ const About = () => {
             
             {/* Vision Content */}
             <div className="space-y-6">
-              <div>
-                {/* <Badge className="mb-4 bg-blue-100 text-blue-800 border-blue-200">
-                  Our Vision
-                </Badge> */}
-                <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                  Building Tomorrow's Infrastructure
-                </h3>
-              </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+                Building Tomorrow's Infrastructure
+              </h3>
               
               <div className="space-y-4">
                 <p className="text-sm text-gray-700 leading-relaxed">
@@ -169,14 +126,9 @@ const About = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Mission Content */}
             <div className="space-y-6 lg:order-1">
-              <div>
-                {/* <Badge className="mb-4 bg-green-100 text-green-800 border-green-200">
-                  Our Mission
-                </Badge> */}
-                <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                  Transforming Parking Through Innovation
-                </h3>
-              </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+                Transforming Parking Through Innovation
+              </h3>
               
               <div className="space-y-4">
                 <p className="text-sm text-gray-700 leading-relaxed">
@@ -232,44 +184,9 @@ const About = () => {
           </div>
         </div>
 
-        {/* Achievements */}
-        <div className="mb-12">
-          <div className="text-center mb-8">
-            {/* <h3 className="text-3xl font-bold text-foreground mb-4">Our Impact in Numbers</h3> */}
-            {/* <p className="text-lg text-muted-foreground">Real results from real implementations</p> */}
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            {/* {achievements.map((achievement, index) => ( */}
-              {/* <div key={index} className="bg-card p-6 rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow"> */}
-                {/* <div className="text-3xl font-bold text-primary mb-1"> */}
-                  {/* {achievement.number} */}
-                {/* </div> */}
-                {/* <div className="text-muted-foreground font-medium">{achievement.label}</div> */}
-              {/* </div> */}
-            {/* ))} */}
-          </div>
-        </div>
-
         {/* Core Values */}
-        <div className="mb-12">
-          <div className="text-center mb-8">
-            <h3 className="text-3xl font-bold text-foreground mb-3">
-              {/* What Drives Our Excellence */}
-            </h3>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-3">
-              {/* The fundamental principles that shape our approach to parking solutions */}
-            </p>
-            
-            <p className="text-sm text-muted-foreground max-w-4xl mx-auto">
-              {/* Our core values drive every aspect of our business, from product development and customer service 
-              to installation and ongoing support. These principles ensure that every solution we deliver not 
-              only meets but exceeds our clients' expectations while contributing to more efficient, secure, 
-              and sustainable parking infrastructure worldwide. */}
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((value, index) => (
               <div key={index} className="text-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                 <h4 className="text-lg font-bold text-gray-900 mb-3">
@@ -281,25 +198,6 @@ const About = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="text-center">
-          <div className="mb-6">
-            {/* <span className="text-primary font-semibold text-lg">Global Presence</span> */}
-          </div>
-          <h3 className="text-3xl font-bold text-foreground mb-6">
-            {/* Ready to Transform Your Parking Infrastructure? */}
-          </h3>
-          <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            {/* Join hundreds of satisfied customers who have revolutionized their parking operations with our solutions. */}
-          </p>
-          {/* <Button 
-            onClick={handleStartProject}
-            className="bg-gradient-to-r from-primary to-accent hover:opacity-90 px-4 py-2 text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            Start Your Project
-          </Button> */}
         </div>
       </div>
     </section>

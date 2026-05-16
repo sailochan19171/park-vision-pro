@@ -438,6 +438,72 @@ const EnhancedChatbot = () => {
   const generateSmartResponse = (userInput: string) => {
     const lowerInput = userInput.toLowerCase();
 
+    // 0) Small-talk / identity handlers — answer warmly without falling through to the
+    //    generic "I can help with Products…" path. These prevent the LLM from being
+    //    asked the question with a parking-only system prompt that would refuse to engage.
+    if (/^(hi|hello|hey|hola|namaste|greetings)\b/i.test(lowerInput) || /^good\s+(morning|afternoon|evening)\b/i.test(lowerInput)) {
+      return {
+        content: "Hi there! I'm VayBot, your assistant for VayAccess Smart Parking Solutions. How can I help you today?",
+        options: [
+          { id: 'products', label: ' View Products', action: 'message' as const, value: 'How many products do you have?' },
+          { id: 'solutions', label: ' Solutions', action: 'navigate' as const, value: '/solutions' },
+          { id: 'locations', label: ' Where are you located?', action: 'message' as const, value: 'Where are you located?' },
+        ],
+      };
+    }
+    if (/\b(who\s+are\s+you|what'?s?\s+your\s+name|introduce\s+yourself|tell\s+me\s+about\s+yourself|what\s+do\s+you\s+do)\b/i.test(lowerInput)) {
+      return {
+        content: "I'm VayBot — the digital assistant for VayAccess, a smart parking and access control company based in Hyderabad, India. I can help you explore our products, solutions, and services, or connect you with our team. What would you like to know?",
+        options: [
+          { id: 'products', label: ' View Products', action: 'message' as const, value: 'How many products do you have?' },
+          { id: 'solutions', label: ' Solutions', action: 'navigate' as const, value: '/solutions' },
+          { id: 'call', label: ' Call Sales', action: 'phone' as const, value: COMPANY.phone },
+        ],
+      };
+    }
+    if (/\b(where|were|wher)\s+(are\s+you|is\s+(the\s+)?company)\s+from\b/i.test(lowerInput) ||
+        /\b(where|were|wher).*\b(based|country|city|located)\b/i.test(lowerInput) ||
+        /\bwhich\s+(country|city|state)\b/i.test(lowerInput)) {
+      return {
+        content: `VayAccess is based in Hyderabad, India. Our corporate office and factory are located in Telangana. Here's our full address:\n\n${COMPANY.addressLines.join("\n")}\n\nPhone: ${COMPANY.phone}\nEmail: ${COMPANY.email}`,
+        options: [
+          { id: 'open-map', label: ' View on Maps', action: 'link' as const, value: 'https://maps.google.com/?q=VayAccess Hyderabad 500083' },
+          { id: 'call', label: ' Call Us', action: 'phone' as const, value: COMPANY.phone },
+        ],
+      };
+    }
+    if (/\b(how\s+old)\b/i.test(lowerInput) ||
+        /\bwhat(\s+is|'?s)?\s+your\s+age\b/i.test(lowerInput) ||
+        /\byour\s+age\b/i.test(lowerInput) ||
+        /\b(how\s+long\s+have\s+you\s+been|since\s+when|when\s+(was\s+the\s+company\s+)?(founded|started|established))\b/i.test(lowerInput)) {
+      return {
+        content: "I'm a digital assistant — so I don't really have an age! VayAccess is a growing smart parking and access control company. For details about our history and experience, feel free to reach out to our team.",
+        options: [
+          { id: 'call', label: ' Call Sales', action: 'phone' as const, value: COMPANY.phone },
+          { id: 'email', label: ' Email Us', action: 'email' as const, value: COMPANY.email },
+        ],
+      };
+    }
+    if (/\b(how\s+are\s+you|how.?s?\s+it\s+going|what.?s?\s+up)\b/i.test(lowerInput)) {
+      return {
+        content: "I'm doing great, thanks for asking! Ready to help you find the right parking or access-control solution. What would you like to explore?",
+        options: [
+          { id: 'products', label: ' View Products', action: 'message' as const, value: 'How many products do you have?' },
+          { id: 'solutions', label: ' Solutions', action: 'navigate' as const, value: '/solutions' },
+        ],
+      };
+    }
+    if (/^(thanks|thank\s+you|thx|ty|much\s+appreciated|appreciate\s+(it|that))\b/i.test(lowerInput)) {
+      return {
+        content: "You're welcome! Let me know if there's anything else I can help you with.",
+      };
+    }
+    if (/^(bye|goodbye|cya|see\s+you|good\s+night)\b/i.test(lowerInput)) {
+      return {
+        content: "Goodbye! Feel free to reach out anytime. Have a great day! ",
+      };
+    }
+
     // 1) Locations intent (handle first to avoid pricing false positives like 'operate' containing 'rate')
     const locationIntent = /(where\s+do\s+you\s+(operate|provide)|where.*(operate|located|locations)|service\s+locations?|locations?\s+(do\s+you\s+serve|you\s+serve))/i;
     if (locationIntent.test(lowerInput) || /\bwhere\b.*\b(factory|office|hq|head\s*office|address|located)\b/i.test(lowerInput)) {
@@ -802,9 +868,13 @@ const EnhancedChatbot = () => {
       const smartResponse = generateSmartResponse(textToSend);
 
       if (smartResponse && smartResponse.content) {
-        // Decide if we should upgrade to AI (ChatGPT-like) instead of a generic rule response
+        // Decide if we should upgrade to AI (ChatGPT-like) instead of a generic rule response.
+        // Any of these phrases indicate the rule engine didn't actually understand the user
+        // and is falling back to a generic menu prompt — that's our cue to hand off to the LLM.
         const genericHints = [
+          'I can help with Products, Solutions, Services, or Office location',
           'I can help you with information about our products and service locations',
+          'Want to navigate to Solutions, Services, or Contact',
           'Would you like to know about our service locations',
           "I couldn't find that product category",
         ];
@@ -831,7 +901,15 @@ const EnhancedChatbot = () => {
             const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
             const completion = await groq.chat.completions.create({
               messages: [
-                { role: 'system', content: `You are VayBot, an assistant for VayAccess Smart Parking Solutions. Answer accurately about parking products, access control, integrations, and services. Do not provide any pricing or costs. If asked about pricing, say: "For detailed pricing and customized quotes, please contact our sales team at info@vayaccess.com or +91 720 724 4344." Keep answers concise and helpful, and prefer bullet points for lists.` },
+                { role: 'system', content: `You are VayBot, the friendly digital assistant for VayAccess Smart Parking Solutions — a parking and access-control company based in Hyderabad, India.
+
+Behavior:
+- For business questions, answer accurately about parking products, access control, integrations, services, and locations.
+- For small talk, greetings, or questions about yourself, the company, where it's from, etc., respond warmly and briefly as the company's helpful assistant — don't refuse or deflect.
+- For unrelated general-knowledge questions (math, world facts, etc.), answer briefly and then gently steer back to how you can help with their parking needs.
+- Never quote prices or costs. If asked, say: "For detailed pricing and customized quotes, please contact our sales team at info@vayaccess.com or +91 720 724 4344."
+
+Style: concise (2–4 sentences), warm, professional. Use bullet points for lists.` },
                 { role: 'user', content: textToSend }
               ],
               model: 'llama-3.3-70b-versatile',
@@ -923,18 +1001,13 @@ const EnhancedChatbot = () => {
   const quickQuestions = [
     "Show all products",
     "Show me solutions",
-    "List multiple options for parking systems",
     "Tell me about Barrier Gates",
-    "Tell me about Pedestrian Gates",
     "Tell me about Access Control",
-    "Tell me about Parking Management",
-    "How many locations do you serve?",
     "Where do you operate?",
-    "Smart Barrier Gate System",
-    "Flap Barrier Turnstiles",
     "RFID Card Readers",
-    "Biometric Systems"
   ];
+
+  const hasUserInteracted = messages.some((m) => m.role === 'user');
 
   const handleQuickQuestion = (question: string) => {
     handleSendMessage(question);
@@ -962,8 +1035,8 @@ const EnhancedChatbot = () => {
 
   return (
     <Card
-      className={`fixed bottom-6 right-6 w-96 shadow-2xl border-2 border-blue-200 z-50 transition-all duration-300 select-none touch-none ${
-        isMinimized ? 'h-16' : 'h-[600px]'
+      className={`fixed bottom-6 right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-[400px] shadow-2xl border-2 border-blue-200 z-50 transition-all duration-300 ${
+        isMinimized ? 'h-16' : 'h-[600px] max-h-[calc(100vh-4rem)]'
       }`}
       style={{ overscrollBehavior: 'contain' }}
     >
@@ -1107,22 +1180,24 @@ const EnhancedChatbot = () => {
             </div>
           </ScrollArea>
 
-          {/* Quick Questions */}
-          <div className="p-3 border-t bg-gray-50">
-            <p className="text-xs text-gray-600 mb-2">Quick questions:</p>
-            <div className="flex flex-wrap gap-1">
-              {quickQuestions.map((question, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-blue-100 text-xs p-1"
-                  onClick={() => handleQuickQuestion(question)}
-                >
-                  {question}
-                </Badge>
-              ))}
+          {/* Quick Questions — only shown until the user sends their first message */}
+          {!hasUserInteracted && (
+            <div className="px-3 pt-2 pb-3 border-t bg-gray-50/80">
+              <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2">Suggested</p>
+              <div className="flex flex-wrap gap-1.5">
+                {quickQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleQuickQuestion(question)}
+                    className="text-xs px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors duration-200"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Input Area */}
           <div className="p-3 sm:p-4 border-t bg-white">

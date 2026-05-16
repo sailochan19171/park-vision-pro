@@ -98,7 +98,7 @@ const FeaturedProducts = () => {
   };
 
   return (
-    <section className="py-24 bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative overflow-hidden">
+    <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30 relative overflow-hidden">
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute top-20 right-20 w-72 h-72 bg-blue-600 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-20 w-64 h-64 bg-blue-400 rounded-full blur-3xl"></div>

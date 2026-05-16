@@ -1,6 +1,9 @@
 ﻿import { io, Socket } from 'socket.io-client';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// Only attempt to talk to a backend when one is explicitly configured.
+// In dev with no backend running, leaving this undefined prevents the
+// socket.io-client from hammering ws://localhost:3001 and spamming the console.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const isNgrok = /ngrok/i.test(String(import.meta.env.VITE_API_BASE_URL || ''));
 const defaultHeaders: Record<string,string> = isNgrok ? { 'ngrok-skip-browser-warning': 'true' } : {};
 
@@ -53,10 +56,15 @@ class AICallService {
 
   // Initialize Socket.IO connection for real-time features
   private initializeSocket() {
+    // No backend configured → don't even try to open a socket.
+    // This silences the "WebSocket connection failed" errors on local dev.
+    if (!API_BASE_URL) return;
+
     try {
       this.socket = io(API_BASE_URL, {
         transports: ['websocket', 'polling'],
         timeout: 20000,
+        reconnection: false,
       });
 
       this.socket.on('connect', () => {

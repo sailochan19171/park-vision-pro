@@ -109,22 +109,25 @@ const Header = () => {
   return (
     <>
       {/* Dynamic spacer div that adjusts with header size */}
-      <div className="h-16 md:h-20"></div>
+      <div className="h-20 md:h-24"></div>
       <header
         className={cn(
-          "fixed top-0 w-full z-50 bg-white shadow-lg border-b transition-transform duration-300",
+          "fixed top-0 w-full z-50 transition-all duration-300 border-b",
+          isScrolled
+            ? "bg-white/85 backdrop-blur-lg shadow-[0_2px_20px_-8px_rgba(15,23,42,0.12)] border-gray-200/60"
+            : "bg-white border-transparent shadow-none",
           isHeaderVisible ? "translate-y-0" : "-translate-y-full",
           isMobileMenuOpen && "transform-none"
         )}
       >
-      <div className="container mx-auto px-6 lg:px-8 py-0 relative">
-        <div className="flex items-center justify-between h-20 md:h-28">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-0 relative">
+        <div className="flex items-center justify-between h-20 md:h-24">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <div className="flex items-center justify-center w-20 h-20 md:w-28 md:h-28">
-              <img 
-                src={logoImage} 
-                alt="Company Logo" 
+          <Link to="/" className="flex items-center group shrink-0">
+            <div className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 transition-transform duration-300 group-hover:scale-[1.03]">
+              <img
+                src={logoImage}
+                alt="Company Logo"
                 className="w-full h-full object-contain"
                 onError={(e) => {
                   // Fallback to PV logo if image fails to load
@@ -140,13 +143,13 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6 ml-auto mr-8">
+          <nav className="hidden md:flex items-center space-x-8 ml-auto mr-8">
             {navItems.filter(item => item.label !== 'Products').map((item) => (
               item.href.startsWith('/') ? (
                 <Link
                   key={item.href}
                   to={item.href}
-                  className="text-foreground hover:text-tech-blue transition-colors duration-300 font-medium font-poppins"
+                  className="relative text-foreground hover:text-tech-blue transition-colors duration-300 font-medium font-poppins after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-tech-blue after:transition-all after:duration-300 hover:after:w-full"
                 >
                   {item.label}
                 </Link>
@@ -154,18 +157,18 @@ const Header = () => {
                 <a
                   key={item.href}
                   href={item.href}
-                  className="text-foreground hover:text-tech-blue transition-colors duration-300 font-medium font-poppins"
+                  className="relative text-foreground hover:text-tech-blue transition-colors duration-300 font-medium font-poppins after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-tech-blue after:transition-all after:duration-300 hover:after:w-full"
                 >
                   {item.label}
                 </a>
               )
             ))}
-            
+
             {/* Products Mega Menu */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-tech-blue transition-colors duration-300 font-medium outline-none">
+              <DropdownMenuTrigger className="group relative flex items-center space-x-1 text-foreground hover:text-tech-blue transition-colors duration-300 font-medium outline-none after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-tech-blue after:transition-all after:duration-300 hover:after:w-full">
                 <span>Products</span>
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 transition-transform duration-300 group-data-[state=open]:rotate-180" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[600px] p-6">
                 <div className="grid grid-cols-1 gap-8">

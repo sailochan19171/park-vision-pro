@@ -30,10 +30,6 @@ const Products: React.FC<ProductsProps> = ({ showPrices = true }) => {
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      // Debug log to confirm parallax is working
-      if (window.scrollY % 100 === 0) {
-        console.log(' Parallax Active - Scroll Y:', window.scrollY);
-      }
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -148,7 +144,7 @@ const Products: React.FC<ProductsProps> = ({ showPrices = true }) => {
   ];
 
   return (
-    <section ref={sectionRef} id="products" className="py-24 bg-white relative overflow-hidden">
+    <section ref={sectionRef} id="products" className="py-12 md:py-16 lg:py-20 bg-white relative overflow-hidden scroll-mt-20">
       {/* Dynamic Parallax Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none max-w-full">
         {/* Floating Geometric Shapes with Parallax */}
