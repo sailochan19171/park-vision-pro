@@ -36,3 +36,6 @@ dist-ssr
 **/.env
 backend/.env
 .vercel
+
+# Loose brochure copy at repo root (the real one lives in public/)
+/vay broucher*.pdf
