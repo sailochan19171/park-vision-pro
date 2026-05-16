@@ -770,6 +770,52 @@ const EnhancedChatbot = () => {
     return undefined;
   };
   
+  // Robust LLM call: tries the current Groq model, falls back to a smaller/cheaper
+  // model if the first one is rate-limited or deprecated, and never throws —
+  // returns null if every attempt fails so the caller can degrade gracefully.
+  const callGroqLLM = async (userText: string): Promise<string | null> => {
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
+    if (!apiKey || apiKey === 'your_groq_api_key_here') {
+      console.warn('[VayBot] VITE_GROQ_API_KEY is not configured — skipping LLM call.');
+      return null;
+    }
+
+    const systemPrompt = `You are VayBot, the friendly digital assistant for VayAccess Smart Parking Solutions — a parking and access-control company based in Hyderabad, India.
+
+Behavior:
+- Answer ANY question the user asks — business, small talk, general knowledge, fun questions, math, jokes — like a helpful conversational assistant.
+- For business questions, answer accurately about VayAccess parking products, access control, integrations, services, and locations (Hyderabad HQ, factory in Yadadri-Bhuvanagiri district).
+- For small talk and personal questions about you or the company, respond warmly and briefly.
+- For unrelated general-knowledge questions, just answer them — then optionally end with a one-line offer to help with their parking needs (don't force it).
+- Never quote prices or costs. If asked about pricing, say: "For detailed pricing and customized quotes, please contact our sales team at info@vayaccess.com or +91 720 724 4344."
+
+Style: warm, professional, concise (2–5 sentences). Use bullet points only for actual lists.`;
+
+    const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it'];
+
+    for (const model of models) {
+      try {
+        const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
+        const completion = await groq.chat.completions.create({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userText },
+          ],
+          model,
+          temperature: 0.5,
+          max_tokens: 600,
+        });
+        const text = completion?.choices?.[0]?.message?.content?.trim();
+        if (text) return text;
+      } catch (err) {
+        console.warn(`[VayBot] Groq model "${model}" failed:`, err);
+        // Try the next model
+      }
+    }
+
+    return null;
+  };
+
   const handleSendMessage = async (messageText?: string) => {
     const textToSend = messageText || inputMessage;
     if (!textToSend.trim()) return;
@@ -882,57 +928,25 @@ const EnhancedChatbot = () => {
         const isPricingLike = /\b(price|pricing|cost|quote|quotation|estimate|fee|charge|budget|amount|rate|payment|₹|rupee|rs|inr)\b/i.test(textToSend);
 
         if (!isPricingLike && isGeneric) {
-          // Upgrade to AI response for richer, more accurate content
-          const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-          if (!apiKey || apiKey === 'your_groq_api_key_here') {
-            // If no key, fallback to current smart response
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: smartResponse.content,
-              role: 'assistant',
-              timestamp: new Date(),
-              options: smartResponse.options,
-              // Prefer dynamic cards for the query; fallback to smartResponse cards
-              cards: getCardsForQuery(textToSend) ?? smartResponse.cards,
-            };
-            setMessages(prev => [...prev, assistantMessage]);
-            await sendConversationEmail(textToSend, assistantMessage.content);
-          } else {
-            const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-            const completion = await groq.chat.completions.create({
-              messages: [
-                { role: 'system', content: `You are VayBot, the friendly digital assistant for VayAccess Smart Parking Solutions — a parking and access-control company based in Hyderabad, India.
-
-Behavior:
-- For business questions, answer accurately about parking products, access control, integrations, services, and locations.
-- For small talk, greetings, or questions about yourself, the company, where it's from, etc., respond warmly and briefly as the company's helpful assistant — don't refuse or deflect.
-- For unrelated general-knowledge questions (math, world facts, etc.), answer briefly and then gently steer back to how you can help with their parking needs.
-- Never quote prices or costs. If asked, say: "For detailed pricing and customized quotes, please contact our sales team at info@vayaccess.com or +91 720 724 4344."
-
-Style: concise (2–4 sentences), warm, professional. Use bullet points for lists.` },
-                { role: 'user', content: textToSend }
-              ],
-              model: 'llama-3.3-70b-versatile',
-              temperature: 0.4,
-              max_tokens: 600,
-            });
-            const responseText = completion?.choices[0]?.message?.content || smartResponse.content;
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: responseText,
-              role: 'assistant',
-              timestamp: new Date(),
-              options: [
-                { id: 'products', label: ' View All Products', action: 'message', value: 'How many products do you have?' },
-                { id: 'locations', label: ' Service Locations', action: 'message', value: 'How many locations do you serve?' },
-                { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
-                { id: 'email', label: ' Email Sales', action: 'email', value: COMPANY.email },
-              ],
-              cards: getCardsForQuery(textToSend)
-            };
-            setMessages(prev => [...prev, assistantMessage]);
-            await sendConversationEmail(textToSend, assistantMessage.content);
-          }
+          // Hand off to the LLM for a ChatGPT-style conversational answer.
+          const llmText = await callGroqLLM(textToSend);
+          const assistantMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            content: llmText || smartResponse.content,
+            role: 'assistant',
+            timestamp: new Date(),
+            options: llmText
+              ? [
+                  { id: 'products', label: ' View All Products', action: 'message', value: 'How many products do you have?' },
+                  { id: 'locations', label: ' Service Locations', action: 'message', value: 'How many locations do you serve?' },
+                  { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
+                  { id: 'email', label: ' Email Sales', action: 'email', value: COMPANY.email },
+                ]
+              : smartResponse.options,
+            cards: getCardsForQuery(textToSend) ?? smartResponse.cards,
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          await sendConversationEmail(textToSend, assistantMessage.content);
         } else {
           // Keep rule-based response
           const assistantMessage: Message = {
@@ -947,25 +961,12 @@ Style: concise (2–4 sentences), warm, professional. Use bullet points for list
           await sendConversationEmail(textToSend, assistantMessage.content);
         }
       } else {
-        // Fallback: call Groq for a ChatGPT-like answer focused on VayAccess features only
-        const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-        if (!apiKey || apiKey === 'your_groq_api_key_here') {
-          throw new Error('API key not configured');
-        }
-        const groq = new Groq({ apiKey, dangerouslyAllowBrowser: true });
-        const completion = await groq.chat.completions.create({
-          messages: [
-            { role: 'system', content: `You are VayBot, an assistant for VayAccess Smart Parking Solutions. Answer accurately about parking products, access control, integrations, and services. Do not provide any pricing or costs. If asked about pricing, say: "For detailed pricing and customized quotes, please contact our sales team at info@vayaccess.com or +91 720 724 4344." Keep answers concise and helpful, and prefer bullet points for lists.` },
-            { role: 'user', content: textToSend }
-          ],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.4,
-          max_tokens: 600,
-        });
-        const responseText = completion?.choices[0]?.message?.content || 'I can help with product and services information. What would you like to know?';
+        // No rule-based match at all — go straight to LLM for a conversational answer.
+        const llmText = await callGroqLLM(textToSend);
+        const fallback = `I can help you with information about VayAccess parking and access-control solutions — products, services, locations, or connecting you with our team. What would you like to know?`;
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: responseText,
+          content: llmText || fallback,
           role: 'assistant',
           timestamp: new Date(),
           options: [
@@ -974,25 +975,29 @@ Style: concise (2–4 sentences), warm, professional. Use bullet points for list
             { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
             { id: 'email', label: ' Email Sales', action: 'email', value: COMPANY.email },
           ],
-          cards: getCardsForQuery(textToSend)
+          cards: getCardsForQuery(textToSend),
         };
         setMessages(prev => [...prev, assistantMessage]);
         await sendConversationEmail(textToSend, assistantMessage.content);
       }
     } catch (error) {
-      console.error('Error generating response:', error);
-      const errorMessage: Message = {
+      // callGroqLLM never throws, so anything that lands here is unexpected
+      // (e.g. setState error, sendConversationEmail crash). Give a graceful,
+      // on-brand reply instead of the previous "trouble responding" message.
+      console.error('[VayBot] Unexpected handler error:', error);
+      const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I'm having trouble responding right now. Please try again or use the quick options below.",
+        content:
+          "Let me get that for you — meanwhile, our team is happy to help directly. Try asking again, or reach us at info@vayaccess.com or +91 720 724 4344.",
         role: 'assistant',
         timestamp: new Date(),
         options: [
           { id: 'retry', label: ' Try Again', action: 'message', value: textToSend },
           { id: 'call', label: ' Call Sales', action: 'phone', value: COMPANY.phone },
           { id: 'email', label: ' Email Sales', action: 'email', value: COMPANY.email },
-        ]
+        ],
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, fallbackMessage]);
     } finally {
       setIsLoading(false);
     }
