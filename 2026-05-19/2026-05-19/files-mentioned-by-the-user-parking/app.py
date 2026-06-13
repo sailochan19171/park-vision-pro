@@ -2415,6 +2415,36 @@ def seed_defaults():
     has_login_capable_account = (
         Account.query.filter(Account.password_hash.isnot(None)).count() > 0
     )
+    # If the operator EXPLICITLY sets INITIAL_ADMIN_PASSWORD as an env var
+    # (Render dashboard), treat that as "reset the admin password on next
+    # boot." Without this branch, once the admin row exists nothing in
+    # INITIAL_ADMIN_PASSWORD has any effect — operators end up locked out
+    # of their own deploy. The env var must be PRESENT in the environment
+    # to qualify; an absent var falls through to the original logic so
+    # existing admin passwords are never silently overwritten.
+    explicit_pwd = os.environ.get('INITIAL_ADMIN_PASSWORD')
+    if explicit_pwd is not None and explicit_pwd.strip() != '':
+        admin_user = (os.environ.get('INITIAL_ADMIN_USER') or 'admin').strip() or 'admin'
+        if not Role.query.filter(db.func.lower(Role.name) == 'administrator').first():
+            db.session.add(Role(name='Administrator',
+                                description='Full system access (seeded on first boot)'))
+            db.session.commit()
+        existing = Account.query.filter(
+            db.func.lower(Account.name) == admin_user.lower()).first()
+        if existing:
+            existing.role = 'Administrator'
+            existing.set_password(explicit_pwd.strip())
+            action = 'password reset from INITIAL_ADMIN_PASSWORD'
+        else:
+            a = Account(name=admin_user, nickname='Initial Admin', role='Administrator')
+            a.set_password(explicit_pwd.strip())
+            db.session.add(a)
+            action = 'seeded from INITIAL_ADMIN_PASSWORD'
+        db.session.commit()
+        AuditEvent.log(f"Admin {action}: {admin_user}", area='System')
+        print(f"[OK] Admin {action}: {admin_user}")
+        has_login_capable_account = True
+
     if not has_login_capable_account:
         # Make sure the "Administrator" role exists so the admin_required
         # decorator can recognise it.
