@@ -1,0 +1,32 @@
+appId: com.farmleysfa
+name: "08 - Restart Day After End"
+---
+- launchApp
+
+# Dashboard should show Start Day (since day was ended)
+- tapOn: "Home"
+- takeScreenshot: "../lochan farmley screenshots/34_dashboard_after_end"
+
+# Tap Start Day
+- tapOn: "Start Day"
+- extendedWaitUntil:
+    visible: "Start Your Day"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/35_restart_day_checks"
+
+# Wait for checks
+- extendedWaitUntil:
+    visible:
+      textRegex: "Proceed|Continue"
+    timeout: 15000
+
+# Proceed (attendance already marked)
+- tapOn:
+    textRegex: "Proceed|Continue"
+- takeScreenshot: "../lochan farmley screenshots/36_restart_navigated"
+
+# Verify timer shows on dashboard
+- extendedWaitUntil:
+    visible: "WORKING"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/37_timer_after_restart"

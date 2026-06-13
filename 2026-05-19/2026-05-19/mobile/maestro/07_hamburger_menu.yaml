@@ -1,0 +1,38 @@
+appId: com.farmleysfa
+name: "07 - Hamburger Menu Navigation"
+---
+- launchApp
+
+# Open hamburger menu
+- tapOn:
+    point: "5%,7%"
+- extendedWaitUntil:
+    visible: "My Tasks"
+    timeout: 3000
+- takeScreenshot: "../lochan farmley screenshots/29_hamburger_menu"
+
+# Test My Tasks
+- tapOn: "My Tasks"
+- takeScreenshot: "../lochan farmley screenshots/30_my_tasks"
+- back
+
+# Reopen drawer
+- tapOn:
+    point: "5%,7%"
+- tapOn: "Reports"
+- takeScreenshot: "../lochan farmley screenshots/31_reports"
+- back
+
+# Reopen drawer
+- tapOn:
+    point: "5%,7%"
+- tapOn: "Others"
+- takeScreenshot: "../lochan farmley screenshots/32_others_settings"
+- back
+
+# Reopen drawer
+- tapOn:
+    point: "5%,7%"
+- tapOn: "Initiatives"
+- takeScreenshot: "../lochan farmley screenshots/33_initiatives"
+- back

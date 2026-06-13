@@ -1,0 +1,49 @@
+appId: com.farmleysfa
+name: "04 - Place Order Flow"
+---
+- launchApp
+
+# Navigate: Stores → first store → Place Order
+- tapOn: "Stores"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 5000
+
+# Tap first visible store
+- tapOn:
+    index: 0
+    childOf:
+      id: "store-list"
+
+- extendedWaitUntil:
+    visible: "Place Order"
+    timeout: 5000
+- tapOn: "Place Order"
+- takeScreenshot: "../lochan farmley screenshots/16_order_screen"
+
+# Wait for products to load
+- extendedWaitUntil:
+    visible: "ALL"
+    timeout: 10000
+- takeScreenshot: "../lochan farmley screenshots/17_order_products_loaded"
+
+# Add first product (tap + button)
+- tapOn: "+"
+- takeScreenshot: "../lochan farmley screenshots/18_order_item_added"
+
+# Add another product
+- scroll:
+    direction: DOWN
+    amount: 200
+- tapOn: "+"
+- takeScreenshot: "../lochan farmley screenshots/19_order_multiple_items"
+
+# Place order
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible: "Order Placed"
+    timeout: 10000
+- takeScreenshot: "../lochan farmley screenshots/20_order_placed_success"
+
+# Confirm
+- tapOn: "OK"

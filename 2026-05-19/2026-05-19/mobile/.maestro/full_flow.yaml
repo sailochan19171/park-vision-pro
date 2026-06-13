@@ -1,0 +1,277 @@
+appId: com.farmleysfa
+name: "Farmley SFA - Full E2E Flow"
+
+---
+
+# ═══ STEP 1: LOGIN ═══
+- clearState
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+
+- tapOn:
+    id: "login-username"
+- inputText: "Demo_p"
+- tapOn:
+    id: "login-password"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn:
+    id: "login-button"
+
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-action-button"
+    timeout: 120000
+
+- takeScreenshot: "01_login_success"
+
+# ═══ STEP 2: START DAY ═══
+- tapOn:
+    id: "dashboard-action-button"
+
+# May show "end the previous day" alert
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+      - evalScript: ${sleep(2000)}
+      - tapOn:
+          id: "dashboard-action-button"
+
+- extendedWaitUntil:
+    visible: "Attendance"
+    timeout: 60000
+
+- takeScreenshot: "02_checks_passed"
+
+- tapOn: "Attendance"
+
+- extendedWaitUntil:
+    visible: "Mark Attendance"
+    timeout: 10000
+
+- tapOn: "Proceed"
+
+# Camera opens for selfie — wait for it to load, then tap shutter
+- evalScript: ${sleep(5000)}
+- tapOn:
+    point: "50%,92%"
+- evalScript: ${sleep(5000)}
+
+# Accept photo if preview shows
+- runFlow:
+    when:
+      visible: "Accept"
+    commands:
+      - tapOn: "Accept"
+      - evalScript: ${sleep(2000)}
+
+# Dismiss any OK alert
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-action-button"
+    timeout: 30000
+
+- takeScreenshot: "03_day_started"
+
+# ═══ STEP 3: NAVIGATE TO STORES ═══
+- tapOn:
+    id: "dashboard-action-button"
+- evalScript: ${sleep(5000)}
+- takeScreenshot: "04_stores_list"
+
+# ═══ STEP 4: CHECK IN TO STORE ═══
+- tapOn:
+    id: "store-card-0"
+- evalScript: ${sleep(5000)}
+
+# Handle force check-in alert
+- runFlow:
+    when:
+      visible: "force check in"
+    commands:
+      - tapOn: "Yes"
+      - evalScript: ${sleep(3000)}
+
+# Camera for check-in photo — wait for camera, tap shutter
+- evalScript: ${sleep(5000)}
+- tapOn:
+    point: "50%,92%"
+- evalScript: ${sleep(5000)}
+
+# Accept photo
+- runFlow:
+    when:
+      visible: "Accept"
+    commands:
+      - tapOn: "Accept"
+      - evalScript: ${sleep(3000)}
+
+# Dismiss any alert
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+
+- extendedWaitUntil:
+    visible: "Opening Stock"
+    timeout: 30000
+
+- takeScreenshot: "05_customer_dashboard"
+
+# ═══ STEP 5: OPENING STOCK ═══
+- tapOn: "Opening Stock"
+- evalScript: ${sleep(3000)}
+- takeScreenshot: "06_opening_stock"
+- tapOn: "Submit"
+- evalScript: ${sleep(3000)}
+
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+      - evalScript: ${sleep(1000)}
+
+- back
+- evalScript: ${sleep(2000)}
+
+# ═══ STEP 6: PHYSICAL STOCK ═══
+- tapOn: "Physical Stock"
+- evalScript: ${sleep(3000)}
+- takeScreenshot: "07_physical_stock"
+- tapOn: "Submit"
+- evalScript: ${sleep(3000)}
+
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+      - evalScript: ${sleep(1000)}
+
+- back
+- evalScript: ${sleep(2000)}
+
+# ═══ STEP 7: OSOI ═══
+- runFlow:
+    when:
+      visible: "OSOI"
+    commands:
+      - tapOn: "OSOI"
+      - evalScript: ${sleep(3000)}
+      - takeScreenshot: "08_osoi"
+      - tapOn: "Submit"
+      - evalScript: ${sleep(3000)}
+      - runFlow:
+          when:
+            visible: "OK"
+          commands:
+            - tapOn: "OK"
+      - back
+      - evalScript: ${sleep(2000)}
+
+# ═══ STEP 8: CHECK OUT ═══
+- tapOn: "Check Out"
+- evalScript: ${sleep(2000)}
+
+# Confirm checkout
+- runFlow:
+    when:
+      visible: "Yes"
+    commands:
+      - tapOn: "Yes"
+      - evalScript: ${sleep(3000)}
+
+# Camera for checkout photo — wait for camera, tap shutter
+- evalScript: ${sleep(5000)}
+- tapOn:
+    point: "50%,92%"
+- evalScript: ${sleep(5000)}
+
+# Accept photo
+- runFlow:
+    when:
+      visible: "Accept"
+    commands:
+      - tapOn: "Accept"
+      - evalScript: ${sleep(3000)}
+
+# Dismiss any alert
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+
+- evalScript: ${sleep(5000)}
+- takeScreenshot: "09_checked_out"
+
+# ═══ STEP 9: END DAY ═══
+- back
+- evalScript: ${sleep(2000)}
+
+# Handle "exit this page" alert
+- runFlow:
+    when:
+      visible: "exit this page"
+    commands:
+      - tapOn: "Yes"
+      - evalScript: ${sleep(2000)}
+
+# Handle another back if needed
+- runFlow:
+    when:
+      visible: "exit this page"
+    commands:
+      - tapOn: "Yes"
+      - evalScript: ${sleep(2000)}
+
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-action-button"
+    timeout: 15000
+
+- tapOn:
+    id: "hamburger-button"
+- evalScript: ${sleep(2000)}
+
+- tapOn: "Day End"
+- evalScript: ${sleep(5000)}
+
+- tapOn: "Submit"
+- evalScript: ${sleep(15000)}
+
+# Confirm end day
+- runFlow:
+    when:
+      visible: "Yes"
+    commands:
+      - tapOn: "Yes"
+      - evalScript: ${sleep(5000)}
+
+# Dismiss OK alert
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+
+- evalScript: ${sleep(5000)}
+
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 30000
+
+- takeScreenshot: "10_day_ended"

@@ -1,0 +1,64 @@
+appId: com.farmleysfa
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+
+# Tap Place Order card (~47% y position, above Store Check which was at 55%)
+- swipe:
+    start: "50%,47%"
+    end: "51%,47%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "ALL"
+    timeout: 15000
+- takeScreenshot: screenshots/10a-order-screen-new
+
+# Tap Makhana category in sidebar (left side, about 25% into the categories)
+- tapOn: "MAKHANA"
+- takeScreenshot: screenshots/10b-order-makhana
+
+# Add items with quantity steppers
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 2
+- tapOn:
+    text: "+"
+    index: 2
+- takeScreenshot: screenshots/10c-order-with-items

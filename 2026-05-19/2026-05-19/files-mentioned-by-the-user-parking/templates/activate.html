@@ -186,14 +186,23 @@
                             <select id="vehicle_type">
                                 <option value="Car" selected>Car</option>
                                 <option value="Bike">Bike / Scooty</option>
-                                <option value="Truck">Truck</option>
-                                <option value="Bus">Bus</option>
                             </select>
                         </div>
                         <div class="full">
                             <label>RFID Tag (from SRK-F206)</label>
                             <input type="text" id="rfid_tag" readonly placeholder="Scan a tag first…">
                         </div>
+                    </div>
+
+                    <div style="margin-top: 14px; padding: 12px 14px;
+                                background: rgba(245,158,11,0.10);
+                                border:1px solid rgba(245,158,11,0.35);
+                                border-radius: 10px; color:#fbbf24; font-size: 0.85em;">
+                        <b>Payment-gated enrollment</b> — new activations are
+                        recorded from the <b>Admin tab</b> in the main shell,
+                        which collects the UPI payment alongside employee
+                        details. This page is kept for tag scanning only.
+                        <a href="/#admin" style="color:#fbbf24; font-weight:700;">Open Admin tab →</a>
                     </div>
 
                     <div class="btn-row">

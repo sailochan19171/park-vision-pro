@@ -1,15 +1,24 @@
 :root {
-  --bg: #f4f6f1;
+  /* Palette shifted teal/forest -> blue/navy to match the SaaS admin look
+     (WeParking / common Element-UI admin templates). Light content area,
+     navy sidebar, bright blue primary. */
+  --bg: #f4f7fa;
   --panel: #ffffff;
-  --text: #1f2a27;
-  --muted: #66706c;
-  --line: #dce2dc;
-  --primary: #127c72;
-  --primary-dark: #0a5e58;
+  --text: #1f2a3d;
+  --muted: #6b7280;
+  --line: #e5e9ef;
+  --primary: #1f73d4;
+  --primary-dark: #1858a6;
   --accent: #d5952a;
   --danger: #b74a42;
   --ok: #2f8b57;
-  --shadow: 0 16px 40px rgba(42, 58, 53, 0.10);
+  --shadow: 0 12px 32px rgba(15, 35, 70, 0.08);
+
+  /* Sidebar palette — navy instead of near-black, slightly lighter hover. */
+  --side-bg: #1d2939;
+  --side-hover: #2a3a52;
+  --side-text: #cbd5e1;
+  --side-text-strong: #f8fafc;
 }
 
 * {
@@ -58,7 +67,12 @@ select {
 .app-shell {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
-  min-height: 100vh;
+  /* Bound the whole shell to one viewport height so the sidebar + main can
+     scroll INDEPENDENTLY. Previously this was min-height: 100vh, which made
+     the entire page scroll as one unit — sidebar moved off-screen along
+     with the main content. */
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -66,8 +80,14 @@ select {
   flex-direction: column;
   gap: 24px;
   padding: 22px;
-  background: #1d2826;
-  color: #f7faf8;
+  background: var(--side-bg);
+  color: var(--side-text-strong);
+  /* Sidebar gets its own scroll if its nav exceeds the viewport (e.g. when
+     all sub-menus are expanded). On mobile it's position: fixed below and
+     this overflow rule still applies. */
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .brand {
@@ -88,7 +108,7 @@ select {
 .operator-panel span,
 .operator-panel small {
   display: block;
-  color: #b7c2bd;
+  color: var(--side-text);
   font-size: 0.82rem;
 }
 
@@ -98,29 +118,260 @@ nav {
 }
 
 .nav-item {
+  /* display:flex is what makes the icon + label + right-aligned caret line up
+     and lets margin-left:auto push the caret to the right edge. Without it the
+     whole row renders inline and looks misaligned. */
+  display: flex;
+  align-items: center;
   width: 100%;
   justify-content: flex-start;
   padding: 0 14px;
   background: transparent;
-  color: #dce6e1;
+  color: var(--side-text);
   text-align: left;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  border-radius: 0 7px 7px 0;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.nav-item:hover,
+.nav-item:hover {
+  background: var(--side-hover);
+  color: var(--side-text-strong);
+}
+
 .nav-item.active {
-  background: #31413d;
+  /* WeParking-style active indicator: filled background + left accent bar
+     in the primary color. Makes the current section visible at a glance. */
+  background: var(--side-hover);
+  color: var(--side-text-strong);
+  border-left-color: var(--primary);
+  font-weight: 700;
+}
+
+/* Sidebar nav icons + expandable groups (WeParking parity). */
+.nav-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  margin-right: 10px;
+  font-size: 0.95em;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+/* Vector (SVG) nav icons — Lucide-style stroke icons that inherit the nav
+   text color, so they dim/brighten with hover + active states automatically. */
+.nav-ico svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  opacity: 0.85;
+}
+.nav-item:hover .nav-ico svg,
+.nav-item.active .nav-ico svg {
+  opacity: 1;
+}
+.nav-child .nav-ico svg {
+  width: 15px;
+  height: 15px;
+}
+
+.nav-group {
+  position: relative;
+}
+
+.nav-caret {
+  margin-left: auto;
+  font-size: 0.75em;
+  opacity: 0.7;
+  transition: transform 0.18s ease;
+}
+
+.nav-group[aria-expanded="true"] .nav-caret {
+  transform: rotate(180deg);
+}
+
+/* Collapsible submenu: hidden by default, revealed when .open. max-height
+   transition keeps it smooth without needing a fixed height. */
+.nav-sub {
+  display: grid;
+  gap: 8px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.22s ease;
+}
+
+.nav-sub.open {
+  /* Large enough for the biggest submenu (System Management = 7 items).
+     240px clipped it; 520px fits all of them with room to spare. */
+  max-height: 520px;
+  margin-top: 8px;
+}
+
+.nav-child {
+  padding-left: 30px;
+  font-size: 0.92em;
+}
+
+.nav-child .nav-ico {
+  font-size: 0.7em;
+  opacity: 0.6;
 }
 
 .operator-panel {
   margin-top: auto;
   padding: 14px;
-  border: 1px solid #40514c;
+  border: 1px solid var(--side-hover);
   border-radius: 8px;
+}
+
+/* Topbar user chip (root ▾ + avatar), mirrors the PDF's top-right. */
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.topbar-user-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Dropdown menu on click. The .topbar-user is position: relative so the menu
+   can anchor to it. Open state toggles aria-expanded + .open class on the
+   parent + hidden attribute on the menu. */
+.topbar-user {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  transition: background 0.12s ease;
+}
+.topbar-user:hover,
+.topbar-user[aria-expanded="true"] {
+  background: rgba(31, 115, 212, 0.08);
+}
+.topbar-caret {
+  font-size: 0.7em;
+  opacity: 0.7;
+  transition: transform 0.18s ease;
+  display: inline-block;
+}
+.topbar-user[aria-expanded="true"] .topbar-caret {
+  transform: rotate(180deg);
+}
+.topbar-user-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 35, 70, 0.16);
+  min-width: 220px;
+  z-index: 1100;
+  padding: 6px;
+  overflow: hidden;
+}
+.topbar-user-menu[hidden] { display: none; }
+.topbar-user-info {
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+.topbar-user-info-name { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+.topbar-user-info-role { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.topbar-menu-item {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--danger, #b74a42);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: left;
+  border-radius: 6px;
+  border: 0;
+}
+.topbar-menu-item:hover {
+  background: rgba(183, 74, 66, 0.08);
+  color: var(--danger, #b74a42);
+}
+
+/* Phase-1 stub sections — clean "coming soon / lives elsewhere" panel. */
+.stub-panel {
+  text-align: center;
+  max-width: 620px;
+  margin: 40px auto;
+  padding: 40px 32px;
+}
+
+.stub-ico {
+  font-size: 2.6rem;
+  margin-bottom: 8px;
+}
+
+.stub-panel h2 {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+.stub-panel > p {
+  color: var(--muted);
+  margin: 0 auto 14px;
+  max-width: 460px;
+  line-height: 1.55;
+}
+
+.stub-note {
+  background: #f4f7fa;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.stub-link {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.stub-link:hover {
+  text-decoration: underline;
 }
 
 main {
   min-width: 0;
   padding: 26px;
+  /* main scrolls vertically within the viewport; the sidebar stays fixed. */
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .topbar {
@@ -169,7 +420,8 @@ h2 {
 }
 
 .ghost-button:hover {
-  background: #eef3ef;
+  background: #eef4f9;
+  border-color: #c8d4e3;
 }
 
 .view {
@@ -216,7 +468,7 @@ label {
   height: 8px;
   overflow: hidden;
   border-radius: 99px;
-  background: #e6ece8;
+  background: #e1e8f0;
 }
 
 .meter i {
@@ -264,7 +516,7 @@ table {
 
 th,
 td {
-  padding: 12px 10px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   font-size: 0.92rem;
@@ -274,6 +526,19 @@ th {
   color: var(--muted);
   font-size: 0.78rem;
   text-transform: uppercase;
+  background: #f8fafc;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+/* Subtle row hover — picks up the user's eye scanning down the table,
+   matches the SaaS admin pattern without being noisy. */
+tbody tr {
+  transition: background 0.12s ease;
+}
+
+tbody tr:hover {
+  background: #f5f9fd;
 }
 
 .status {
@@ -282,7 +547,7 @@ th {
   min-height: 26px;
   border-radius: 99px;
   padding: 0 10px;
-  background: #edf7f1;
+  background: #ecfdf5;
   color: var(--ok);
   font-weight: 800;
   font-size: 0.8rem;
@@ -485,40 +750,186 @@ pre {
   transform: translateY(0);
 }
 
+/* ──────────────────────────────────────────────────────────────────────
+   Cross-viewport defenses — applied to ALL widths, so panels never
+   refuse to shrink below their intrinsic content width on narrow phones.
+   ────────────────────────────────────────────────────────────────────── */
+/* Allow flex/grid children to shrink (text and inline elements default
+   to min-content, which keeps panels stuck at ~560 px on phones). */
+.panel,
+.metric,
+.metric-grid > *,
+.dashboard-layout > *,
+.form-layout > *,
+.device-layout > *,
+.report-grid > *,
+.admin-grid > *,
+.rpt-summary-grid > *,
+.rpt-metric-grid > *,
+.rpt-status-grid > *,
+.rpt-filters-grid > *,
+.panel-head,
+.panel-head > *,
+.rpt-header,
+.rpt-header > *,
+.rpt-header-left,
+.rpt-header-left > *,
+.rpt-header-right,
+.rpt-header-right > *,
+.topbar,
+.topbar > *,
+main {
+  min-width: 0;
+}
+
+/* Long h2 / p inside the report header — wrap text instead of stretching. */
+.rpt-header h2,
+.rpt-header p,
+.rpt-subtitle {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Long EPC tags (E2806894000050319F12CCC8) and full plate strings have
+   no natural break points and can blow out cells. Allow them to wrap. */
+td, th, .epc, code, .scan-row dd,
+[data-live-dur],
+.bar-row > * {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Live ANPR feed: clamp the camera image to its container width, so an
+   800-px camera frame can't force the dashboard panel to 800 px. */
+.live-feed-wrap {
+  width: 100%;
+  min-width: 0;
+}
+.live-feed-wrap img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Report chart SVGs: scale down with their panel. */
+.rpt-donut svg,
+.rpt-trend svg,
+.bar-chart svg,
+#rpt-top-vehicles svg,
+#rpt-zone-perf svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mobile hamburger button (hidden on desktop) */
+#mobile-menu-toggle { display: none; }
+#mobile-backdrop    { display: none; }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Tablet & below (≤1000px): collapse the 2-col app shell, turn the
+   sidebar into a left-slide drawer, show the hamburger toggle.
+   Every grid that was multi-column on desktop collapses to a single
+   column. Tables already scroll horizontally via .table-wrap.
+   ────────────────────────────────────────────────────────────────────── */
 @media (max-width: 1000px) {
   .app-shell {
     grid-template-columns: 1fr;
   }
 
+  /* Sidebar becomes a fixed drawer that slides in from the left. */
   .sidebar {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 2;
+    left: 0;
+    bottom: 0;
+    width: min(280px, 82vw);
+    z-index: 60;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  }
+  body.sidebar-open .sidebar { transform: translateX(0); }
+  nav { grid-template-columns: 1fr; }  /* keep nav vertical inside drawer */
+
+  /* Backdrop appears when drawer open. */
+  #mobile-backdrop {
+    display: block;
+    position: fixed; inset: 0;
+    background: rgba(15,22,20,0.55);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  body.sidebar-open #mobile-backdrop {
+    opacity: 1;
+    pointer-events: auto;
   }
 
-  nav {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Hamburger toggle — top-left, above all panels. */
+  #mobile-menu-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    position: fixed;
+    top: 12px; left: 12px;
+    width: 44px; height: 44px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.10);
+    z-index: 70;
+    cursor: pointer;
   }
-
-  .operator-panel {
-    display: none;
+  #mobile-menu-toggle span {
+    display: block;
+    margin: 0 auto;
+    width: 22px; height: 2.5px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: 0.2s;
   }
+  body.sidebar-open #mobile-menu-toggle span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  body.sidebar-open #mobile-menu-toggle span:nth-child(2) { opacity: 0; }
+  body.sidebar-open #mobile-menu-toggle span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
 
+  /* Main content needs left padding for the hamburger button. */
+  main { padding: 20px 18px 24px; }
+  .topbar { padding-left: 52px; }   /* room for the fixed hamburger */
+
+  /* Collapse every multi-column grid to single column. */
   .metric-grid,
   .dashboard-layout,
   .form-layout,
   .device-layout,
   .report-grid,
-  .admin-grid {
-    grid-template-columns: 1fr;
+  .admin-grid,
+  .rpt-summary-grid,
+  .rpt-metric-grid,
+  .rpt-status-grid,
+  .rpt-filters-grid,
+  .control-grid {
+    grid-template-columns: 1fr !important;
   }
+
+  /* Hide the panel that was only useful on desktop (operator card stays
+     in the drawer for mobile but the badge of role is fine to display). */
+  .operator-panel { display: block; }
+
+  /* Force tighter padding on chart panels. */
+  .rpt-donut, .rpt-trend { max-height: 280px; }
 }
 
+/* ──────────────────────────────────────────────────────────────────────
+   Phone (≤640px): tighter spacing, stacked rows, reduced font sizes.
+   ────────────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  main,
-  .sidebar {
-    padding: 16px;
-  }
+  main { padding: 16px 14px 20px; }
+  .topbar { padding-left: 52px; gap: 10px; }
 
   .topbar,
   .panel-head,
@@ -527,16 +938,1033 @@ pre {
     align-items: stretch;
     flex-direction: column;
   }
+  .top-actions { gap: 8px; }
+  .top-actions button, .top-actions .ghost-button { width: 100%; }
 
-  .report-actions {
-    grid-template-columns: 1fr;
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1rem; }
+  .metric strong { font-size: 1.4rem; }
+  .metric { padding: 14px; }
+  .panel  { padding: 14px; }
+
+  .report-actions { grid-template-columns: 1fr; }
+
+  /* Live ANPR feed: don't blow out screen height. */
+  .live-feed-wrap img { max-height: 50vh; object-fit: contain; }
+
+  /* Long-parked / auto-exit / expired banners — stack icon over text. */
+  #dash-longparked-alert,
+  #dash-autoexit-alert,
+  #dash-expired-alert {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 8px !important;
   }
 
-  nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Admin forms with inline 2-column grids — collapse to 1 column. */
+  #bl-form,
+  #vis-form > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  #bl-form button[type="submit"] { width: 100%; }
+
+  /* Activation page side-by-side employee details — single column. */
+  #emp-form div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
   }
 
-  .metric strong {
-    font-size: 1.5rem;
+  /* UHF hourly panel: shrink the date label row gracefully. */
+  #uhf-hourly-date { font-size: 0.9em; }
+  #uhf-hourly-meta {
+    white-space: normal !important;  /* override inline nowrap that blocks shrinking */
+    font-size: 0.82em;
+    line-height: 1.35;
   }
+  /* The UHF panel header row has a 2-element flex (title + date picker).
+     Stack them vertically on mobile so neither side fights for width. */
+  #reports .panel-head > div[style*="display:flex"],
+  #reports .panel-head > div[style*="display: flex"] {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  /* Defensive: any nowrap span inside a panel-head should wrap on mobile. */
+  .panel-head .hint,
+  .panel-head span[style*="nowrap"] {
+    white-space: normal !important;
+  }
+
+  /* Flex containers in panels should wrap by default at small widths. */
+  .panel-head { flex-wrap: wrap; }
+
+  /* Reports: filter fields stack; export buttons go full-width. */
+  .rpt-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .rpt-header-right {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .rpt-header-right > button { width: 100%; }
+
+  /* Report metric strong number can be huge — clamp it. */
+  .rpt-metric strong { font-size: 1.5rem; }
+  .rpt-status strong { font-size: 1.5rem; }
+
+  /* Pagination — already wraps but tighten the spacing. */
+  .rpt-paginator { gap: 4px; font-size: 0.84em; }
+  .rpt-paginator button { padding: 4px 10px; min-height: 30px; }
+  .rpt-page-meta { display: block; margin: 4px 0 0; }
+
+  /* Receipt dl: stack key over value on narrow screens. */
+  .receipt dl { grid-template-columns: 1fr; gap: 4px; }
+  .receipt dt { font-size: 0.8em; }
+
+  /* Bar chart row — tighter columns. */
+  .bar-row { grid-template-columns: 70px 1fr 60px; font-size: 0.85em; }
+
+  /* Pre/debug blocks — readable on small screens. */
+  pre { font-size: 0.75em; min-height: 60px; padding: 10px; }
+
+  /* Toast: bottom-center, full-width minus padding. */
+  #toast {
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    bottom: 12px;
+  }
+
+  /* Tables: tighter cell padding so more fits per row. */
+  th, td { padding: 9px 7px; font-size: 0.86rem; }
+  th { font-size: 0.7rem; }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Very small phones (≤380px): one more notch tighter.
+   ────────────────────────────────────────────────────────────────────── */
+@media (max-width: 380px) {
+  main { padding: 14px 10px 18px; }
+  .topbar { padding-left: 50px; }
+  .metric { padding: 12px; }
+  .metric strong { font-size: 1.25rem; }
+  th, td { padding: 8px 6px; font-size: 0.82rem; }
+  .rpt-metric strong, .rpt-status strong { font-size: 1.3rem; }
+  .panel { padding: 12px; }
+  h1 { font-size: 1.3rem; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Reports → Detailed View tables.
+   Both the Gate Access Events table and the Monthly Transactions table
+   carry ~11 columns. Without explicit widths the browser squishes mid-
+   width columns (Department / Contact / Mode) so the row looks ragged.
+   These rules give each column breathing room, align the numeric/time
+   columns with tabular-nums, and add a subtle zebra so the eye can
+   track across the row.
+   ────────────────────────────────────────────────────────────────────── */
+#rpt-detail-table,
+#rpt-access-events table {
+  /* Below this width, the .table-wrap scrolls horizontally instead of
+     collapsing columns. Picked to fit all 11 columns on a 1366px laptop
+     without scroll, scroll on narrower screens. */
+  min-width: 1020px;
+}
+
+#rpt-detail-table th,
+#rpt-detail-table td,
+#rpt-access-events th,
+#rpt-access-events td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+#rpt-detail-table th,
+#rpt-access-events th {
+  background: #f4f7fa;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Subtle zebra striping — only on the dense report tables. Helps the eye
+   track across 11 columns without being noisy elsewhere. */
+#rpt-detail-table tbody tr:nth-child(even),
+#rpt-access-events tbody tr:nth-child(even) {
+  background: #fafbfd;
+}
+
+/* Tabular-nums on time / date / duration cells so digits line up vertically
+   instead of dancing as widths vary character to character. */
+#rpt-detail-table td:nth-child(1),   /* Date     */
+#rpt-detail-table td:nth-child(8),   /* Entry    */
+#rpt-detail-table td:nth-child(9),   /* Exit     */
+#rpt-detail-table td:nth-child(10),  /* Duration */
+#rpt-access-events td:nth-child(1),  /* Scan Time*/
+#rpt-access-events td:nth-child(8),  /* Entry    */
+#rpt-access-events td:nth-child(9),  /* Exit     */
+#rpt-access-events td:nth-child(10) {/* Duration */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Plate / Tag / Identity columns: monospace + smaller so the codes are
+   visually distinct and stay one-line. */
+#rpt-detail-table td:nth-child(2),   /* Vehicle  */
+#rpt-detail-table td:nth-child(7),   /* Identity */
+#rpt-access-events td:nth-child(2),  /* Plate    */
+#rpt-access-events td:nth-child(3) { /* Tag (EPC)*/
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.88em;
+}
+
+/* Per-column min-widths — Monthly Transactions table. */
+#rpt-detail-table th:nth-child(1),  #rpt-detail-table td:nth-child(1)  { min-width: 110px; }
+#rpt-detail-table th:nth-child(2),  #rpt-detail-table td:nth-child(2)  { min-width: 130px; }
+#rpt-detail-table th:nth-child(3),  #rpt-detail-table td:nth-child(3)  { min-width: 140px; }
+#rpt-detail-table th:nth-child(4),  #rpt-detail-table td:nth-child(4)  { min-width: 70px;  }
+#rpt-detail-table th:nth-child(5),  #rpt-detail-table td:nth-child(5)  { min-width: 140px; }
+#rpt-detail-table th:nth-child(6),  #rpt-detail-table td:nth-child(6)  { min-width: 90px;  }
+#rpt-detail-table th:nth-child(7),  #rpt-detail-table td:nth-child(7)  { min-width: 110px; }
+#rpt-detail-table th:nth-child(8),  #rpt-detail-table td:nth-child(8)  { min-width: 110px; }
+#rpt-detail-table th:nth-child(9),  #rpt-detail-table td:nth-child(9)  { min-width: 110px; }
+#rpt-detail-table th:nth-child(10), #rpt-detail-table td:nth-child(10) { min-width: 90px;  }
+#rpt-detail-table th:nth-child(11), #rpt-detail-table td:nth-child(11) { min-width: 70px;  text-align: center; }
+
+/* Per-column min-widths — Gate Access Events table. */
+#rpt-access-events th:nth-child(1),  #rpt-access-events td:nth-child(1)  { min-width: 150px; }
+#rpt-access-events th:nth-child(2),  #rpt-access-events td:nth-child(2)  { min-width: 130px; }
+#rpt-access-events th:nth-child(3),  #rpt-access-events td:nth-child(3)  { min-width: 130px; }
+#rpt-access-events th:nth-child(4),  #rpt-access-events td:nth-child(4)  { min-width: 140px; }
+#rpt-access-events th:nth-child(5),  #rpt-access-events td:nth-child(5)  { min-width: 120px; }
+#rpt-access-events th:nth-child(6),  #rpt-access-events td:nth-child(6)  { min-width: 120px; }
+#rpt-access-events th:nth-child(7),  #rpt-access-events td:nth-child(7)  { min-width: 70px;  }
+#rpt-access-events th:nth-child(8),  #rpt-access-events td:nth-child(8)  { min-width: 110px; }
+#rpt-access-events th:nth-child(9),  #rpt-access-events td:nth-child(9)  { min-width: 110px; }
+#rpt-access-events th:nth-child(10), #rpt-access-events td:nth-child(10) { min-width: 90px;  }
+#rpt-access-events th:nth-child(11), #rpt-access-events td:nth-child(11) { min-width: 100px; text-align: center; }
+
+/* Smooth horizontal-scroll affordance when the page is narrower than the
+   1020px min-width above. Thin scrollbar keeps the visual quiet. */
+.rpt-view-pane .table-wrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   UNIVERSAL data-table alignment. Every table inside a .table-wrap (which
+   already scrolls horizontally) gets nowrap on its cells, so columns stay
+   one-line and headers never split mid-word (e.g. "HOST" → "HOS T"). When
+   total column width exceeds the panel, the wrap scrolls horizontally
+   instead of crushing columns. Works for ANY number of columns in ANY
+   section — past, present, and future tables.
+   ────────────────────────────────────────────────────────────────────── */
+.table-wrap > table {
+  width: max-content;   /* size to content, then .table-wrap scrolls */
+  min-width: 100%;      /* but at least fill the wrap when there's space  */
+}
+.table-wrap > table th,
+.table-wrap > table td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+/* Compact action buttons inside table rows (Edit/Delete/QR/etc.) — the
+   global button min-height 42px is way too tall for inline row actions. */
+.table-wrap > table td button {
+  min-height: 28px;
+  line-height: 1;
+}
+/* The single-line constraint on headers + first-cell breathing room so
+   things never look cramped. */
+.table-wrap > table thead th { padding: 10px 14px; font-size: 0.74rem; }
+
+/* Reusable table paginator (injected by paginate() after each .table-wrap). */
+.tbl-paginator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+}
+.tbl-paginator button {
+  padding: 5px 12px;
+  min-height: 32px;
+  min-width: 38px;
+}
+.tbl-paginator button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.tbl-page-info { padding: 0 10px; color: var(--text); }
+.tbl-page-info b { color: var(--primary); }
+.tbl-page-meta { color: var(--muted); margin-left: 4px; }
+
+/* Generic edit modal (shared by all CRUD tables). */
+.edit-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.edit-modal {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 22px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 24px 60px rgba(15, 35, 70, 0.25);
+}
+.edit-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.edit-modal-head h3 { margin: 0; font-size: 1.2rem; }
+.edit-modal label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.edit-modal label input,
+.edit-modal label select { margin-top: 4px; }
+.edit-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* QR pass modal (Visitor / Member). Reuses .edit-modal frame, adds a QR
+   image and meta block. */
+.qr-modal { max-width: 380px; }
+.qr-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 16px;
+}
+.qr-modal-body img {
+  width: 240px;
+  height: 240px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+}
+.qr-modal-meta {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+.qr-modal-meta b { color: var(--primary); }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Branded view-switch loader. Shows briefly on every sidebar nav click
+   so the user gets feedback that the new page is loading. The VayAccess
+   logo sits inside a spinning ring and gently pulses.
+   ────────────────────────────────────────────────────────────────────── */
+.view-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(15, 35, 70, 0.18);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: vl-fade-in 0.15s ease-out;
+}
+.view-loader[hidden] { display: none; }
+
+.view-loader-card {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid rgba(31, 115, 212, 0.18);
+  border-top-color: var(--primary, #1f73d4);
+  border-right-color: var(--primary, #1f73d4);
+  animation: vl-spin 0.9s linear infinite;
+  box-shadow: 0 8px 32px rgba(31, 115, 212, 0.25);
+}
+
+.view-loader-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #fff;
+  padding: 6px;
+  box-shadow: 0 6px 20px rgba(15, 35, 70, 0.18);
+  animation: vl-pulse 1.2s ease-in-out infinite;
+}
+
+.view-loader-text {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(15, 35, 70, 0.62);
+  padding: 6px 16px;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(15, 35, 70, 0.25);
+}
+
+@keyframes vl-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes vl-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(0.92); opacity: 0.85; }
+}
+@keyframes vl-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* "Search Conditions" panel — multi-field filter bar above PDF-pattern tables
+   (Order Management, Parking Records). */
+.search-conditions { margin-bottom: 14px; }
+.search-conditions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.search-conditions-head h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.search-conditions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+.search-conditions-grid label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.search-conditions-grid label input,
+.search-conditions-grid label select {
+  margin-top: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+
+/* Per-table action group (Refresh + 📥 CSV), injected into each panel-head. */
+.table-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.table-actions button {
+  padding: 4px 12px;
+  min-height: 32px;
+  font-size: 0.85rem;
+}
+
+/* Dashboard expiry-alerts list rows. */
+.hs-expiry-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(168, 114, 23, 0.06);
+  border: 1px solid rgba(168, 114, 23, 0.15);
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Monitoring Center (PDF page 4). Dark dual-camera layout — kept self-
+   contained so the SaaS-light theme on every other page is unaffected.
+   ────────────────────────────────────────────────────────────────────── */
+.monitoring-center {
+  background: linear-gradient(180deg, #0c1c3a 0%, #142a52 50%, #0a1730 100%);
+  color: #f1f5ff;
+  border-radius: 12px;
+  padding: 22px 26px;
+  min-height: calc(100vh - 200px);
+}
+
+.mc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.mc-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0;
+  color: #1f73d4;
+}
+
+.mc-title-accent {
+  color: #f1f5ff;
+}
+
+.mc-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mc-meta-cell {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  color: #cfd9ec;
+}
+
+.mc-pill {
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.mc-clock {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f1f5ff;
+}
+
+.mc-home {
+  width: 42px;
+  height: 42px;
+  min-height: 0;
+  border-radius: 10px;
+  background: #1f73d4;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+}
+
+.mc-home svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mc-areas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.mc-area-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.mc-area-sub {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #9fb1d2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2cd47f;
+  box-shadow: 0 0 8px rgba(44, 212, 127, 0.5);
+}
+
+.mc-dot-exit {
+  background: #ffb84d;
+  box-shadow: 0 0 8px rgba(255, 184, 77, 0.5);
+}
+
+.mc-card {
+  background: linear-gradient(180deg, rgba(20, 38, 72, 0.85), rgba(12, 26, 54, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.mc-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.mc-flag {
+  background: rgba(31, 115, 212, 0.18);
+  color: #6bb1ff;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  letter-spacing: 0.4px;
+}
+
+.mc-flag-exit {
+  background: rgba(255, 184, 77, 0.18);
+  color: #ffce85;
+}
+
+.mc-info-label {
+  color: #f1f5ff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mc-info-flag {
+  width: 14px;
+  height: 14px;
+  background: #2cd47f;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.mc-info-flag-exit {
+  background: #ffb84d;
+}
+
+.mc-card-body {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.mc-cam {
+  position: relative;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  min-height: 160px;
+}
+
+.mc-cam img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mc-cam-offline {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  color: #6c7a96;
+  background: linear-gradient(135deg, #0d1a36, #08122a);
+}
+
+.mc-cam-offline svg {
+  width: 30px;
+  height: 30px;
+  opacity: 0.45;
+}
+
+.mc-cam-offline small {
+  color: #4a5778;
+  font-size: 0.72rem;
+}
+
+.mc-info {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mc-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.88rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 6px;
+}
+
+.mc-info-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.mc-info-row > span:first-child { color: #9fb1d2; }
+.mc-info-row > b { color: #4ec3ff; font-weight: 700; font-family: 'Consolas','Monaco',monospace; font-size: 1.05rem; }
+.mc-info-row > span:nth-child(2) { color: #f1f5ff; font-weight: 600; }
+
+.mc-plate-text { color: #4ec3ff; }
+
+.mc-plate-band {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.mc-plate-thumb {
+  width: 110px;
+  height: 36px;
+  background: linear-gradient(135deg, #fde047, #facc15);
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+
+.mc-plate-mag {
+  flex: 1;
+  font-family: 'Consolas','Monaco',monospace;
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: 6px;
+  color: #f1f5ff;
+  background: #0a1428;
+  border-radius: 6px;
+  padding: 6px 14px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .mc-areas { grid-template-columns: 1fr; }
+  .mc-card-body { grid-template-columns: 1fr; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Home Page summary (PDF page 5) — gradient metric cards + grouped bar
+   chart + Income Statistics donut.
+   ────────────────────────────────────────────────────────────────────── */
+.home-summary {
+  margin-bottom: 22px;
+}
+
+.home-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.home-card {
+  position: relative;
+  border-radius: 16px;
+  padding: 28px 24px;
+  color: #fff;
+  overflow: hidden;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(15, 35, 70, 0.12);
+}
+
+.home-card::after {
+  content: '';
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 160px;
+  height: 160px;
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 50%;
+}
+
+.home-card-label {
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.92;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.home-card-value {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  position: relative;
+  z-index: 1;
+}
+
+.home-card-purple { background: linear-gradient(135deg, #a78bfa, #8b5cf6 60%, #7c3aed); }
+.home-card-blue   { background: linear-gradient(135deg, #60a5fa, #3b82f6 60%, #2563eb); }
+.home-card-cyan   { background: linear-gradient(135deg, #67e8f9, #22d3ee 60%, #06b6d4); }
+.home-card-orange { background: linear-gradient(135deg, #fdba74, #fb923c 60%, #ea580c); }
+
+.home-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.home-panel-title {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.home-chart-legend {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.home-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.home-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Bar chart — pure SVG bars in a flex row. Height set by per-bar inline style.
+   Two bars per day (entry blue, exit orange) grouped together. */
+.home-bar-chart {
+  position: relative;
+  height: 280px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 6px;
+  padding: 0 4px 28px;
+  border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.home-bar-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100%;
+  position: relative;
+  flex: 1;
+}
+
+.home-bar {
+  flex: 1;
+  min-width: 14px;
+  max-width: 30px;
+  background: linear-gradient(180deg, #1f73d4, #1858a6);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: height 0.4s ease;
+}
+
+.home-bar-exit { background: linear-gradient(180deg, #f59e0b, #d97706); }
+
+.home-bar-value {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.home-bar-label {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Donut + center label. SVG ring is rendered via stroke-dasharray. */
+.home-donut-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+}
+
+.home-donut {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.home-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.home-donut-total { font-size: 1.4rem; font-weight: 800; color: var(--text); }
+.home-donut-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+.home-donut-legend {
+  margin-top: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.home-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+
+.home-legend-row b { margin-left: auto; font-weight: 700; color: var(--text); }
+
+@media (max-width: 1100px) {
+  .home-cards { grid-template-columns: repeat(2, 1fr); }
+  .home-charts { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .home-cards { grid-template-columns: 1fr; }
+  .home-card-value { font-size: 2rem; }
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Consistent alignment for every data table added in the WeParking rebuild
+   (dashboard Access History, Order Management, and the Parking/Scanning/
+   Registered/Black-List/Yard/Region tables). The ragged-header problem comes
+   from cells wrapping to two lines while headers stay on one — nowrap keeps
+   both on a single line so columns line up, and a min-width makes the
+   .table-wrap scroll horizontally instead of crushing the columns.
+   ────────────────────────────────────────────────────────────────────── */
+#access-log-table, #od-table, #pr-table, #sr-table, #rv-table,
+#bl-table, #yard-table, #region-table {
+  min-width: 760px;
+}
+/* The 8-column tables need more room before scrolling. */
+#od-table, #pr-table, #rv-table { min-width: 960px; }
+
+#access-log-table th, #access-log-table td,
+#od-table th, #od-table td,
+#pr-table th, #pr-table td,
+#sr-table th, #sr-table td,
+#rv-table th, #rv-table td,
+#bl-table th, #bl-table td,
+#yard-table th, #yard-table td,
+#region-table th, #region-table td {
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 12px 16px;
+}
+
+#access-log-table th, #od-table th, #pr-table th, #sr-table th,
+#rv-table th, #bl-table th, #yard-table th, #region-table th {
+  background: #f8fafc;
+  text-align: left;
+}
+
+/* Zone-wise gate entry — live grid of per-zone cards */
+.zone-live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+.zone-card {
+  background: #fff;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.zone-card.is-full   { border-color: #b74a42; }
+.zone-card.is-tight  { border-color: #d5952a; }
+.zone-card-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.zone-card-head h3 { margin: 0; font-size: 16px; }
+.zone-card-head .region { font-size: 12px; opacity: 0.6; margin-top: 2px; }
+.zone-pill {
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  background: #eef2ff; color: #3b3f8a;
+}
+.zone-pill.ok   { background:#dcfce7; color:#166534; }
+.zone-pill.warn { background:#fef3c7; color:#92400e; }
+.zone-pill.full { background:#fee2e2; color:#991b1b; }
+.zone-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.zone-stat {
+  background: var(--bg, #f6f7fb);
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 8px; padding: 8px; text-align: center;
+}
+.zone-stat .lbl  { font-size: 10px; color:#6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+.zone-stat .val  { font-size: 18px; font-weight: 800; margin-top: 2px; }
+.zone-recent {
+  font-size: 12px; max-height: 180px; overflow-y: auto;
+  border-top: 1px dashed var(--line, #e5e7eb); padding-top: 8px;
+}
+.zone-recent-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; border-bottom: 1px solid #f3f4f6;
+}
+.zone-recent-row:last-child { border-bottom: 0; }
+.zone-recent-row .plate { font-family: monospace; font-weight: 700; }
+.zone-recent-row .time  { opacity: 0.6; font-size: 11px; }

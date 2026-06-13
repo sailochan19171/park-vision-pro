@@ -1,0 +1,27 @@
+export const Colors = {
+  primary: '#1a56db',
+  primaryDark: '#1e40af',
+  primaryLight: '#EFF6FF',
+  background: '#F5F7FA',
+  card: '#FFFFFF',
+  text: '#111827',
+  textSecondary: '#6B7280',
+  border: '#E5E7EB',
+  danger: '#EF4444',
+  warning: '#F97316',
+  success: '#22C55E',
+  white: '#FFFFFF',
+  black: '#000000',
+  // surface aliases
+  surface: '#FFFFFF',
+  surfaceMuted: '#EFF6FF',
+  inputBg: '#F9FAFB',
+  inputBorder: '#E5E7EB',
+  inputFocus: '#1a56db',
+  divider: '#E5E7EB',
+  tabBar: '#FFFFFF',
+  headerBg: '#1a56db',
+  headerText: '#FFFFFF',
+  // status
+  statusBar: '#1240ab',
+} as const;

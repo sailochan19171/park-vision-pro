@@ -1,0 +1,36 @@
+appId: com.farmleysfa
+name: "01 - Login Flow"
+---
+- launchApp:
+    clearState: true
+- takeScreenshot: "../lochan farmley screenshots/01_login_screen"
+
+# Enter credentials
+- tapOn:
+    text: "Enter your username"
+- inputText: "admin"
+- tapOn:
+    text: "Enter your password"
+- inputText: "farmley123"
+- takeScreenshot: "../lochan farmley screenshots/02_login_filled"
+
+# Submit
+- tapOn: "Sign In"
+
+# Wait for sync screen
+- extendedWaitUntil:
+    visible: "Syncing your data..."
+    timeout: 10000
+- takeScreenshot: "../lochan farmley screenshots/03_sync_started"
+
+# Wait for sync to complete
+- extendedWaitUntil:
+    visible: "100%"
+    timeout: 60000
+- takeScreenshot: "../lochan farmley screenshots/04_sync_complete"
+
+# Wait for dashboard
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- takeScreenshot: "../lochan farmley screenshots/05_dashboard"

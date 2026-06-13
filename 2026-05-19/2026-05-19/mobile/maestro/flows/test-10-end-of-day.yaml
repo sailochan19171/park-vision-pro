@@ -1,0 +1,115 @@
+appId: com.farmleysfa
+---
+# TEST 10: Full Day End-to-End → End of Day Summary
+# Verify: Login → Attendance → Check In → Place Order → Check Out → End Day → Summary
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Start Day / Attendance
+- tapOn: "Start Day"
+- extendedWaitUntil:
+    visible: "Start Your Day"
+    timeout: 5000
+- scrollUntilVisible:
+    element: "Mark Attendance & Start Day"
+    direction: DOWN
+- tapOn: "Mark Attendance & Start Day"
+- extendedWaitUntil:
+    visible: "Day Started"
+    timeout: 15000
+- takeScreenshot: screenshots/test-10-day-started
+- tapOn: "Go to Stores"
+
+# Go to Stores (after attendance, goes directly to My Stores)
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+
+# Tap first store and check in
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+- takeScreenshot: screenshots/test-10-checked-in
+
+# Place Order (swipe-as-tap at ~47%)
+- swipe:
+    start: "50%,47%"
+    end: "51%,47%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "ALL"
+    timeout: 15000
+- tapOn: "MAKHANA"
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible: "Order Placed"
+    timeout: 5000
+- takeScreenshot: screenshots/test-10-order-placed
+- tapOn: "OK"
+
+# Check Out
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- scrollUntilVisible:
+    element: "Check Out"
+    direction: DOWN
+- tapOn: "Check Out"
+- extendedWaitUntil:
+    visible: "Checked Out"
+    timeout: 10000
+- takeScreenshot: screenshots/test-10-checked-out
+- tapOn: "OK"
+
+# Navigate to Home tab for End Day
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 5000
+- tapOn:
+    point: "12%,97%"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 10000
+
+# End Day
+- scrollUntilVisible:
+    element: "End Day"
+    direction: DOWN
+- tapOn: "End Day"
+- extendedWaitUntil:
+    visible: "End of Day Summary"
+    timeout: 10000
+- takeScreenshot: screenshots/test-10-end-of-day-summary

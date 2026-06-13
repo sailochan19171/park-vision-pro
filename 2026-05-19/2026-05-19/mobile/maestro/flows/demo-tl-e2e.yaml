@@ -1,0 +1,135 @@
+appId: com.farmleysfa
+---
+# === DEMO: Team Leader E2E with API Validation ===
+# Login: demo / farmley123 (Team Leader role)
+
+# ── STEP 1: Login ──
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- takeScreenshot: screenshots/demo-tl-01-login-screen
+- tapOn:
+    id: "username-input"
+- inputText: "demo"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- takeScreenshot: screenshots/demo-tl-02-logged-in
+
+# ── API: Get token ──
+- runScript:
+    file: ../scripts/api/tl-login.js
+- assertTrue:
+    condition: ${output.token != null}
+    label: "API auth — token acquired"
+
+# ── STEP 2: Dashboard ──
+- assertVisible: "Today's Stores"
+- assertVisible: "My Team"
+- assertVisible: "Location Approvals"
+- takeScreenshot: screenshots/demo-tl-03-dashboard
+
+# ── STEP 3: API — team member count ──
+- runScript:
+    file: ../scripts/api/tl-team-members.js
+- assertTrue:
+    condition: ${output.teamTotal > 0}
+    label: "API: team total=${output.teamTotal}"
+- takeScreenshot: screenshots/demo-tl-04-api-team
+
+# ── STEP 4: My Team ──
+- tapOn: "My Team"
+- extendedWaitUntil:
+    visible: "Total"
+    timeout: 10000
+- assertVisible: "Present"
+- assertVisible: "Absent"
+- assertVisible: "All"
+- assertVisible: "Promoter"
+- takeScreenshot: screenshots/demo-tl-05-my-team
+
+# ── STEP 5: Member Detail ──
+- tapOn: "Arti Jatav"
+- extendedWaitUntil:
+    visible: "Attendance"
+    timeout: 10000
+- assertVisible: "Orders"
+- assertVisible: "Revenue"
+- assertVisible: "Visits"
+- takeScreenshot: screenshots/demo-tl-06-member-detail
+- scroll
+- assertVisible: "Assigned Customers.*"
+- takeScreenshot: screenshots/demo-tl-07-member-customers
+- back
+
+# ── STEP 6: Location Approvals ──
+- extendedWaitUntil:
+    visible: "My Team"
+    timeout: 5000
+- back
+- extendedWaitUntil:
+    visible: "Location Approvals"
+    timeout: 5000
+- tapOn: "Location Approvals"
+- extendedWaitUntil:
+    visible: "Pending"
+    timeout: 10000
+- assertVisible: "Approved"
+- assertVisible: "Rejected"
+- takeScreenshot: screenshots/demo-tl-08-approvals-pending
+- tapOn: "Approved"
+- takeScreenshot: screenshots/demo-tl-09-approvals-approved
+- tapOn: "Rejected"
+- takeScreenshot: screenshots/demo-tl-10-approvals-rejected
+- tapOn: "Pending"
+
+# ── STEP 7: API — approval counts ──
+- runScript:
+    file: ../scripts/api/tl-location-approvals.js
+- assertTrue:
+    condition: ${output.totalApprovals >= 0}
+    label: "API: approvals pending=${output.pendingCount}"
+- takeScreenshot: screenshots/demo-tl-11-api-approvals
+
+# ── STEP 8: Rota → Create Schedule ──
+- back
+- extendedWaitUntil:
+    visible: "My Schedule"
+    timeout: 5000
+- scroll
+- tapOn:
+    text: "My Schedule"
+- extendedWaitUntil:
+    visible: "Rota"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-tl-12-rota
+- tapOn:
+    id: "btn-create-schedule"
+- extendedWaitUntil:
+    visible: "Tap a day to change shift"
+    timeout: 15000
+- assertVisible: "CREATE FOR"
+- assertVisible: "Myself"
+- takeScreenshot: screenshots/demo-tl-13-create-for
+
+# ── STEP 9: Select team member ──
+- tapOn: "Arti"
+- takeScreenshot: screenshots/demo-tl-14-selected-member
+
+# ── STEP 10: API — verify rota data ──
+- runScript:
+    file: ../scripts/api/tl-verify-rota.js
+- assertTrue:
+    condition: ${output.rotaCount >= 0}
+    label: "API: rota entries=${output.rotaCount}"
+- takeScreenshot: screenshots/demo-tl-15-api-rota
+
+# ── DONE ──
+- takeScreenshot: screenshots/demo-tl-16-complete

@@ -1,0 +1,62 @@
+appId: com.farmleysfa
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+
+# Test Order screen MSL
+- swipe:
+    start: "50%,47%"
+    end: "51%,47%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "MSL"
+    timeout: 15000
+- takeScreenshot: screenshots/msl-01-order-with-msl-chip
+# Tap MSL chip
+- tapOn: "MSL"
+- takeScreenshot: screenshots/msl-02-order-msl-filtered
+- back
+
+# Test Store Check MSL
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- swipe:
+    start: "50%,55%"
+    end: "51%,55%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "MSL Only"
+    timeout: 20000
+- takeScreenshot: screenshots/msl-03-store-check-msl-only
+# Toggle to All Items
+- tapOn: "MSL Only"
+- takeScreenshot: screenshots/msl-04-store-check-all-items

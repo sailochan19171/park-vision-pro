@@ -121,7 +121,7 @@
       .rpt-status-weekoff .rpt-status-label, .rpt-status-weekoff strong { color: #3d4945; }
 
       .rpt-view-toggle       { display:inline-flex; background: rgba(31,42,39,0.06);
-                               border-radius: 10px; padding: 4px; margin: 0 auto 18px;
+                               border-radius: 10px; padding: 4px; margin: 30px auto 20px;
                                display: flex; width: fit-content; }
       .rpt-view-btn          { background: transparent; color: var(--muted); padding: 8px 22px;
                                border-radius: 8px; font-weight: 700; min-height: 36px;
@@ -231,6 +231,14 @@
     </style>
   </head>
   <body>
+    <!-- (The user dropdown lives in the topbar itself — see .topbar-user below.) -->
+
+    <!-- Mobile-only hamburger + backdrop. CSS hides these on desktop. -->
+    <button id="mobile-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div id="mobile-backdrop" aria-hidden="true"></div>
+
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand">
@@ -241,11 +249,76 @@
           </div>
         </div>
         <nav aria-label="Primary">
-          <button class="nav-item active" data-view="dashboard">Dashboard</button>
-          <button class="nav-item" data-view="exit">Exit</button>
-          <button class="nav-item" data-view="devices">Devices</button>
-          <button class="nav-item" data-view="reports">Reports</button>
-          <button class="nav-item" data-view="admin">Admin</button>
+          <!-- Sidebar mirrors the WeParking layout from VAY Parking Management.pdf.
+               Existing views are wired to their nearest section; brand-new sections
+               (Video, Order, Yard, Region) are stubs pending their own backend. -->
+          <button class="nav-item active" data-view="dashboard"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3l9 7.2V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>Home Page</button>
+          <button class="nav-item" data-view="reports"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20v-7M11 20V5M16 20v-9"/></svg></span>Statistical Management</button>
+          <button class="nav-item" data-view="video"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg></span>Video Monitoring</button>
+
+          <!-- Parking Inquiry — expandable group -->
+          <button class="nav-item nav-group" data-group="parking-inquiry" aria-expanded="false">
+            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>Parking Inquiry<span class="nav-caret">▾</span>
+          </button>
+          <div class="nav-sub" data-group-body="parking-inquiry">
+            <button class="nav-item nav-child" data-view="parking-records"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>Parking Records</button>
+            <button class="nav-item nav-child" data-view="scanning-record"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg></span>Scanning Record</button>
+          </div>
+
+          <button class="nav-item" data-view="devices"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21 7 3M20 21 17 3M12 3v3M12 10v3M12 17v3"/></svg></span>Lane Monitoring</button>
+          <button class="nav-item" data-view="zone-live"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg></span>Zone-wise Gate Entry</button>
+          <button class="nav-item" data-view="exit"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></span>Manual Exit Record</button>
+          <button class="nav-item" data-view="manual-entry"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg></span>Manual Entry</button>
+          <button class="nav-item" data-view="orders"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2v20l2.5-1.5L10 22l2-1.5L14 22l2.5-1.5L19 22V2l-2.5 1.5L14 2l-2 1.5L10 2 7.5 3.5z"/><path d="M9 8h6M9 12h4"/></svg></span>Order Management</button>
+          <!-- Member Management — expandable group -->
+          <button class="nav-item nav-group" data-group="member-mgmt" aria-expanded="false">
+            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg></span>Member Management<span class="nav-caret">▾</span>
+          </button>
+          <div class="nav-sub" data-group-body="member-mgmt">
+            <button class="nav-item nav-child" data-view="membership"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>Monthly Membership</button>
+            <button class="nav-item nav-child" data-view="admin"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>Whitelist</button>
+          </div>
+
+          <button class="nav-item" data-view="registered"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l1.6-4.3A2 2 0 0 1 8.5 6.2h7a2 2 0 0 1 1.9 1.5L19 12M4 12h16v5h-2v-2H6v2H4z"/><circle cx="7.5" cy="15.5" r="1"/><circle cx="16.5" cy="15.5" r="1"/></svg></span>Registered Vehicle</button>
+          <button class="nav-item" data-view="blacklist"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg></span>Black List</button>
+          <button class="nav-item" data-view="yard"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h3.5a3 3 0 0 1 0 6H9"/></svg></span>Yard Management</button>
+
+          <!-- Region Management — expandable group -->
+          <button class="nav-item nav-group" data-group="region-mgmt" aria-expanded="false">
+            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5-6 2v14l6-2 6 2 6-2V5l-6 2zM9 5v14M15 7v14"/></svg></span>Region Management<span class="nav-caret">▾</span>
+          </button>
+          <div class="nav-sub" data-group-body="region-mgmt">
+            <button class="nav-item nav-child" data-view="region"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg></span>Region Management</button>
+            <button class="nav-item nav-child" data-view="type-mgmt"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/></svg></span>Type Management</button>
+          </div>
+
+          <button class="nav-item" data-view="visitors"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/></svg></span>Visitor Management</button>
+
+          <!-- System Management — expandable group -->
+          <button class="nav-item nav-group" data-group="system-mgmt" aria-expanded="false">
+            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.8 19.5l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.6a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.5 6.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></span>System Management<span class="nav-caret">▾</span>
+          </button>
+          <div class="nav-sub" data-group-body="system-mgmt">
+            <button class="nav-item nav-child" data-view="account"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Account Management</button>
+            <button class="nav-item nav-child" data-view="lcd"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>LCD</button>
+            <button class="nav-item nav-child" data-view="equipment"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Equipment Management</button>
+            <button class="nav-item nav-child" data-view="menu-mgmt"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>Menu Management</button>
+            <button class="nav-item nav-child" data-view="role"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/></svg></span>Role Management</button>
+            <button class="nav-item nav-child" data-view="role-perm"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"/><path d="m11.5 11.5 8 8M16 16l2 2M19 13l2 2"/></svg></span>Role Permission</button>
+            <button class="nav-item nav-child" data-view="dictionary"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v15a1 1 0 0 0 1 1h15M7 4h13v16H7a3 3 0 0 1 0-6h13"/></svg></span>Dictionary Managed</button>
+            <button class="nav-item nav-child" data-view="audit-log"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Audit Log</button>
+            <button class="nav-item nav-child" data-view="uhf-captures"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2"/><circle cx="10" cy="12" r="3"/><path d="M19 7v10M22 9v6"/></svg></span>UHF Captures</button>
+            <button class="nav-item nav-child" data-view="driver-users"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22a8 8 0 0 1 16 0"/><circle cx="11" cy="9" r="4"/><path d="M19 4l2 2M21 4l-2 2"/></svg></span>Driver Users (Mobile)</button>
+          </div>
+
+          <!-- System Settings — expandable group -->
+          <button class="nav-item nav-group" data-group="system-settings" aria-expanded="false">
+            <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></span>System Settings<span class="nav-caret">▾</span>
+          </button>
+          <div class="nav-sub" data-group-body="system-settings">
+            <button class="nav-item nav-child" data-view="settings-basic"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span>Basic Settings</button>
+            <button class="nav-item nav-child" data-view="settings-entry-exit"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17l5-5-5-5M15 12H3M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/></svg></span>Entry / Exit Settings</button>
+          </div>
           <!-- Entry + Tariffs views still exist (entry-form is used by Dashboard
                GRANTED auto-fill flow) but are no longer reachable from the nav. -->
         </nav>
@@ -259,17 +332,85 @@
       <main>
         <header class="topbar">
           <div>
-            <p class="eyebrow">VayAccess Systems Control</p>
-            <h1 id="view-title">Dashboard</h1>
+            <p class="eyebrow" id="welcome-greeting">Welcome to VayAccess Management System</p>
+            <h1 id="view-title">Home Page</h1>
           </div>
           <div class="top-actions">
             <span id="clock"></span>
+            <div class="topbar-user" id="topbar-user" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+              <span class="topbar-avatar" id="topbar-avatar">·</span>
+              <span class="topbar-user-name" id="topbar-username">…<span class="topbar-caret">▾</span></span>
+              <div class="topbar-user-menu" id="topbar-user-menu" hidden>
+                <div class="topbar-user-info">
+                  <div class="topbar-user-info-name" id="topbar-user-info-name">—</div>
+                  <div class="topbar-user-info-role" id="topbar-user-info-role">—</div>
+                </div>
+                <button type="button" class="topbar-menu-item" id="topbar-logout">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                  Logout
+                </button>
+              </div>
+            </div>
             <button class="ghost-button" id="seed-data">Reload Demo</button>
           </div>
         </header>
 
         <!-- ─── DASHBOARD ───────────────────────────────────────────────── -->
         <section id="dashboard" class="view active">
+          <!-- ── Home Page summary (PDF page 5): gradient cards + charts ───── -->
+          <div class="home-summary">
+            <div class="home-cards">
+              <article class="home-card home-card-purple">
+                <div class="home-card-label">Parking Total</div>
+                <div class="home-card-value" id="hs-parking-total">0</div>
+              </article>
+              <article class="home-card home-card-blue">
+                <div class="home-card-label">Total number of members</div>
+                <div class="home-card-value" id="hs-member-total">0</div>
+              </article>
+              <article class="home-card home-card-cyan">
+                <div class="home-card-label">Total number of devices</div>
+                <div class="home-card-value" id="hs-device-total">0</div>
+              </article>
+              <article class="home-card home-card-orange">
+                <div class="home-card-label">Total Order</div>
+                <div class="home-card-value" id="hs-order-total">0</div>
+              </article>
+            </div>
+            <div class="home-charts">
+              <section class="panel home-bar-panel">
+                <div class="home-chart-legend">
+                  <span class="home-legend-item"><span class="home-legend-dot" style="background:#1f73d4;"></span>Entry Vehicle</span>
+                  <span class="home-legend-item"><span class="home-legend-dot" style="background:#f59e0b;"></span>Exit Vehicle</span>
+                </div>
+                <div class="home-bar-chart" id="hs-bar-chart"></div>
+              </section>
+              <section class="panel home-donut-panel">
+                <h3 class="home-panel-title">Income Statistics</h3>
+                <div class="home-donut-wrap">
+                  <svg id="hs-donut" viewBox="0 0 200 200" class="home-donut"></svg>
+                  <div class="home-donut-center">
+                    <div class="home-donut-total" id="hs-income-total">₹0</div>
+                    <div class="home-donut-label">Total Income</div>
+                  </div>
+                </div>
+                <div class="home-donut-legend">
+                  <div class="home-legend-row"><span class="home-legend-dot" style="background:#2cd47f;"></span>Temporary Income<b id="hs-income-temp">₹0</b></div>
+                  <div class="home-legend-row"><span class="home-legend-dot" style="background:#f59e0b;"></span>Member Income<b id="hs-income-mem">₹0</b></div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <!-- Member-expiry alerts. Hidden when no rows match. -->
+          <div id="hs-expiry-host" class="panel" style="display:none; margin-bottom:14px; border-left:4px solid #a87217;">
+            <div class="panel-head">
+              <h2>⚠ Member Expiry Alerts</h2>
+              <span class="hint"><b id="hs-expiry-count">0</b> member(s) expiring soon or expired</span>
+            </div>
+            <div id="hs-expiry-list" style="display:grid; gap:8px;"></div>
+          </div>
+
           <div class="metric-grid">
             <article class="metric">
               <span>Occupancy</span>
@@ -386,7 +527,7 @@
                 <span id="log-count"></span>
               </div>
               <div class="table-wrap">
-                <table>
+                <table id="access-log-table">
                   <thead><tr><th>Time</th><th>Plate</th><th>Tag</th><th>Employee</th><th>Dept</th><th>Status</th></tr></thead>
                   <tbody id="access-log-body">
                     <tr><td colspan="6" style="text-align:center; opacity:0.6; padding:20px;">No access events yet</td></tr>
@@ -520,6 +661,67 @@
               <p class="hint">No payment required — this is an internal parking system.</p>
             </section>
           </div>
+        </section>
+
+        <!-- ─── MANUAL ENTRY ────────────────────────────────────────────── -->
+        <!-- Operator-driven fallback when ANPR or RFID misses a vehicle.
+             POSTs the same /api/entries shape used by the Dashboard entry
+             handler so a single backend code path stays canonical. -->
+        <section id="manual-entry" class="view">
+          <section class="panel form-panel" style="max-width: 720px;">
+            <h2>Manual Entry</h2>
+            <p class="hint" style="margin-top:-4px; margin-bottom: 14px;">
+              Record a vehicle entry when ANPR or RFID fails.
+            </p>
+            <form id="me-form" autocomplete="off"
+                  style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
+              <label style="grid-column: 1 / -1;">License Plate *
+                <input type="text" id="me-plate" required
+                       placeholder="MH12AB1234" style="text-transform: uppercase;">
+              </label>
+              <label>Vehicle Type
+                <select id="me-type">
+                  <option>Car</option>
+                  <option>Bike</option>
+                </select>
+              </label>
+              <label>Entry Mode
+                <select id="me-mode">
+                  <option value="Manual Ticket">Manual Ticket</option>
+                  <option value="RFID/UHF">RFID/UHF</option>
+                  <option value="ANPR">ANPR</option>
+                  <option value="QR Code">QR Code</option>
+                </select>
+              </label>
+              <label>Identity Value
+                <input type="text" id="me-identity"
+                       placeholder="Ticket # or RFID tag" style="text-transform: uppercase;">
+              </label>
+              <label>Zone
+                <input type="text" id="me-zone" value="GMR Cargo Staff Parking">
+              </label>
+              <label style="grid-column: 1 / -1;">Owner Name
+                <input type="text" id="me-owner" placeholder="Optional — visitor / staff name">
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-size:0.95em; color:var(--text);">
+                <input type="checkbox" id="me-vip"> VIP vehicle
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-size:0.95em; color:var(--text);">
+                <input type="checkbox" id="me-staff"> Staff (free parking)
+              </label>
+              <label style="grid-column: 1 / -1;">Notes
+                <textarea id="me-notes" rows="2" placeholder="Reason for manual entry…"
+                          style="width:100%; resize: vertical; font-family: inherit;"></textarea>
+              </label>
+              <div style="grid-column: 1 / -1;">
+                <button type="submit" id="me-submit">+ Record Entry</button>
+              </div>
+            </form>
+            <div id="me-result" style="display:none; margin-top: 14px; padding: 10px 12px;
+                                       background: rgba(47,139,87,0.10);
+                                       border: 1px solid rgba(47,139,87,0.35);
+                                       border-radius: 8px; font-size: 0.9em;"></div>
+          </section>
         </section>
 
         <!-- ─── TARIFFS ─────────────────────────────────────────────────── -->
@@ -673,6 +875,7 @@
               <button id="rpt-refresh" class="ghost-button" type="button">↻ Refresh</button>
               <button id="export-excel" class="ghost-button" type="button">⬇ Export Excel</button>
               <button id="export-pdf"   class="ghost-button" type="button">⬇ Export PDF</button>
+              <button id="rpt-monthly-pdf" class="ghost-button" type="button" title="Download server-generated monthly summary">📄 Monthly Report</button>
             </div>
           </div>
 
@@ -822,6 +1025,7 @@
               <table>
                 <thead>
                   <tr>
+                    <th>Photos</th>
                     <th>Scan Time</th>
                     <th>Plate</th>
                     <th>Tag (EPC)</th>
@@ -836,7 +1040,7 @@
                   </tr>
                 </thead>
                 <tbody id="rpt-access-body">
-                  <tr><td colspan="11" style="text-align:center; opacity:0.6; padding:20px;">No access events match the filters.</td></tr>
+                  <tr><td colspan="12" style="text-align:center; opacity:0.6; padding:20px;">No access events match the filters.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -892,6 +1096,756 @@
               </div>
             </section>
           </div>
+        </section>
+
+        <!-- ─── PHASE-1 STUB SECTIONS (WeParking parity) ─────────────────────
+             These sections appear in the sidebar for full parity with the PDF.
+             Some link to where the data already lives in this app; the rest are
+             placeholders for features whose backend is a later phase. -->
+
+        <!-- Video Monitoring — Monitoring Center layout (PDF p4) -->
+        <section id="video" class="view">
+          <div class="monitoring-center">
+            <header class="mc-header">
+              <h2 class="mc-title">Monitoring<span class="mc-title-accent">Center</span></h2>
+              <div class="mc-meta">
+                <div class="mc-meta-cell mc-pill">Access-vay-<br>Monitoring</div>
+                <div class="mc-meta-cell mc-clock" id="mc-clock">--:--:--</div>
+                <div class="mc-meta-cell mc-date" id="mc-date">—</div>
+                <button class="mc-home" data-jump="dashboard" type="button" title="Back to dashboard">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 10.2 12 3l9 7.2V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <div class="mc-areas">
+              <!-- ── Area 1: Entrance ────────────────────────────────────── -->
+              <section class="mc-area">
+                <div class="mc-area-label">
+                  <span>Area 1</span>
+                  <span class="mc-area-sub"><span class="mc-dot"></span>Entrance</span>
+                </div>
+                <div class="mc-card">
+                  <div class="mc-card-head">
+                    <span class="mc-flag">Entrance</span>
+                    <span class="mc-info-label">Vehicle entry information<span class="mc-info-flag"></span></span>
+                  </div>
+                  <div class="mc-card-body">
+                    <div class="mc-cam">
+                      <img id="mc-cam-entry" src="/api/latest_frame.jpg" alt="Entry camera"
+                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      <div class="mc-cam-offline" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m4 4 16 16"/></svg>
+                        <div>Entry camera offline</div>
+                        <small>Live RTSP feed only available on-site</small>
+                      </div>
+                    </div>
+                    <div class="mc-info">
+                      <div class="mc-info-row"><span>License Plate</span><b class="mc-plate-text" id="mc-entry-plate">—</b></div>
+                      <div class="mc-info-row"><span>Vehicle type</span><span id="mc-entry-type">—</span></div>
+                      <div class="mc-info-row"><span>Entry Time</span><span id="mc-entry-time">—</span></div>
+                    </div>
+                  </div>
+                  <div class="mc-plate-band">
+                    <div class="mc-plate-thumb" id="mc-entry-thumb"></div>
+                    <div class="mc-plate-mag" id="mc-entry-mag">— — — — — — —</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ── Area 2: Exit ──────────────────────────────────────────── -->
+              <section class="mc-area">
+                <div class="mc-area-label">
+                  <span>Area 2</span>
+                  <span class="mc-area-sub"><span class="mc-dot mc-dot-exit"></span>Exit</span>
+                </div>
+                <div class="mc-card">
+                  <div class="mc-card-head">
+                    <span class="mc-flag mc-flag-exit">Exit</span>
+                    <span class="mc-info-label">Vehicle appearance information<span class="mc-info-flag mc-info-flag-exit"></span></span>
+                  </div>
+                  <div class="mc-card-body">
+                    <div class="mc-cam">
+                      <img id="mc-cam-exit" src="/api/latest_frame.jpg" alt="Exit camera"
+                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                      <div class="mc-cam-offline" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="m4 4 16 16"/></svg>
+                        <div>Exit camera offline</div>
+                        <small>Live RTSP feed only available on-site</small>
+                      </div>
+                    </div>
+                    <div class="mc-info">
+                      <div class="mc-info-row"><span>License Plate</span><b class="mc-plate-text" id="mc-exit-plate">—</b></div>
+                      <div class="mc-info-row"><span>Vehicle type</span><span id="mc-exit-type">—</span></div>
+                      <div class="mc-info-row"><span>Dwell time</span><span id="mc-exit-dwell">—</span></div>
+                      <div class="mc-info-row"><span>Charge</span><span id="mc-exit-charge">—</span></div>
+                    </div>
+                  </div>
+                  <div class="mc-plate-band">
+                    <div class="mc-plate-thumb" id="mc-exit-thumb"></div>
+                    <div class="mc-plate-mag" id="mc-exit-mag">— — — — — — —</div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <!-- Parking Records (Parking Inquiry) — live from /api/transactions -->
+        <section id="parking-records" class="view">
+          <section class="panel search-conditions">
+            <div class="search-conditions-head">
+              <h3>Search Conditions</h3>
+              <div style="display:flex; gap:8px;">
+                <button class="ghost-button" id="pr-reset" type="button">Reset</button>
+                <button class="ghost-button" id="pr-refresh" type="button">↻ Refresh</button>
+              </div>
+            </div>
+            <div class="search-conditions-grid">
+              <label>License Plate
+                <input type="text" id="pr-search" placeholder="e.g. TS08FH5796" style="text-transform:uppercase;">
+              </label>
+              <label>Vehicle Type
+                <select id="pr-type">
+                  <option value="">All types</option>
+                  <option value="Car">Car</option>
+                  <option value="Bike">Bike</option>
+                </select>
+              </label>
+              <label>Match Status
+                <select id="pr-status">
+                  <option value="">All</option>
+                  <option value="parked">Parked</option>
+                  <option value="exited">Exited</option>
+                </select>
+              </label>
+              <label>Entry from
+                <input type="date" id="pr-from">
+              </label>
+              <label>Entry to
+                <input type="date" id="pr-to">
+              </label>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Parking Records</h2>
+              <span class="hint" id="pr-meta">Loading…</span>
+            </div>
+            <div class="table-wrap">
+              <table id="pr-table">
+                <thead>
+                  <tr><th>License Plate</th><th>Type</th><th>Entry Time</th><th>Exit Time</th>
+                    <th>Dwell</th><th>Amount</th><th>Payment</th><th>Status</th></tr>
+                </thead>
+                <tbody id="pr-body">
+                  <tr><td colspan="8" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Scanning Record (Parking Inquiry) — live from /api/logs -->
+        <section id="scanning-record" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>Scanning Record</h2>
+                <p class="hint" style="margin:2px 0 0;" id="sr-meta">Loading…</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="text" id="sr-search" placeholder="Search plate / tag…"
+                       style="margin:0; min-width:200px;">
+                <button class="ghost-button" id="sr-refresh" type="button">↻ Refresh</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="sr-table">
+                <thead>
+                  <tr><th>Scan Time</th><th>License Plate</th><th>Tag (EPC)</th><th>Owner</th>
+                    <th>Department</th><th>Type</th><th>Status</th></tr>
+                </thead>
+                <tbody id="sr-body">
+                  <tr><td colspan="7" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Order Management — live from /api/orders (derived) -->
+        <section id="orders" class="view">
+          <section class="panel search-conditions">
+            <div class="search-conditions-head">
+              <h3>Search Conditions</h3>
+              <div style="display:flex; gap:8px;">
+                <button class="ghost-button" id="od-reset" type="button">Reset</button>
+                <button class="ghost-button" id="od-refresh" type="button">↻ Refresh</button>
+              </div>
+            </div>
+            <div class="search-conditions-grid">
+              <label>Status
+                <select id="od-status">
+                  <option value="">All statuses</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Free">Free</option>
+                  <option value="Unpaid Fee">Unpaid Fee</option>
+                </select>
+              </label>
+              <label>Order Type
+                <select id="od-type">
+                  <option value="">All order types</option>
+                  <option value="Temporary parking fee">Temporary parking fee</option>
+                  <option value="memberPurchase">memberPurchase</option>
+                </select>
+              </label>
+              <label>Order Number
+                <input type="text" id="od-search" placeholder="e.g. PK00000010">
+              </label>
+              <label>License Plate
+                <input type="text" id="od-plate" placeholder="e.g. TS08FH5796" style="text-transform:uppercase;">
+              </label>
+              <label>Start Time
+                <input type="date" id="od-from">
+              </label>
+              <label>End Time
+                <input type="date" id="od-to">
+              </label>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Order Management</h2>
+              <span class="hint" id="od-meta">Loading…</span>
+            </div>
+            <div class="table-wrap">
+              <table id="od-table">
+                <thead>
+                  <tr><th>Order Number</th><th>Order Type</th><th>License Plate</th>
+                    <th>Amount</th><th>Payment</th><th>Order Created</th><th>Admission Time</th><th>Status</th></tr>
+                </thead>
+                <tbody id="od-body">
+                  <tr><td colspan="8" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Registered Vehicle — live from /api/employees -->
+        <section id="registered" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>Registered Vehicle</h2>
+                <p class="hint" style="margin:2px 0 0;" id="rv-meta">Loading…</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="text" id="rv-search" placeholder="Search plate / owner…"
+                       style="margin:0; min-width:200px;">
+                <button class="ghost-button" data-jump="admin" type="button">+ Register New →</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="rv-table">
+                <thead>
+                  <tr><th>Owner</th><th>License Plate</th><th>Tag (EPC)</th><th>Type</th>
+                    <th>Department</th><th>Payment</th><th>Valid Until</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody id="rv-body">
+                  <tr><td colspan="9" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Black List — live from /api/blacklist -->
+        <section id="blacklist" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>Black List</h2>
+                <p class="hint" style="margin:2px 0 0;" id="bl-meta">Loading…</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="text" id="bl-search" placeholder="Search plate / tag…"
+                       style="margin:0; min-width:200px;">
+                <button class="ghost-button" data-jump="admin" type="button">+ Manage in Member Mgmt →</button>
+              </div>
+            </div>
+            <p class="hint" style="margin:0 0 10px;">Plates/tags here are always denied at the gate,
+              even if they're also whitelisted.</p>
+            <div class="table-wrap">
+              <table id="bl-table">
+                <thead>
+                  <tr><th>License Plate</th><th>Tag (EPC)</th><th>Reason</th><th>Added By</th><th>Added On</th></tr>
+                </thead>
+                <tbody id="bl-body">
+                  <tr><td colspan="5" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Yard Management — live CRUD from /api/yards -->
+        <section id="yard" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Parking Yard</h2></div>
+            <form id="yard-form" autocomplete="off"
+                  style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; align-items:end;">
+              <label>Yard Name *<input type="text" id="yard-name" required placeholder="Basement A"></label>
+              <label>Capacity *<input type="number" id="yard-capacity" required min="0" step="1" placeholder="120"></label>
+              <label>Location<input type="text" id="yard-location" placeholder="Block A, Level -1"></label>
+              <label>Region
+                <select id="yard-region"><option value="">— none —</option></select>
+              </label>
+              <div style="grid-column: 1 / -1;">
+                <button type="submit" id="yard-submit">+ Add Yard</button>
+              </div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Parking Yards</h2><span class="hint" id="yard-meta">Loading…</span></div>
+              <input type="text" id="yard-search" placeholder="Search yard / region…" style="margin:0; min-width:200px;">
+            </div>
+            <div class="table-wrap">
+              <table id="yard-table">
+                <thead>
+                  <tr><th>Yard Name</th><th>Capacity</th><th>Occupied</th><th>Available</th>
+                    <th>Location</th><th>Region</th><th>Action</th></tr>
+                </thead>
+                <tbody id="yard-body">
+                  <tr><td colspan="7" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Region Management — live CRUD from /api/regions -->
+        <section id="region" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Region</h2></div>
+            <form id="region-form" autocomplete="off"
+                  style="display:grid; grid-template-columns: 1fr 2fr auto; gap:12px; align-items:end;">
+              <label>Region Name *<input type="text" id="region-name" required placeholder="Hyderabad - North"></label>
+              <label>Description<input type="text" id="region-desc" placeholder="Covers GMR cargo + terminal lots"></label>
+              <div><button type="submit" id="region-submit">+ Add Region</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Regions</h2><span class="hint" id="region-meta">Loading…</span></div>
+              <input type="text" id="region-search" placeholder="Search region…" style="margin:0; min-width:200px;">
+            </div>
+            <div class="table-wrap">
+              <table id="region-table">
+                <thead>
+                  <tr><th>Region Name</th><th>Yards</th><th>Description</th><th>Created</th><th>Action</th></tr>
+                </thead>
+                <tbody id="region-body">
+                  <tr><td colspan="5" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Monthly Membership — live from /api/employees -->
+        <section id="membership" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Monthly Membership</h2><p class="hint" style="margin:2px 0 0;" id="mm-meta">Loading…</p></div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="text" id="mm-search" placeholder="Search member / plate…" style="margin:0; min-width:200px;">
+                <button class="ghost-button" data-jump="admin" type="button">+ New Member →</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="mm-table">
+                <thead><tr><th>Member</th><th>License Plate</th><th>Tag (EPC)</th><th>Department</th>
+                  <th>Plan</th><th>Amount</th><th>Valid Until</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="mm-body"><tr><td colspan="9" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Type Management — live from /api/tariffs -->
+        <section id="type-mgmt" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Vehicle Type Management</h2><span class="hint" id="tm-meta">Loading…</span></div>
+              <input type="text" id="tm-search" placeholder="Search type…" style="margin:0; min-width:200px;">
+            </div>
+            <p class="hint" style="margin:0 0 10px;">Vehicle types &amp; their tariff plans. Add or adjust under
+              <a href="#" data-jump="tariffs" class="stub-link">Tariffs</a>.</p>
+            <div class="table-wrap">
+              <table id="tm-table">
+                <thead><tr><th>Vehicle Type</th><th>Tariff Model</th><th>Hourly Rate</th><th>Daily Cap</th><th>Lost Ticket</th></tr></thead>
+                <tbody id="tm-body"><tr><td colspan="5" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Visitor Management — live CRUD from /api/visitors -->
+        <section id="visitors" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Visitor Pass</h2></div>
+            <form id="vis-form" autocomplete="off" style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px; align-items:end;">
+              <label>Visitor Name *<input type="text" id="vis-name" required placeholder="Ramesh Kumar"></label>
+              <label>License Plate<input type="text" id="vis-plate" placeholder="TS09AB1234" style="text-transform:uppercase;"></label>
+              <label>Contact<input type="tel" id="vis-contact" placeholder="+91 98765 43210"></label>
+              <label>Purpose<input type="text" id="vis-purpose" placeholder="Meeting / Delivery"></label>
+              <label>Host Employee<input type="text" id="vis-host" placeholder="Whom they're visiting"></label>
+              <div><button type="submit" id="vis-submit">+ Add Visitor</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Visitor Passes</h2><span class="hint" id="vis-meta">Loading…</span></div>
+              <input type="text" id="vis-search" placeholder="Search visitor / plate / host…" style="margin:0; min-width:220px;">
+            </div>
+            <div class="table-wrap">
+              <table id="vis-table">
+                <thead><tr><th>Visitor</th><th>Plate</th><th>Contact</th><th>Purpose</th><th>Host</th>
+                  <th>Valid From</th><th>Valid To</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="vis-body"><tr><td colspan="9" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Equipment Management — live from /api/devices -->
+        <section id="equipment" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Equipment Management</h2><span class="hint" id="eq-meta">Loading…</span></div>
+              <input type="text" id="eq-search" placeholder="Search device / type…" style="margin:0; min-width:200px;">
+            </div>
+            <p class="hint" style="margin:0 0 10px;">Connected hardware reported by the on-site system (readers, cameras, barriers).</p>
+            <div class="table-wrap">
+              <table id="eq-table">
+                <thead><tr><th>Device</th><th>Type</th><th>Status</th><th>Last Seen</th></tr></thead>
+                <tbody id="eq-body"><tr><td colspan="4" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- Basic Settings — live from /api/settings -->
+        <section id="settings-basic" class="view">
+          <section class="panel" style="max-width:640px;">
+            <div class="panel-head"><h2>Basic Settings</h2></div>
+            <form id="sb-form" autocomplete="off" style="display:grid; gap:14px;">
+              <label>Total Parking Capacity<input type="number" id="sb-capacity" min="0" step="1"></label>
+              <label>Default Entry Zone<input type="text" id="sb-zone" placeholder="GMR Cargo Staff Parking"></label>
+              <label>Backup Schedule<input type="text" id="sb-backup" placeholder="Daily at 02:00"></label>
+              <div><button type="submit" id="sb-submit">Save Basic Settings</button></div>
+            </form>
+          </section>
+        </section>
+
+        <!-- Entry/Exit Settings — live from /api/settings (extended keys) -->
+        <section id="settings-entry-exit" class="view">
+          <section class="panel" style="max-width:640px;">
+            <div class="panel-head"><h2>Entry / Exit Settings</h2></div>
+            <form id="se-form" autocomplete="off" style="display:grid; gap:14px;">
+              <label>Entry grace period (minutes)<input type="number" id="se-entry-grace" min="0" step="1" placeholder="5"></label>
+              <label>Exit grace period (minutes)<input type="number" id="se-exit-grace" min="0" step="1" placeholder="10"></label>
+              <label>Auto-open barrier on GRANTED
+                <select id="se-auto-barrier"><option value="1">Yes</option><option value="0">No</option></select>
+              </label>
+              <label>Re-scan cooldown (seconds)<input type="number" id="se-cooldown" min="0" step="1" placeholder="30"></label>
+              <div><button type="submit" id="se-submit">Save Entry/Exit Settings</button></div>
+            </form>
+          </section>
+        </section>
+
+        <!-- System Management placeholders (need dedicated backends — next chunk) -->
+        <!-- Account Management — live CRUD from /api/accounts -->
+        <section id="account" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Account</h2></div>
+            <form id="acc-form" autocomplete="off" style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px; align-items:end;">
+              <label>Account Name *<input type="text" id="acc-name" required placeholder="security"></label>
+              <label>Nickname<input type="text" id="acc-nick" placeholder="Sec"></label>
+              <label>Contact<input type="text" id="acc-contact" placeholder="9876543210"></label>
+              <label>Role
+                <select id="acc-role"><option value="">— none —</option></select>
+              </label>
+              <label>Password *<input type="password" id="acc-password" required placeholder="At least 4 characters" autocomplete="new-password"></label>
+              <label>Re-enter Password *<input type="password" id="acc-password2" required placeholder="Repeat" autocomplete="new-password"></label>
+              <div style="grid-column:1/-1;"><button type="submit" id="acc-submit">+ Add Account</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Accounts</h2><span class="hint" id="acc-meta">Loading…</span></div>
+              <input type="text" id="acc-search" placeholder="Search account / role…" style="margin:0; min-width:200px;">
+            </div>
+            <div class="table-wrap">
+              <table id="acc-table">
+                <thead><tr><th>Account Name</th><th>Nickname</th><th>Contact</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
+                <tbody id="acc-body"><tr><td colspan="6" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <!-- LCD Display Management — live CRUD from /api/lcd -->
+        <section id="lcd" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add LCD Display</h2></div>
+            <form id="lcd-form" autocomplete="off" style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px; align-items:end;">
+              <label>Screen Name *<input type="text" id="lcd-name" required placeholder="Entry Gate LCD"></label>
+              <label>Location<input type="text" id="lcd-location" placeholder="Entry Gate A"></label>
+              <label>Message<input type="text" id="lcd-message" placeholder="Welcome to VayAccess"></label>
+              <label>Status
+                <select id="lcd-active"><option value="1">Active</option><option value="0">Inactive</option></select>
+              </label>
+              <div style="grid-column:1/-1;"><button type="submit" id="lcd-submit">+ Add Screen</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>LCD Displays</h2><span class="hint" id="lcd-meta">Loading…</span></div>
+              <input type="text" id="lcd-search" placeholder="Search screen / location…" style="margin:0; min-width:220px;">
+            </div>
+            <div class="table-wrap">
+              <table id="lcd-table">
+                <thead><tr><th>Screen Name</th><th>Location</th><th>Message</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+                <tbody id="lcd-body"><tr><td colspan="6" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <!-- Menu Management — live CRUD from /api/menu_permissions -->
+        <section id="menu-mgmt" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Menu Permission</h2></div>
+            <form id="mn-form" autocomplete="off" style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px; align-items:end;">
+              <label>Role *<select id="mn-role"><option value="">— Select role —</option></select></label>
+              <label>Menu Item *
+                <select id="mn-menu" data-menu-options>
+                  <option value="">— Select menu —</option>
+                  <option value="dashboard">Home Page</option>
+                  <option value="reports">Statistical Management</option>
+                  <option value="video">Video Monitoring</option>
+                  <option value="parking-records">Parking Records</option>
+                  <option value="scanning-record">Scanning Record</option>
+                  <option value="devices">Lane Monitoring</option>
+                  <option value="exit">Manual Exit Record</option>
+                  <option value="orders">Order Management</option>
+                  <option value="admin">Member Management · Whitelist</option>
+                  <option value="membership">Member Management · Monthly</option>
+                  <option value="registered">Registered Vehicle</option>
+                  <option value="blacklist">Black List</option>
+                  <option value="yard">Yard Management</option>
+                  <option value="region">Region Management</option>
+                  <option value="type-mgmt">Type Management</option>
+                  <option value="visitors">Visitor Management</option>
+                  <option value="account">Account Management</option>
+                  <option value="lcd">LCD Display</option>
+                  <option value="equipment">Equipment Management</option>
+                  <option value="menu-mgmt">Menu Management</option>
+                  <option value="role">Role Management</option>
+                  <option value="role-perm">Role Permission</option>
+                  <option value="dictionary">Dictionary Managed</option>
+                  <option value="settings-basic">Basic Settings</option>
+                  <option value="settings-entry-exit">Entry/Exit Settings</option>
+                </select>
+              </label>
+              <label>Visibility
+                <select id="mn-allowed"><option value="1">Allowed (visible)</option><option value="0">Blocked (hidden)</option></select>
+              </label>
+              <div style="grid-column:1/-1;"><button type="submit" id="mn-submit">+ Save Permission</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Menu Visibility</h2><span class="hint" id="mn-meta">Loading…</span></div>
+              <input type="text" id="mn-search" placeholder="Search role / menu…" style="margin:0; min-width:220px;">
+            </div>
+            <p class="hint" style="margin:0 0 10px;">Configuration is persisted in Neon. Runtime sidebar enforcement is a later hook.</p>
+            <div class="table-wrap">
+              <table id="mn-table">
+                <thead><tr><th>Role</th><th>Menu Item</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+                <tbody id="mn-body"><tr><td colspan="5" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <!-- Role Management — live CRUD from /api/roles -->
+        <section id="role" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Role</h2></div>
+            <form id="role-mgmt-form" autocomplete="off" style="display:grid; grid-template-columns: 1fr 2fr auto; gap:12px; align-items:end;">
+              <label>Role Name *<input type="text" id="rl-name" required placeholder="Supervisor"></label>
+              <label>Description<input type="text" id="rl-desc" placeholder="Shift oversight + approvals"></label>
+              <div><button type="submit" id="rl-submit">+ Add Role</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Roles</h2><span class="hint" id="rl-meta">Loading…</span></div>
+              <input type="text" id="rl-search" placeholder="Search role…" style="margin:0; min-width:200px;">
+            </div>
+            <div class="table-wrap">
+              <table id="rl-table">
+                <thead><tr><th>Role Name</th><th>Accounts</th><th>Description</th><th>Created</th><th>Action</th></tr></thead>
+                <tbody id="rl-body"><tr><td colspan="5" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <!-- Role Permission — live CRUD from /api/role_permissions -->
+        <section id="role-perm" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Role Permission</h2></div>
+            <form id="rp-form" autocomplete="off" style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px; align-items:end;">
+              <label>Role *<select id="rp-role"><option value="">— Select role —</option></select></label>
+              <label>Section *<select id="rp-section" data-menu-options><option value="">— Select section —</option></select></label>
+              <label>Action *
+                <select id="rp-action">
+                  <option value="read">Read (view)</option>
+                  <option value="write">Write (create / edit)</option>
+                  <option value="delete">Delete</option>
+                </select>
+              </label>
+              <label>Allowed
+                <select id="rp-allowed"><option value="1">Yes</option><option value="0">No</option></select>
+              </label>
+              <div style="grid-column:1/-1;"><button type="submit" id="rp-submit">+ Save Permission</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Role Permissions</h2><span class="hint" id="rp-meta">Loading…</span></div>
+              <input type="text" id="rp-search" placeholder="Search role / section / action…" style="margin:0; min-width:220px;">
+            </div>
+            <p class="hint" style="margin:0 0 10px;">Configuration is persisted in Neon. Runtime enforcement is a later hook.</p>
+            <div class="table-wrap">
+              <table id="rp-table">
+                <thead><tr><th>Role</th><th>Section</th><th>Action</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+                <tbody id="rp-body"><tr><td colspan="6" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+        <!-- Dictionary Managed — live CRUD from /api/dictionary -->
+        <section id="dictionary" class="view">
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Dictionary Entry</h2></div>
+            <form id="dict-form" autocomplete="off" style="display:grid; grid-template-columns: repeat(3,1fr); gap:12px; align-items:end;">
+              <label>Category *<input type="text" id="dc-cat" required placeholder="Vehicle Category"></label>
+              <label>Key *<input type="text" id="dc-key" required placeholder="Four-Wheeler"></label>
+              <label>Value<input type="text" id="dc-val" placeholder="Car / Truck / Bus / EV"></label>
+              <div style="grid-column:1/-1;"><button type="submit" id="dc-submit">+ Add Entry</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div><h2>Dictionary Entries</h2><span class="hint" id="dc-meta">Loading…</span></div>
+              <input type="text" id="dc-search" placeholder="Search category / key…" style="margin:0; min-width:200px;">
+            </div>
+            <div class="table-wrap">
+              <table id="dc-table">
+                <thead><tr><th>Category</th><th>Key</th><th>Value</th><th>Created</th><th>Action</th></tr></thead>
+                <tbody id="dc-body"><tr><td colspan="5" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- UHF Captures — live from /api/uhf_captures (on-site only) -->
+        <section id="uhf-captures" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>UHF-Triggered ANPR Captures</h2>
+                <p class="hint" style="margin:2px 0 0;" id="uc-meta">Every time the UHF reader picks up a tag, the camera frame + plate crop are saved here.</p>
+              </div>
+              <input type="text" id="uc-search" placeholder="Search tag / plate / owner…" style="margin:0; min-width:220px;">
+            </div>
+            <div class="table-wrap">
+              <table id="uc-table">
+                <thead><tr><th>When</th><th>Vehicle photo</th><th>Plate photo</th><th>Tag (EPC)</th><th>Plate</th><th>Owner</th><th>Status</th></tr></thead>
+                <tbody id="uc-body"><tr><td colspan="7" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <p class="hint" style="margin:14px 0 0;">Captures are saved on the on-site PC under <code>detections/</code> and persisted to the <code>uhf_entry_events</code> table. Click any thumbnail to view full-size.</p>
+          </section>
+        </section>
+
+        <!-- ─── Zone-wise Gate Entry — live across every yard ───────────────── -->
+        <section id="zone-live" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>Zone-wise Gate Entry — Live</h2>
+                <p class="hint" style="margin:2px 0 0;" id="zl-meta">Per-zone occupancy + every gate entry from the last hour. Refreshes every 5 seconds.</p>
+              </div>
+              <input type="text" id="zl-search" placeholder="Search zone or plate…" style="margin:0; min-width:220px;">
+              <button type="button" class="btn" id="zl-refresh">Refresh</button>
+            </div>
+            <div id="zl-grid" class="zone-live-grid">
+              <div style="padding:40px; text-align:center; opacity:0.6;">Loading…</div>
+            </div>
+          </section>
+        </section>
+
+        <!-- ─── Driver Users (Mobile app) — admin-side management ─────────── -->
+        <section id="driver-users" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>Driver Users — VayAccess Mobile</h2>
+                <p class="hint" style="margin:2px 0 0;" id="du-meta">All self-registered mobile users. Actions here surface on the user's phone within ~5s.</p>
+              </div>
+              <input type="text" id="du-search" placeholder="Search name / email / phone / plate…" style="margin:0; min-width:240px;">
+              <button type="button" class="btn" id="du-refresh">Refresh</button>
+            </div>
+            <div class="table-wrap">
+              <table id="du-table">
+                <thead><tr>
+                  <th>Name</th><th>Email</th><th>Phone</th><th>Primary Plate</th><th>Type</th>
+                  <th>Live</th><th>Unread</th><th>Reservations</th><th>Last Seen</th><th>Actions</th>
+                </tr></thead>
+                <tbody id="du-body"><tr><td colspan="10" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+            <p class="hint" style="margin:14px 0 0;">
+              <b>Send Alert</b> pushes an in-app notification to a single user.
+              <b>Force Logout</b> revokes every active mobile session for that user.
+              <b>Delete</b> erases the account and all reservations.
+            </p>
+          </section>
+        </section>
+
+        <!-- Audit Log viewer — live from /api/audit (existing endpoint) -->
+        <section id="audit-log" class="view">
+          <section class="panel">
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>Audit Log</h2>
+                <p class="hint" style="margin:2px 0 0;" id="al-meta">Every state-changing action is recorded here.</p>
+              </div>
+              <input type="text" id="al-search" placeholder="Search area / message…" style="margin:0; min-width:220px;">
+            </div>
+            <div class="table-wrap">
+              <table id="al-table">
+                <thead><tr><th>When</th><th>Area</th><th>Message</th></tr></thead>
+                <tbody id="al-body"><tr><td colspan="3" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
         </section>
 
         <!-- ─── ADMIN ───────────────────────────────────────────────────── -->
@@ -959,6 +1913,50 @@
                 </div>
                 <label>RFID Tag (from SRK-F206)
                   <input type="text" id="emp-tag" readonly placeholder="Scan a tag first…"></label>
+
+                <!-- ── 3 · Payment ────────────────────────────────────────── -->
+                <div style="margin: 16px 0 4px; padding-top: 14px;
+                            border-top: 1px dashed var(--line);">
+                  <h4 style="margin: 0 0 4px; font-size: 1em; color: var(--primary);">3 · Payment Confirmation</h4>
+                  <p class="hint" style="margin: 0 0 12px;">Whitelist activation
+                    requires a verified UPI payment. All four fields are
+                    mandatory and validated server-side.</p>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+                  <label>Payment Method *
+                    <select id="emp-pay-method" required>
+                      <option value="" selected disabled>— Select method —</option>
+                      <option value="Cash">Cash</option>
+                      <option value="PhonePe">PhonePe</option>
+                      <option value="Paytm">Paytm</option>
+                      <option value="Google Pay">Google Pay</option>
+                      <option value="BHIM">BHIM</option>
+                      <option value="Amazon Pay">Amazon Pay</option>
+                      <option value="Other UPI">Other UPI</option>
+                    </select>
+                  </label>
+                  <label>Amount Paid (₹) *
+                    <input type="number" id="emp-pay-amount" required min="1" step="1"
+                           placeholder="e.g. 2500">
+                  </label>
+                </div>
+                <!-- UPI-only fields. Hidden when Payment Method = Cash. JS keeps
+                     these in sync with #emp-pay-method via #upi-fields wrapper. -->
+                <div id="upi-fields">
+                  <label>UPI ID *
+                    <input type="text" id="emp-pay-upi" required
+                           placeholder="e.g. 9876543210@ybl"
+                           pattern="[a-zA-Z0-9._\-]{2,256}@[a-zA-Z][a-zA-Z0-9.\-]{1,64}"
+                           title="Format: name@provider — e.g. 9876543210@ybl">
+                  </label>
+                  <label>Transaction ID *
+                    <input type="text" id="emp-pay-txn" required
+                           placeholder="e.g. T2402151234567890"
+                           pattern="[A-Za-z0-9]{8,30}"
+                           title="8-30 alphanumeric characters">
+                  </label>
+                </div>
+
                 <div style="display:flex; gap:10px; margin-top: 12px;">
                   <button type="button" class="ghost-button" id="emp-reset">Reset</button>
                   <button type="submit" id="emp-submit" disabled>Activate Tag</button>
@@ -1029,11 +2027,11 @@
                 <thead>
                   <tr>
                     <th>Employee</th><th>Department</th><th>Contact</th><th>Tag (EPC)</th>
-                    <th>Plate</th><th>Activated</th><th>Valid Until</th><th>Status</th><th>Action</th>
+                    <th>Plate</th><th>Payment</th><th>Activated</th><th>Valid Until</th><th>Status</th><th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="emp-tbody">
-                  <tr><td colspan="9" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
+                  <tr><td colspan="10" style="text-align:center; opacity:0.6; padding:20px;">Loading…</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1139,6 +2137,52 @@
     </div>
 
     <div id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Branded loader shown briefly when switching views. JS toggles [hidden]. -->
+    <div id="view-loader" class="view-loader" hidden aria-hidden="true">
+      <div class="view-loader-card">
+        <div class="view-loader-ring"></div>
+        <img class="view-loader-logo"
+             src="{{ url_for('static', filename='assets/vay-logo.jpeg') }}"
+             alt="VayAccess">
+      </div>
+      <div class="view-loader-text">Loading…</div>
+    </div>
+
+    <!-- QR pass modal — opened from a row's QR button (Visitor / Member). -->
+    <div id="qr-modal" class="edit-modal-backdrop" style="display:none;">
+      <div class="edit-modal qr-modal">
+        <div class="edit-modal-head">
+          <h3 id="qr-modal-title">Pass QR Code</h3>
+          <button type="button" id="qr-modal-x" class="ghost-button" style="padding:2px 10px;">✕</button>
+        </div>
+        <div class="qr-modal-body">
+          <img id="qr-modal-img" src="" alt="QR code">
+          <div class="qr-modal-meta" id="qr-modal-meta"></div>
+          <p class="hint" style="margin: 10px 0 0;">Scan at the gate to verify the pass.</p>
+        </div>
+        <div class="edit-modal-actions">
+          <button type="button" class="ghost-button" id="qr-modal-close">Close</button>
+          <button type="button" id="qr-modal-print">🖨 Print</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generic edit modal — reused by all CRUD tables (Account/Role/Dictionary/
+         Yard/Region/Visitor). Fields are injected per-section by parkvision.js. -->
+    <div id="edit-modal" class="edit-modal-backdrop" style="display:none;">
+      <div class="edit-modal">
+        <div class="edit-modal-head">
+          <h3 id="edit-modal-title">Edit</h3>
+          <button type="button" id="edit-modal-x" class="ghost-button" style="padding:2px 10px;">✕</button>
+        </div>
+        <div id="edit-modal-fields"></div>
+        <div class="edit-modal-actions">
+          <button type="button" class="ghost-button" id="edit-modal-cancel">Cancel</button>
+          <button type="button" id="edit-modal-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
     <!-- VAY ParkOps demo SPA: drives Entry/Exit/Tariffs/Reports + Dashboard metrics/vehicles/activity + Admin Users&Roles/Settings -->
     <script src="{{ url_for('static', filename='vay-app.js') }}"></script>
     <!-- ParkVision additions: live ANPR feed, current scan, access log, device cards, employee enrollment -->

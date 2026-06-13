@@ -1,0 +1,80 @@
+appId: com.farmleysfa
+name: "Farmley SFA - Rapid-Tap Stress Test"
+
+---
+
+- clearState
+- launchApp
+
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+
+# Login
+- tapOn:
+    id: "login-username"
+- inputText: "Demo_p"
+- tapOn:
+    id: "login-password"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn:
+    id: "login-button"
+
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-action-button"
+    timeout: 120000
+
+- takeScreenshot: "stress_00_dashboard"
+
+# ═══ RAPID TAP STORM 1: Dashboard action button — 30 taps, no delay ═══
+- repeat:
+    times: 30
+    commands:
+      - tapOn:
+          id: "dashboard-action-button"
+
+- evalScript: ${sleep(2000)}
+- takeScreenshot: "stress_01_after_storm1"
+
+# Dismiss any alert
+- runFlow:
+    when:
+      visible: "OK"
+    commands:
+      - tapOn: "OK"
+
+# ═══ RAPID TAP STORM 2: Back + forward oscillation ═══
+- repeat:
+    times: 20
+    commands:
+      - tapOn:
+          id: "dashboard-action-button"
+      - back
+      - tapOn:
+          id: "dashboard-action-button"
+      - back
+
+- evalScript: ${sleep(2000)}
+- takeScreenshot: "stress_02_after_oscillation"
+
+# ═══ RAPID TAP STORM 3: Random point taps across dashboard ═══
+- repeat:
+    times: 50
+    commands:
+      - tapOn:
+          point: "50%, 40%"
+      - tapOn:
+          point: "50%, 55%"
+      - tapOn:
+          point: "50%, 70%"
+
+- evalScript: ${sleep(2000)}
+- takeScreenshot: "stress_03_after_random_taps"
+
+# ═══ Assert app still alive ═══
+- assertVisible:
+    id: "dashboard-action-button"
+
+- takeScreenshot: "stress_99_survived"

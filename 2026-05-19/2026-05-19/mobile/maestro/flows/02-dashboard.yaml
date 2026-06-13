@@ -1,0 +1,13 @@
+appId: com.farmleysfa
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Dashboard"
+    timeout: 10000
+# Verify KPI cards exist
+- assertVisible: "visits"
+- assertVisible: "orders"
+# Verify journey plan preview
+- assertVisible: "Today"
+- takeScreenshot: screenshots/02-dashboard

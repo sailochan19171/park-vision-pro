@@ -1,0 +1,54 @@
+appId: com.farmleysfa
+---
+# TEST 08: Store Check
+# Verify: Store Check screen loads, MSL Only toggle visible
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Navigate to stores
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+
+# Tap first store and check in
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+
+# Tap Store Check card (swipe-as-tap at ~55%)
+- swipe:
+    start: "50%,55%"
+    end: "51%,55%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "MSL Only"
+    timeout: 20000
+
+# Verify MSL Only toggle is visible (default view)
+- assertVisible: "MSL Only"
+- takeScreenshot: screenshots/test-08-store-check-msl-only

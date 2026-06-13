@@ -1,0 +1,163 @@
+appId: com.farmleysfa
+---
+# === FULL DEMO: All Features ===
+
+# 1. LOGIN
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+
+# 2. INITIAL SYNC (auto-downloads all data)
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- takeScreenshot: screenshots/demo-01-dashboard
+
+# 3. ATTENDANCE / START DAY
+- tapOn: "Start Day"
+- extendedWaitUntil:
+    visible: "Start Your Day"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-02-attendance
+- scrollUntilVisible:
+    element: "Mark Attendance & Start Day"
+    direction: DOWN
+- tapOn: "Mark Attendance & Start Day"
+- extendedWaitUntil:
+    visible: "Day Started"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-03-day-started
+- tapOn: "Go to Stores"
+
+# 4. STORES LIST (navigate via See all on dashboard)
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 10000
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-04-stores
+
+# 5. CUSTOMER VISIT + CHECK IN
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-05-customer-visit
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-06-checked-in
+
+# 6. STORE CHECK
+- tapOn: "Record shelf conditions"
+- extendedWaitUntil:
+    visible: "ALMONDS"
+    timeout: 20000
+- takeScreenshot: screenshots/demo-07-store-check
+
+# Go back
+- back
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+
+# 7. PLANOGRAM (use text tap - scroll to ensure visible first)
+- scrollUntilVisible:
+    element: "Capture planogram"
+    direction: DOWN
+- tapOn: "Capture planogram"
+- extendedWaitUntil:
+    visible: "Select Category"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-08-planogram
+- tapOn: "Makhana"
+- extendedWaitUntil:
+    visible: "Yes, Followed"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-09-planogram-compliance
+- tapOn: "Yes, Followed"
+- takeScreenshot: screenshots/demo-10-planogram-recorded
+
+# Go back
+- back
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+
+# 8. PLACE ORDER
+- tapOn: "Create a new order"
+- extendedWaitUntil:
+    visible: "Search products"
+    timeout: 15000
+- takeScreenshot: screenshots/demo-11-order-screen
+
+# Add items
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- takeScreenshot: screenshots/demo-12-order-items-added
+
+# Place order
+- scrollUntilVisible:
+    element: "Place Order"
+    direction: DOWN
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible: "Order Placed"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-13-order-placed
+- tapOn: "OK"
+
+# 9. CHECK OUT
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- scrollUntilVisible:
+    element: "Check Out"
+    direction: DOWN
+- tapOn: "Check Out"
+- extendedWaitUntil:
+    visible: "Checked Out"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-14-checked-out
+- tapOn: "OK"
+
+# 10. ORDER HISTORY
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 5000
+- tapOn:
+    point: "62%,97%"
+- extendedWaitUntil:
+    visible: "Orders"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-15-order-history
+
+# 11. SETTINGS
+- tapOn:
+    point: "88%,97%"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 5000
+- takeScreenshot: screenshots/demo-16-settings

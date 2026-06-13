@@ -1,0 +1,38 @@
+appId: com.farmleysfa
+---
+# TEST 11: Settings + Sync
+# Verify: Settings tab visible, Sync Now button present
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Tap Settings tab (bottom-right corner of tab bar)
+- tapOn:
+    point: "88%,97%"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 5000
+
+# Verify Settings screen
+- assertVisible: "Settings"
+- takeScreenshot: screenshots/test-11-settings-screen
+
+# Verify Sync Now button
+- assertVisible: "Sync Now"
+- takeScreenshot: screenshots/test-11-sync-button

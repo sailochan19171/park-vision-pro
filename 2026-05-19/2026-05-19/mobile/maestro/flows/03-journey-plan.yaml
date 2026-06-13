@@ -1,0 +1,22 @@
+appId: com.farmleysfa
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Dashboard"
+    timeout: 10000
+# Navigate to My Stores tab
+- tapOn: "Stores"
+- extendedWaitUntil:
+    visible:
+      text: "My Stores"
+    timeout: 10000
+# Should show journey plan stores
+- assertVisible: "KPN Fresh"
+- takeScreenshot: screenshots/03-journey-plan
+# Tap first store
+- tapOn:
+    text: "KPN Fresh"
+    index: 0
+- assertVisible: "Check In"
+- takeScreenshot: screenshots/03-customer-visit

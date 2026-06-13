@@ -1,0 +1,38 @@
+appId: com.farmleysfa
+name: "02 - Start Day Flow"
+---
+- launchApp
+
+# Navigate to Start Day
+- tapOn: "Start Day"
+- extendedWaitUntil:
+    visible: "Start Your Day"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/06_start_day_screen"
+
+# Wait for pre-flight checks
+- extendedWaitUntil:
+    visible: "Pre-flight checks complete"
+    timeout: 15000
+- takeScreenshot: "../lochan farmley screenshots/07_preflight_done"
+
+# Tap CTA to proceed
+- tapOn: "Proceed to Mark Attendance"
+- extendedWaitUntil:
+    visible: "Start Your Day"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/08_attendance_screen"
+
+# Mark attendance
+- tapOn: "Mark Attendance & Start Day"
+- extendedWaitUntil:
+    visible: "Day Started"
+    timeout: 10000
+- takeScreenshot: "../lochan farmley screenshots/09_day_started_alert"
+
+# Confirm alert
+- tapOn: "Go to Dashboard"
+- extendedWaitUntil:
+    visible: "WORKING"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/10_dashboard_with_timer"

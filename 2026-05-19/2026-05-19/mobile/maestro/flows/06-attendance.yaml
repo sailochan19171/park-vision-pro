@@ -1,0 +1,20 @@
+appId: com.farmleysfa
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 10000
+- tapOn: "Start Day"
+- extendedWaitUntil:
+    visible: "Start Your Day"
+    timeout: 5000
+- assertVisible: "Admin"
+- takeScreenshot: screenshots/06-attendance-screen
+- scrollUntilVisible:
+    element: "Mark Attendance & Start Day"
+    direction: DOWN
+- tapOn: "Mark Attendance & Start Day"
+- extendedWaitUntil:
+    visible: "Day Started"
+    timeout: 10000
+- takeScreenshot: screenshots/06-attendance-marked

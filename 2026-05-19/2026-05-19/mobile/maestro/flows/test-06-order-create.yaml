@@ -1,0 +1,75 @@
+appId: com.farmleysfa
+---
+# TEST 06: Create Order
+# Verify: Place Order → select MAKHANA → add items → Place Order → success
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Navigate to stores
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+
+# Tap first store and check in
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+
+# Tap Place Order card (swipe-as-tap at ~47%)
+- swipe:
+    start: "50%,47%"
+    end: "51%,47%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "ALL"
+    timeout: 15000
+- takeScreenshot: screenshots/test-06-order-screen
+
+# Select MAKHANA category
+- tapOn: "MAKHANA"
+- takeScreenshot: screenshots/test-06-makhana-selected
+
+# Add 3 of first item
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- takeScreenshot: screenshots/test-06-items-added
+
+# Place the order
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible: "Order Placed"
+    timeout: 5000
+- takeScreenshot: screenshots/test-06-order-placed
+- tapOn: "OK"

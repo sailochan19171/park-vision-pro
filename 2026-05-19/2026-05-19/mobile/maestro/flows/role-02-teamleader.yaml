@@ -1,0 +1,26 @@
+appId: com.farmleysfa
+---
+# ROLE TEST: Team Leader (Demo)
+# Team Leaders: Can do everything + create rota + see My Team
+
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "demo"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- takeScreenshot: screenshots/role-tl-01-dashboard
+
+# Verify dashboard
+- assertVisible: "Today's Stores"
+- takeScreenshot: screenshots/role-tl-02-dashboard-full

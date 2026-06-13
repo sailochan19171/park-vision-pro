@@ -1,0 +1,26 @@
+appId: com.farmleysfa
+---
+- launchApp:
+    clearState: true
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+
+# After login → sync → dashboard (sync is fast, may not see sync screen)
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Verify stores are populated from sync
+- assertVisible: "Today's Stores"
+- assertVisible: "See all"
+- takeScreenshot: screenshots/08-dashboard-with-synced-data

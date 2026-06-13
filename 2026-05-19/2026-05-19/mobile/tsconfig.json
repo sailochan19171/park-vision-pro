@@ -1,0 +1,39 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["jest"],
+    "experimentalDecorators": true
+  },
+  "include": [
+    "App.tsx",
+    "index.js",
+    "src/config.ts",
+    "src/api/parking.ts",
+    "src/store/driverAuth.ts",
+    "src/navigation/VayNavigator.tsx",
+    "src/screens/parking/**/*.ts",
+    "src/screens/parking/**/*.tsx"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/Pods",
+    "scratch",
+    "scripts",
+    "e2e",
+    "__tests__",
+    "src/screens/!(parking)/**",
+    "src/services/**",
+    "src/store/auth.ts",
+    "src/store/sync.ts",
+    "src/store/visit.ts",
+    "src/store/activityDrafts.ts",
+    "src/db/**",
+    "src/components/**",
+    "src/api/client.ts",
+    "src/hooks/**",
+    "src/utils/**",
+    "src/constants/**",
+    "src/types/**",
+    "src/navigation/AppNavigator.tsx"
+  ]
+}

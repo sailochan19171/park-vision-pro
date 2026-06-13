@@ -1,0 +1,39 @@
+appId: com.farmleysfa
+name: "03 - Store Check-in Flow"
+---
+- launchApp
+
+# Go to Stores tab
+- tapOn: "Stores"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/11_stores_list"
+
+# Check filter tabs
+- tapOn: "All"
+- takeScreenshot: "../lochan farmley screenshots/12_stores_all_tab"
+
+- tapOn: "Pending"
+- takeScreenshot: "../lochan farmley screenshots/13_stores_pending_tab"
+
+# Go back to All and tap first store
+- tapOn: "All"
+- scrollUntilVisible:
+    element:
+      textRegex: ".*"
+    direction: DOWN
+    timeout: 3000
+
+# Tap on the first store card (use index)
+- tapOn:
+    index: 0
+    childOf:
+      id: "store-list"
+- takeScreenshot: "../lochan farmley screenshots/14_customer_dashboard"
+
+# Verify customer dashboard loads
+- extendedWaitUntil:
+    visible: "Place Order"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/15_customer_activities"

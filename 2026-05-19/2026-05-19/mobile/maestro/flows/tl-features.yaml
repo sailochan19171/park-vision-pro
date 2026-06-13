@@ -1,0 +1,118 @@
+appId: com.farmleysfa
+---
+# TL FEATURES E2E: Login as Team Leader → My Team → Member Detail → Location Approvals → Rota (Create For)
+
+# 1. FRESH LOGIN as Team Leader (demo)
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "demo"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 90000
+- takeScreenshot: screenshots/tl-01-dashboard
+
+# 2. VERIFY TL-ONLY CARDS on Dashboard
+- assertVisible: "My Team"
+- assertVisible: "Location Approvals"
+- takeScreenshot: screenshots/tl-02-tl-cards-visible
+
+# 3. TAP MY TEAM
+- tapOn: "My Team"
+- extendedWaitUntil:
+    visible: "Total"
+    timeout: 10000
+- assertVisible: "Present"
+- assertVisible: "Absent"
+- takeScreenshot: screenshots/tl-03-my-team-list
+
+# 4. VERIFY FILTER CHIPS
+- assertVisible: "All"
+- assertVisible: "Promoter"
+- tapOn: "Present"
+- takeScreenshot: screenshots/tl-04-filter-present
+- tapOn: "All"
+
+# 5. TAP A TEAM MEMBER → DETAIL
+- tapOn:
+    text: "Arti Jatav"
+- extendedWaitUntil:
+    visible: "Attendance"
+    timeout: 10000
+- assertVisible: "Orders"
+- assertVisible: "Revenue"
+- assertVisible: "Visits"
+- scroll
+- assertVisible: "Assigned Customers.*"
+- takeScreenshot: screenshots/tl-05-member-detail
+- back
+
+# 6. GO BACK AND TAP LOCATION APPROVALS
+- extendedWaitUntil:
+    visible: "My Team"
+    timeout: 5000
+- back
+- extendedWaitUntil:
+    visible: "Location Approvals"
+    timeout: 5000
+- tapOn: "Location Approvals"
+- extendedWaitUntil:
+    visible: "Pending"
+    timeout: 10000
+- assertVisible: "Approved"
+- assertVisible: "Rejected"
+- takeScreenshot: screenshots/tl-06-location-approvals
+
+# 7. TAP APPROVED TAB
+- tapOn: "Approved"
+- takeScreenshot: screenshots/tl-07-approved-tab
+
+# 8. TAP REJECTED TAB
+- tapOn: "Rejected"
+- takeScreenshot: screenshots/tl-08-rejected-tab
+
+# 9. BACK TO PENDING
+- tapOn: "Pending"
+- takeScreenshot: screenshots/tl-09-pending-tab
+
+# 10. GO BACK TO DASHBOARD → ROTA
+- back
+- extendedWaitUntil:
+    visible: "My Schedule"
+    timeout: 5000
+- scroll
+- tapOn:
+    text: "My Schedule"
+- extendedWaitUntil:
+    visible: "Rota"
+    timeout: 10000
+- takeScreenshot: screenshots/tl-10-rota-screen
+
+# 11. TAP CREATE SCHEDULE BUTTON (works in both empty and populated states)
+- tapOn:
+    id: "btn-create-schedule"
+- extendedWaitUntil:
+    visible: "Tap a day to change shift"
+    timeout: 15000
+
+# 12. VERIFY "CREATE FOR" PICKER (TL only)
+- assertVisible: "CREATE FOR"
+- assertVisible: "Myself"
+- takeScreenshot: screenshots/tl-11-rota-create-for
+
+# 13. TAP A TEAM MEMBER NAME IN PICKER
+- tapOn:
+    text: "Arti"
+- takeScreenshot: screenshots/tl-12-rota-creating-for-member
+
+# 14. DONE
+- takeScreenshot: screenshots/tl-13-final

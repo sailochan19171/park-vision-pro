@@ -1,0 +1,46 @@
+appId: com.farmleysfa
+---
+# ROLE TEST: Promoter (Nisha Sahani / TB0486)
+# Promoters: Can do orders, store checks, planograms. Cannot create rota.
+
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "nisha sahani"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- takeScreenshot: screenshots/role-promoter-01-dashboard
+
+# Verify dashboard shows stores
+- assertVisible: "Today's Stores"
+
+# Navigate to stores
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/role-promoter-02-stores
+
+# Tap first store and check in
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+
+# Verify Promoter CAN see Place Order
+- assertVisible: "Place Order"
+- assertVisible: "Store Check"
+- assertVisible: "Planogram"
+- takeScreenshot: screenshots/role-promoter-03-activities

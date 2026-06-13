@@ -1,0 +1,58 @@
+appId: com.farmleysfa
+---
+# TEST 07: Order MSL Filter
+# Verify: MSL chip visible on order screen, tap to filter items
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Navigate to stores
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+
+# Tap first store and check in
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+
+# Tap Place Order card (swipe-as-tap at ~47%)
+- swipe:
+    start: "50%,47%"
+    end: "51%,47%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "MSL"
+    timeout: 15000
+
+# Verify MSL chip is visible
+- assertVisible: "MSL"
+- takeScreenshot: screenshots/test-07-msl-chip-visible
+
+# Tap MSL chip to filter
+- tapOn: "MSL"
+- takeScreenshot: screenshots/test-07-msl-filtered

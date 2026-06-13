@@ -1,0 +1,55 @@
+appId: com.farmleysfa
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 30000
+- takeScreenshot: screenshots/01-dashboard
+
+# Navigate to Stores tab
+- tapOn: "Stores"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/02-stores-tab
+
+# Use the + FAB to open unplanned visit search
+- tapOn: "+"
+- extendedWaitUntil:
+    visible: "Unplanned Visit"
+    timeout: 5000
+
+# Type in the search field and search
+- tapOn: "Customer code or name"
+- inputText: "C"
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+- takeScreenshot: screenshots/03-search-results
+
+# Tap the first search result
+- tapOn:
+    index: 0
+    below: "Search"
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 10000
+- takeScreenshot: screenshots/04-customer-visit
+
+# Check in
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+- takeScreenshot: screenshots/05-checked-in-activities
+
+# Scroll down to see all activities
+- scroll
+- takeScreenshot: screenshots/06-activities-scrolled
+
+# Try to tap Place Order (visible for Promoter role, not Merchandiser)
+# If the current user is a Merchandiser, Place Order won't be visible.
+# Let's capture what we can see - the activities list IS the key output
+- scroll
+- takeScreenshot: screenshots/07-more-activities

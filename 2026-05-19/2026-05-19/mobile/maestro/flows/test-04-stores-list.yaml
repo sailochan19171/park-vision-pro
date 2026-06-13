@@ -1,0 +1,42 @@
+appId: com.farmleysfa
+---
+# TEST 04: Stores List Navigation
+# Verify: Navigate to stores, verify 3 stores visible
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Navigate to stores via "See all"
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/test-04-stores-list
+
+# Verify 3 stores are visible (MT is the channel type shown on store cards)
+- assertVisible:
+    text: "MT"
+    index: 0
+- assertVisible:
+    text: "MT"
+    index: 1
+- assertVisible:
+    text: "MT"
+    index: 2
+- takeScreenshot: screenshots/test-04-three-stores

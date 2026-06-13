@@ -1,0 +1,41 @@
+appId: com.farmleysfa
+---
+# TEST 03: Attendance / Start Day
+# Verify: Start Day → Mark Attendance → Day Started success
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Start Day
+- tapOn: "Start Day"
+- extendedWaitUntil:
+    visible: "Start Your Day"
+    timeout: 5000
+- assertVisible: "Admin"
+- takeScreenshot: screenshots/test-03-attendance-screen
+
+# Mark attendance
+- scrollUntilVisible:
+    element: "Mark Attendance & Start Day"
+    direction: DOWN
+- tapOn: "Mark Attendance & Start Day"
+- extendedWaitUntil:
+    visible: "Day Started"
+    timeout: 15000
+- takeScreenshot: screenshots/test-03-day-started

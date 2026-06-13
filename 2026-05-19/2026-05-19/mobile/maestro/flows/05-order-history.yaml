@@ -1,0 +1,21 @@
+appId: com.farmleysfa
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Dashboard"
+    timeout: 10000
+# Navigate to Orders tab
+- tapOn: "Orders"
+- extendedWaitUntil:
+    visible:
+      text: "Order History"
+    timeout: 5000
+# Should show orders
+- takeScreenshot: screenshots/05-order-history
+# Tap first order for detail
+- tapOn:
+    index: 0
+- assertVisible: "Order Detail"
+- assertVisible: "Total"
+- takeScreenshot: screenshots/05-order-detail

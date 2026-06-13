@@ -1,0 +1,82 @@
+appId: com.farmleysfa
+---
+# Flow: Login → Stores → Check-in → Store Check + Planogram
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 20000
+
+# Navigate to Stores
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/07a-stores-list
+
+# Tap first store
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+
+# Check In
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- takeScreenshot: screenshots/07b-checked-in
+
+# Swipe up to ensure cards are visible
+- swipe:
+    direction: UP
+    duration: 300
+
+# Navigate to Store Check (point tap)
+- tapOn:
+    point: "50%,47%"
+- extendedWaitUntil:
+    visible: "ALMONDS"
+    timeout: 20000
+- takeScreenshot: screenshots/07c-store-check
+
+# Go back
+- back
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+
+# Navigate to Planogram
+- tapOn:
+    point: "50%,55%"
+- extendedWaitUntil:
+    visible: "Select Category"
+    timeout: 10000
+- takeScreenshot: screenshots/07d-planogram
+
+# Select Makhana category
+- tapOn: "Makhana"
+- extendedWaitUntil:
+    visible: "followed"
+    timeout: 5000
+- takeScreenshot: screenshots/07e-planogram-compliance
+
+# Mark as followed
+- tapOn: "Yes, Followed"
+- assertVisible: "Recorded"
+- takeScreenshot: screenshots/07f-planogram-recorded

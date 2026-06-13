@@ -1,0 +1,133 @@
+appId: com.farmleysfa
+---
+# === FULL E2E DEMO: Login as Promoter → Stores → Check-in → Order → New Activities → Checkout ===
+
+# 1. FRESH LOGIN as Promoter
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "nisha sahani"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 90000
+- takeScreenshot: screenshots/demo-01-dashboard
+
+# 2. GO TO STORES
+- tapOn: "Stores"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-02-stores
+
+# 3. Unplanned visit search
+- tapOn: "+"
+- extendedWaitUntil:
+    visible: "Unplanned Visit"
+    timeout: 5000
+- tapOn: "Customer code or name"
+- inputText: "C"
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-03-search
+- tapOn:
+    index: 0
+    below: "Search"
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-04-before-checkin
+
+# 4. CHECK IN
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-05-activities-top
+- scroll
+- takeScreenshot: screenshots/demo-06-activities-bottom
+
+# 5. TAP PLACE ORDER using long press
+- longPressOn:
+    id: "activity-place-order"
+- extendedWaitUntil:
+    visible: "New Order"
+    timeout: 30000
+- takeScreenshot: screenshots/demo-07-order-screen
+
+# Select a category
+- tapOn: "MAKHANA"
+- takeScreenshot: screenshots/demo-08-order-makhana
+
+# Add items
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- takeScreenshot: screenshots/demo-09-order-with-items
+
+# Place the order
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible: "Order Placed"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-10-order-placed
+- tapOn: "OK"
+
+# 6. TAP AGEING/EXPIRY
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- longPressOn: "Ageing / Expiry"
+- extendedWaitUntil:
+    visible: "Add Item"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-11-expiry-screen
+- back
+
+# 7. TAP COMPETITOR OBSERVATION
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- longPressOn: "Competitor Observation"
+- extendedWaitUntil:
+    visible: "Add Observation"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-12-competitor-screen
+- back
+
+# 8. MTD SUMMARY
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- scroll
+- longPressOn: "MTD Sales Summary"
+- takeScreenshot: screenshots/demo-13-mtd-screen
+- back
+
+# 9. CHECK OUT
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- scroll
+- tapOn: "Check Out"
+- extendedWaitUntil:
+    visible: "Checked Out"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-14-checked-out
+- tapOn: "OK"

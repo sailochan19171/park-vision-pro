@@ -1,0 +1,11 @@
+appId: com.farmleysfa
+name: "Full E2E Test Suite - Farmley SFA"
+---
+- runFlow: 01_login.yaml
+- runFlow: 02_start_day.yaml
+- runFlow: 03_stores_checkin.yaml
+- runFlow: 04_place_order.yaml
+- runFlow: 05_end_day.yaml
+- runFlow: 06_settings.yaml
+- runFlow: 07_hamburger_menu.yaml
+- runFlow: 08_restart_day.yaml

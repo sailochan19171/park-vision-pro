@@ -1,0 +1,33 @@
+appId: com.farmleysfa
+name: "06 - Settings Flow"
+---
+- launchApp
+
+# Go to Settings tab
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Sync Data"
+    timeout: 5000
+- takeScreenshot: "../lochan farmley screenshots/25_settings_screen"
+
+# Test Sync Data
+- tapOn: "Sync Data"
+- extendedWaitUntil:
+    visible:
+      textRegex: "Success|Sync Failed"
+    timeout: 30000
+- takeScreenshot: "../lochan farmley screenshots/26_sync_data_result"
+- tapOn: "OK"
+
+# Test Upload Data
+- tapOn: "Upload Data"
+- extendedWaitUntil:
+    visible:
+      textRegex: "Success|Up to Date|Upload Failed"
+    timeout: 30000
+- takeScreenshot: "../lochan farmley screenshots/27_upload_data_result"
+- tapOn: "OK"
+
+# Toggle Custom Camera
+- tapOn: "Custom Camera"
+- takeScreenshot: "../lochan farmley screenshots/28_custom_camera_toggled"

@@ -13,9 +13,14 @@ if not CLOUD_MODE:
     # with minimum buffering. Only relevant when the camera_loop will run.
     os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;udp|fflags;nobuffer|flags;low_delay|stimeout;5000000"
 
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, session, redirect, url_for
+from functools import wraps
 from database import (db, Whitelist, AccessLog, Tariff, ParkingTransaction,
-                      Setting, AuditEvent, Blacklist, Visitor, migrate_schema)
+                      Setting, AuditEvent, Blacklist, Visitor, Region, Yard,
+                      Account, Role, DictionaryEntry, LCDScreen, UHFEntryEvent,
+                      MenuPermission, RolePermission, migrate_schema,
+                      DriverUser, DriverSession, DriverReservation,
+                      DriverNotification)
 from api_integration import clean_plate_number
 from sqlalchemy import or_
 import threading
@@ -52,6 +57,11 @@ else:
     cv2 = easyocr = np = YOLO = torch = concurrent = None
 
 app = Flask(__name__)
+# Required to use Flask sessions for login. In production the real secret MUST
+# be set via the SECRET_KEY environment variable (Render/Fly/Koyeb dashboard);
+# the fallback is only here so local dev boots without configuration. Rotate
+# this default before going to production — sessions can be forged otherwise.
+app.secret_key = os.environ.get('SECRET_KEY', 'vayaccess-default-secret-CHANGE-ME-IN-PROD')
 
 # DB connection. The real Neon URL is NEVER hardcoded here — this file is
 # committed to a public GitHub repo. Set DATABASE_URL via:
@@ -1447,13 +1457,189 @@ def check_access(det_type=None, det_cat=None):
             last_logged_time = now
 
 
+def capture_on_uhf_event(tag):
+    """UHF-triggered ANPR capture. Snapshots the current camera frame, runs
+    YOLO+OCR ONCE to identify the vehicle + plate, saves two images linked
+    to this tag (full vehicle + plate crop), writes a UHFEntryEvent row, and
+    returns the dict shape. Safe to call even if camera/ML aren't ready —
+    just logs and returns None.
+
+    This is the workflow the user described:
+       UHF tag arrives -> ANPR captures THIS frame -> save full + plate +
+       link them to this tag.
+    """
+    if CLOUD_MODE:
+        return None
+    tag_c = (tag or '').strip().upper()
+    if not tag_c:
+        return None
+
+    # Grab freshest highres frame. Wait briefly (up to ~1s) so we don't miss
+    # the moment if the camera loop is between frames when the tag arrives.
+    frame = None
+    for _ in range(20):
+        with frame_lock:
+            if latest_highres is not None:
+                frame = latest_highres.copy()
+                break
+        time.sleep(0.05)
+    if frame is None:
+        print(f"[UHF-ANPR] tag={tag_c} — no camera frame available, skip capture")
+        return None
+
+    ts       = datetime.now()
+    ts_str   = ts.strftime("%Y%m%d_%H%M%S_%f")[:-3]
+    safe_tag = ''.join(c for c in tag_c if c.isalnum())[:24] or 'TAG'
+    full_name = f"uhf_{ts_str}_{safe_tag}_full.jpg"
+    full_path = os.path.join(DETECTIONS_DIR, full_name)
+    try:
+        cv2.imwrite(full_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 88])
+    except Exception as e:
+        print(f"[UHF-ANPR] failed to save full frame: {e}")
+        return None
+
+    # Run YOLO on a downscaled copy to find the primary vehicle.
+    plate_text       = None
+    plate_confidence = 0.0
+    vehicle_label    = None
+    plate_crop_name  = None
+    try:
+        h_full, w_full = frame.shape[:2]
+        small = cv2.resize(frame, (640, 360))
+        results = model(small, verbose=False, imgsz=480, conf=0.15)
+        best = None
+        for r in results:
+            for box in r.boxes:
+                cls_id = int(box.cls[0].item())
+                conf   = float(box.conf[0].item())
+                if cls_id not in CLASS_NAMES or conf < 0.15:
+                    continue
+                x1, y1, x2, y2 = box.xyxy[0].int().tolist()
+                area = (x2 - x1) * (y2 - y1)
+                if best is None or area > best['area']:
+                    best = {'box': (x1, y1, x2, y2), 'area': area,
+                            'conf': conf, 'label': CLASS_NAMES.get(cls_id, 'Vehicle')}
+        if best:
+            vehicle_label = best['label']
+            sx, sy = w_full / 640, h_full / 360
+            x1, y1, x2, y2 = best['box']
+            hx1, hy1 = int(x1 * sx), int(y1 * sy)
+            hx2, hy2 = int(x2 * sx), int(y2 * sy)
+            pad_x = int((hx2 - hx1) * 0.15)
+            pad_y = int((hy2 - hy1) * 0.15)
+            hx1 = max(0, hx1 - pad_x); hy1 = max(0, hy1 - pad_y)
+            hx2 = min(w_full, hx2 + pad_x); hy2 = min(h_full, hy2 + pad_y)
+            vehicle_crop = frame[hy1:hy2, hx1:hx2]
+
+            if vehicle_crop.size > 0:
+                # Plate OCR — FastALPR preferred (plate-specific model),
+                # EasyOCR fallback.
+                if USE_FAST_ALPR and alpr is not None:
+                    try:
+                        ocr_results = alpr.predict(vehicle_crop)
+                        best_p = None
+                        for r in ocr_results:
+                            if r.ocr is None: continue
+                            cleaned = clean_plate_number(r.ocr.text)
+                            if not cleaned or len(cleaned) < 6: continue
+                            rc = r.ocr.confidence
+                            prob = (sum(rc) / len(rc)) if isinstance(rc, (list, tuple)) and rc else float(rc)
+                            if best_p is None or prob > best_p['prob']:
+                                bb = r.detection.bounding_box
+                                best_p = {'plate': cleaned, 'prob': prob,
+                                          'bbox': (int(bb.x1), int(bb.y1), int(bb.x2), int(bb.y2))}
+                        if best_p:
+                            plate_text       = best_p['plate']
+                            plate_confidence = best_p['prob']
+                            px1, py1, px2, py2 = best_p['bbox']
+                            px1 = max(0, px1); py1 = max(0, py1)
+                            px2 = min(vehicle_crop.shape[1], px2)
+                            py2 = min(vehicle_crop.shape[0], py2)
+                            if px2 > px1 and py2 > py1:
+                                plate_crop_name = f"uhf_{ts_str}_{safe_tag}_plate.jpg"
+                                cv2.imwrite(os.path.join(DETECTIONS_DIR, plate_crop_name),
+                                            vehicle_crop[py1:py2, px1:px2],
+                                            [cv2.IMWRITE_JPEG_QUALITY, 92])
+                    except Exception as e:
+                        print(f"[UHF-ANPR] FastALPR failed: {e}")
+                else:
+                    # EasyOCR fallback over the vehicle crop
+                    try:
+                        ocr_results = _run_easy_ocr(vehicle_crop)
+                        best_p = None
+                        for (_, text, prob) in ocr_results:
+                            cleaned = clean_plate_number(text)
+                            if cleaned and len(cleaned) >= 6 and prob > (best_p['prob'] if best_p else 0):
+                                best_p = {'plate': cleaned, 'prob': float(prob)}
+                        if best_p:
+                            plate_text = best_p['plate']
+                            plate_confidence = best_p['prob']
+                    except Exception as e:
+                        print(f"[UHF-ANPR] EasyOCR fallback failed: {e}")
+    except Exception as e:
+        print(f"[UHF-ANPR] YOLO/OCR step failed: {e}")
+
+    # Whitelist lookup -> determine GRANTED / DENIED / UNKNOWN.
+    owner_name = None
+    department = None
+    status     = "UNKNOWN"
+    try:
+        with app.app_context():
+            q = Whitelist.query.filter(db.func.upper(Whitelist.rfid_tag) == tag_c)
+            w = q.first()
+            if not w and plate_text:
+                w = Whitelist.query.filter(
+                    db.func.upper(Whitelist.number_plate) == plate_text.upper()).first()
+            if w:
+                owner_name = w.owner_name
+                department = w.department or None
+                status = "ACCESS GRANTED" if w.is_valid() else "ACCESS DENIED (EXPIRED)"
+            else:
+                status = "ACCESS DENIED (UNKNOWN TAG)"
+
+            event = UHFEntryEvent(
+                timestamp=ts, rfid_tag=tag_c, plate=plate_text,
+                vehicle_type=vehicle_label, confidence=plate_confidence,
+                full_image=full_name, plate_image=plate_crop_name,
+                owner_name=owner_name, department=department, status=status,
+            )
+            db.session.add(event)
+            db.session.commit()
+
+            print(f"[UHF-ANPR] tag={tag_c} plate={plate_text} owner={owner_name} "
+                  f"status={status} full={full_name} plate_img={plate_crop_name}")
+            return event.to_dict()
+    except Exception as e:
+        print(f"[UHF-ANPR] DB write failed: {e}")
+        return None
+
+
 def rfid_monitor():
+    last_tag      = None
+    last_tag_at   = 0.0
+    # Don't re-fire the capture for the same tag within this window — the
+    # reader can repeat reads many times per second while a vehicle sits at
+    # the gate. ~6s is plenty for one entry event.
+    UHF_DEDUP_SECONDS = 6.0
     while True:
         dashboard_state["reader_status"] = rfid.status
         tag = rfid.get_latest_tag()
         if tag:
-            dashboard_state["latest_tag"]      = tag
+            now_t = time.time()
+            tag_c = tag.strip().upper()
+            dashboard_state["latest_tag"]      = tag_c
             dashboard_state["latest_tag_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Fire the UHF-triggered capture only on a NEW tag (or after
+            # the dedup window). Runs in this thread — capture is short
+            # enough (~200-600ms) that it doesn't starve the polling loop.
+            new_tag = (tag_c != last_tag) or (now_t - last_tag_at > UHF_DEDUP_SECONDS)
+            if new_tag:
+                last_tag    = tag_c
+                last_tag_at = now_t
+                try:
+                    capture_on_uhf_event(tag_c)
+                except Exception as e:
+                    print(f"[UHF-ANPR] capture wrapper failed: {e}")
             check_access()
         time.sleep(0.5)
 
@@ -1556,11 +1742,92 @@ def process_static_frame(frame):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Auth: session + RBAC decorators
+# ─────────────────────────────────────────────────────────────────────────────
+# Two decorators wrap protected routes:
+#   • login_required  — any logged-in account
+#   • admin_required  — login + role == 'Administrator' (case-insensitive)
+# For /api/* routes a missing session returns JSON 401 so the frontend can
+# react cleanly. For HTML routes it redirects to /login.
+def _is_api(path):
+    return path.startswith('/api/')
+
+def login_required(fn):
+    @wraps(fn)
+    def _wrapped(*args, **kwargs):
+        if not session.get('user_id'):
+            if _is_api(request.path):
+                return jsonify({"error": "login_required"}), 401
+            return redirect(url_for('login_page'))
+        return fn(*args, **kwargs)
+    return _wrapped
+
+def admin_required(fn):
+    @wraps(fn)
+    def _wrapped(*args, **kwargs):
+        if not session.get('user_id'):
+            if _is_api(request.path):
+                return jsonify({"error": "login_required"}), 401
+            return redirect(url_for('login_page'))
+        role = (session.get('user_role') or '').strip().lower()
+        if role != 'administrator':
+            if _is_api(request.path):
+                return jsonify({"error": "admin_required",
+                                "message": "Administrator role required"}), 403
+            return redirect(url_for('login_page'))
+        return fn(*args, **kwargs)
+    return _wrapped
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Flask Routes
 # ─────────────────────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+# ── Login page + session API ────────────────────────────────────────────────
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    d = request.json or {}
+    username = (d.get('username') or '').strip()
+    password = d.get('password') or ''
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+    user = Account.query.filter(db.func.lower(Account.name) == username.lower()).first()
+    if not user or not user.check_password(password):
+        return jsonify({"error": "Invalid credentials"}), 401
+    session['user_id']   = user.id
+    session['user_name'] = user.name
+    session['user_role'] = user.role or ''
+    AuditEvent.log(f"Login: {user.name}", area='Auth')
+    return jsonify({"ok": True, "user": {
+        "id": user.id, "name": user.name, "role": user.role or "",
+    }})
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    name = session.get('user_name')
+    session.clear()
+    if name:
+        AuditEvent.log(f"Logout: {name}", area='Auth')
+    return jsonify({"ok": True})
+
+@app.route('/api/me')
+def api_me():
+    if not session.get('user_id'):
+        return jsonify({"logged_in": False})
+    return jsonify({
+        "logged_in": True,
+        "id":   session.get('user_id'),
+        "name": session.get('user_name'),
+        "role": session.get('user_role') or '',
+    })
 
 # 1×1 transparent PNG — used in CLOUD_MODE where there is no camera frame.
 # The HTML <img id="anpr-stream"> stays valid (no broken-image icon) and the
@@ -1596,6 +1863,7 @@ def get_state():
     return jsonify(dashboard_state)
 
 @app.route('/api/whitelist', methods=['GET', 'POST'])
+@login_required
 def handle_whitelist():
     if request.method == 'POST':
         data = request.json
@@ -1657,6 +1925,18 @@ def get_logs():
             if w.number_plate:
                 wl_by_plate[w.number_plate.upper()] = w
 
+        # UHF captures keyed by tag, sorted newest-first. We match each log
+        # row to the nearest capture within a small time window so the
+        # Reports table can show the vehicle + plate photo inline.
+        uhf_by_tag = {}
+        if logs:
+            oldest_ts = min(l.timestamp for l in logs if l.timestamp)
+            uhf_candidates = (UHFEntryEvent.query
+                              .filter(UHFEntryEvent.timestamp >= (oldest_ts - timedelta(minutes=5)))
+                              .order_by(UHFEntryEvent.timestamp.desc()).all())
+            for ev in uhf_candidates:
+                uhf_by_tag.setdefault(ev.rfid_tag.upper(), []).append(ev)
+
         out = []
         for log in logs:
             d = log.to_dict()
@@ -1680,12 +1960,28 @@ def get_logs():
                     d['number_plate'] = wl.number_plate or 'N/A'
                 if d.get('vehicle_type') in ('N/A', '', None):
                     d['vehicle_type'] = wl.vehicle_type or 'N/A'
+            # Attach the closest UHF capture's image filenames (within ±30s
+            # of the log row). Empty strings stay empty if there's no capture
+            # — Reports renders them as a placeholder thumb.
+            d['full_image'] = ''
+            d['plate_image'] = ''
+            if tag and tag in uhf_by_tag and log.timestamp:
+                best, best_dt = None, None
+                for ev in uhf_by_tag[tag]:
+                    if not ev.timestamp: continue
+                    dt = abs((ev.timestamp - log.timestamp).total_seconds())
+                    if dt <= 30 and (best_dt is None or dt < best_dt):
+                        best, best_dt = ev, dt
+                if best:
+                    d['full_image']  = best.full_image  or ''
+                    d['plate_image'] = best.plate_image or ''
             out.append(d)
         return jsonify(out)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/api/config', methods=['GET', 'POST'])
+@admin_required
 def handle_config():
     if request.method == 'POST':
         data = request.json
@@ -1702,6 +1998,7 @@ def handle_config():
     return jsonify({"camera_source": source})
 
 @app.route('/api/test_image', methods=['POST'])
+@admin_required
 def test_image():
     if CLOUD_MODE:
         return jsonify({"status": "error", "message": "Disabled in cloud mode (no ANPR pipeline)"}), 503
@@ -1720,12 +2017,28 @@ def test_image():
     return jsonify({"status": "success"})
 
 @app.route('/api/resume_feed', methods=['POST'])
+@admin_required
 def resume_feed():
     global freeze_feed
     freeze_feed = False
     return jsonify({"status": "success"})
 
 # ── Saved-plate gallery endpoints (ReolinkANPR pattern) ──────────────────────
+@app.route('/api/uhf_captures')
+@login_required
+def api_uhf_captures():
+    """Recent UHF-triggered ANPR capture events with image filenames the
+    /image/<filename> route can serve."""
+    try:
+        limit = min(int(request.args.get('limit', 200)), 1000)
+    except ValueError:
+        limit = 200
+    rows = (UHFEntryEvent.query
+            .order_by(UHFEntryEvent.timestamp.desc())
+            .limit(limit).all())
+    return jsonify([r.to_dict() for r in rows])
+
+
 @app.route('/api/recent_detections')
 def api_recent_detections():
     """Return the most recent committed plates with image filenames."""
@@ -1773,6 +2086,7 @@ def api_desktop_reader_ports():
     return jsonify(list_available_ports())
 
 @app.route('/api/desktop_reader/configure', methods=['POST'])
+@admin_required
 def api_desktop_reader_configure():
     if CLOUD_MODE:
         return jsonify({"status": "error", "message": "No COM ports in cloud mode"}), 503
@@ -1785,11 +2099,13 @@ def api_desktop_reader_configure():
     return jsonify({"status": "ok", "port": port, "baudrate": baud})
 
 @app.route('/api/desktop_reader/clear', methods=['POST'])
+@admin_required
 def api_desktop_reader_clear():
     desktop_rfid.clear_latest_tag()
     return jsonify({"status": "ok"})
 
 @app.route('/api/employees', methods=['GET', 'POST'])
+@login_required
 def api_employees():
     """Employee enrollment endpoint. POST activates a tag with employee info;
     GET lists all activated employees (whitelist rows with department set)."""
@@ -1824,6 +2140,59 @@ def api_employees():
             return jsonify({"status": "error",
                             "message": "Vehicle plate format is invalid"}), 400
 
+        # ── Payment gate (added 2026-05-27) ───────────────────────────────
+        # Whitelist activation requires a recorded UPI payment. UHF tag check
+        # above already guarantees a scanned tag is present. Payment fields
+        # are validated client- and server-side so the row never lands in the
+        # DB without them, and a third party can audit who paid what.
+        payment_method = (data.get('payment_method') or '').strip()
+        upi_id         = (data.get('upi_id') or '').strip()
+        transaction_id = (data.get('transaction_id') or '').strip()
+        try:
+            payment_amount = int(data.get('payment_amount', 0) or 0)
+        except (TypeError, ValueError):
+            payment_amount = 0
+
+        ALLOWED_METHODS = {'Cash', 'PhonePe', 'Paytm', 'Google Pay', 'BHIM',
+                           'Amazon Pay', 'Other UPI'}
+        # Methods that REQUIRE a UPI ID + provider transaction ID. Cash is
+        # excluded — there is no digital reference to capture.
+        UPI_METHODS = {'PhonePe', 'Paytm', 'Google Pay', 'BHIM',
+                       'Amazon Pay', 'Other UPI'}
+        # UPI VPA spec: <handle>@<provider>, handle 2-256 chars alphanumeric/._-,
+        # provider 2-64 chars starting with a letter. e.g. 9876543210@ybl
+        UPI_RE = re.compile(r'^[a-zA-Z0-9._\-]{2,256}@[a-zA-Z][a-zA-Z0-9.\-]{1,64}$')
+        # Transaction ID: provider-issued reference. PhonePe T2..., Paytm digits,
+        # GPay ABCD..., etc. — accept any 8-30 char alphanumeric.
+        TXN_RE = re.compile(r'^[A-Za-z0-9]{8,30}$')
+
+        if payment_method not in ALLOWED_METHODS:
+            return jsonify({"status": "error",
+                            "message": "Select a valid payment method "
+                                       "(Cash / PhonePe / Paytm / Google Pay / "
+                                       "BHIM / Amazon Pay / Other UPI)"}), 400
+        if payment_amount <= 0:
+            return jsonify({"status": "error",
+                            "message": "Payment amount must be greater than 0"}), 400
+
+        if payment_method in UPI_METHODS:
+            # Digital payments must have a valid UPI VPA + a unique
+            # provider-issued transaction reference. Both are saved so
+            # finance can reconcile against the provider's statement.
+            if not UPI_RE.match(upi_id):
+                return jsonify({"status": "error",
+                                "message": "UPI ID must look like 'name@provider' "
+                                           "(e.g. 9876543210@ybl)"}), 400
+            if not TXN_RE.match(transaction_id):
+                return jsonify({"status": "error",
+                                "message": "Transaction ID must be 8-30 "
+                                           "alphanumeric characters"}), 400
+        else:
+            # Cash: no UPI handle, no provider transaction. Clear any value
+            # the client may have sent so the DB stays clean.
+            upi_id         = None
+            transaction_id = None
+
         now = datetime.now()
         from dateutil.relativedelta import relativedelta
         valid_until = now + relativedelta(months=+months)
@@ -1839,18 +2208,45 @@ def api_employees():
             existing.activated_at      = now
             existing.activation_months = months
             existing.valid_until       = valid_until
+            existing.payment_method    = payment_method
+            existing.upi_id            = upi_id
+            existing.transaction_id    = transaction_id
+            existing.payment_amount    = payment_amount
+            existing.paid_at           = now
             # only overwrite plate if a real one was provided this time
             if plate_in:
                 existing.number_plate  = plate_c
             row = existing
             action = "renewed"
         else:
-            # If the plate is in use by a different row, reject — uniqueness needed.
-            plate_clash = Whitelist.query.filter(
-                db.func.upper(Whitelist.number_plate) == plate_c.upper()).first()
-            if plate_clash:
+            # Plate uniqueness across BOTH whitelist (members) AND visitors —
+            # a single plate identifies one vehicle, and that vehicle has one
+            # owner of record.
+            clash = _find_plate_conflict(plate_c)
+            if clash:
                 return jsonify({"status": "error",
-                                "message": f"Plate {plate_c} is already enrolled"}), 400
+                                "message": f"Plate {plate_c} is already registered to "
+                                           f"{clash[1]} ({clash[0]}). Edit that record "
+                                           f"instead of creating a new one."}), 400
+            # Phone uniqueness too — a contact number identifies one person.
+            if contact:
+                pclash = _find_phone_conflict(contact)
+                if pclash:
+                    return jsonify({"status": "error",
+                                    "message": f"Phone {contact} is already registered to "
+                                               f"{pclash[1]} ({pclash[0]})."}), 400
+            # Block duplicate UPI transaction IDs: a single provider txn
+            # reference can only enroll one employee. Catches accidental
+            # re-use and basic fraud. Cash payments have transaction_id=NULL
+            # so the check is skipped — many Cash rows can legitimately
+            # share "no transaction id".
+            if transaction_id:
+                txn_clash = Whitelist.query.filter(
+                    Whitelist.transaction_id == transaction_id).first()
+                if txn_clash:
+                    return jsonify({"status": "error",
+                                    "message": f"Transaction ID {transaction_id} "
+                                               f"already used for another enrollment"}), 400
             row = Whitelist(
                 rfid_tag         = rfid_tag,
                 number_plate     = plate_c,
@@ -1861,6 +2257,11 @@ def api_employees():
                 activated_at     = now,
                 activation_months= months,
                 valid_until      = valid_until,
+                payment_method   = payment_method,
+                upi_id           = upi_id,
+                transaction_id   = transaction_id,
+                payment_amount   = payment_amount,
+                paid_at          = now,
             )
             db.session.add(row)
             action = "activated"
@@ -1886,6 +2287,7 @@ def api_employees():
 
 
 @app.route('/api/employees/renew', methods=['POST'])
+@login_required
 def api_employee_renew():
     """Renew (extend validity) for an existing employee. Requires:
       - rfid_tag: the existing tag to renew
@@ -2003,6 +2405,47 @@ def seed_defaults():
     if Setting.get('default_entry_zone') is None:
         Setting.set('default_entry_zone', 'GMR Cargo Staff Parking')
 
+    # ── Seed initial admin account ───────────────────────────────────────────
+    # Fires whenever NO account has a usable password_hash. Covers:
+    #   * fresh install (zero accounts)
+    #   * migration case where accounts exist from before the auth feature
+    #     shipped (rows with password_hash = NULL — none of them can log in)
+    # Reads INITIAL_ADMIN_USER / INITIAL_ADMIN_PASSWORD env vars (override on
+    # Render). Defaults to admin/admin with a console warning.
+    has_login_capable_account = (
+        Account.query.filter(Account.password_hash.isnot(None)).count() > 0
+    )
+    if not has_login_capable_account:
+        # Make sure the "Administrator" role exists so the admin_required
+        # decorator can recognise it.
+        if not Role.query.filter(db.func.lower(Role.name) == 'administrator').first():
+            db.session.add(Role(name='Administrator',
+                                description='Full system access (seeded on first boot)'))
+            db.session.commit()
+        admin_user = os.environ.get('INITIAL_ADMIN_USER', 'admin').strip() or 'admin'
+        admin_pass = os.environ.get('INITIAL_ADMIN_PASSWORD', 'admin').strip() or 'admin'
+        # Reuse an existing row with the same name (e.g. one created from the
+        # CRUD UI before passwords were a thing) instead of duplicating it.
+        existing = Account.query.filter(
+            db.func.lower(Account.name) == admin_user.lower()).first()
+        if existing:
+            existing.role = 'Administrator'
+            existing.set_password(admin_pass)
+            action = 'updated'
+        else:
+            a = Account(name=admin_user, nickname='Initial Admin', role='Administrator')
+            a.set_password(admin_pass)
+            db.session.add(a)
+            action = 'seeded'
+        db.session.commit()
+        AuditEvent.log(f"Initial admin {action}: {admin_user}", area='System')
+        if admin_pass == 'admin':
+            print("[SECURITY] WARNING: initial admin password is the default 'admin'. "
+                  "Log in and change it immediately, or set INITIAL_ADMIN_PASSWORD "
+                  "env var before first boot.")
+        else:
+            print(f"[OK] Initial admin {action}: {admin_user}")
+
     # One-shot retag: collapse all legacy multi-zone values to the single
     # configured zone ('GMR Cargo Staff Parking'). Runs once, guarded by a
     # setting. Old zones like 'Auto Gate', 'Basement A', etc. become one
@@ -2048,6 +2491,7 @@ def seed_defaults():
 
 # ── Tariffs ──────────────────────────────────────────────────────────────────
 @app.route('/api/tariffs', methods=['GET', 'POST'])
+@login_required
 def api_tariffs():
     if request.method == 'POST':
         data = request.json or {}
@@ -2076,6 +2520,7 @@ def api_tariffs():
 
 
 @app.route('/api/tariffs/<int:tid>', methods=['DELETE'])
+@login_required
 def api_tariff_delete(tid):
     row = Tariff.query.get(tid)
     if not row:
@@ -2111,6 +2556,7 @@ def api_transactions():
 
 
 @app.route('/api/entries', methods=['POST'])
+@login_required
 def api_entry_create():
     data = request.json or {}
     veh = (data.get('vehicle') or '').strip().upper()
@@ -2171,6 +2617,7 @@ def _compute_bill(tx: ParkingTransaction, lost: bool):
 
 
 @app.route('/api/exits', methods=['POST'])
+@login_required
 def api_exit_close():
     """Strict exit: must match an ACTIVE transaction by EXACT plate or EXACT
     tag (not partial contains) AND optionally by zone. Wrong plate/tag = 404.
@@ -2252,18 +2699,29 @@ def api_exit_close():
 
 # ── Settings (capacity, backup schedule) ─────────────────────────────────────
 @app.route('/api/settings', methods=['GET', 'POST'])
+@admin_required
 def api_settings():
+    # Basic facility settings + Entry/Exit settings share the key/value Setting
+    # store. The UI splits them into two pages (Basic Settings, Entry/Exit
+    # Settings) but they all persist here.
+    SETTING_KEYS = ('capacity', 'backup_schedule', 'default_entry_zone',
+                    'entry_grace_minutes', 'exit_grace_minutes',
+                    'auto_open_barrier', 'rescan_cooldown_seconds')
     if request.method == 'POST':
         data = request.json or {}
-        for key in ('capacity', 'backup_schedule', 'default_entry_zone'):
+        for key in SETTING_KEYS:
             if key in data:
                 Setting.set(key, data[key])
         AuditEvent.log("Facility settings updated", area='Admin')
         return jsonify({"status": "ok"})
     return jsonify({
-        "capacity":           int(Setting.get('capacity', '120')),
-        "backup_schedule":    Setting.get('backup_schedule', 'Daily at 02:00'),
-        "default_entry_zone": Setting.get('default_entry_zone', 'Auto Gate'),
+        "capacity":                int(Setting.get('capacity', '120')),
+        "backup_schedule":         Setting.get('backup_schedule', 'Daily at 02:00'),
+        "default_entry_zone":      Setting.get('default_entry_zone', 'Auto Gate'),
+        "entry_grace_minutes":     int(Setting.get('entry_grace_minutes', '5')),
+        "exit_grace_minutes":      int(Setting.get('exit_grace_minutes', '10')),
+        "auto_open_barrier":       Setting.get('auto_open_barrier', '1'),
+        "rescan_cooldown_seconds": int(Setting.get('rescan_cooldown_seconds', '30')),
     })
 
 
@@ -2297,6 +2755,7 @@ def api_dashboard_metrics():
 
 # ── Audit trail ──────────────────────────────────────────────────────────────
 @app.route('/api/audit')
+@admin_required
 def api_audit():
     try:
         limit = min(int(request.args.get('limit', 50)), 500)
@@ -2392,6 +2851,7 @@ def api_devices():
 
 # ── Blacklist (banned plates / tags) ─────────────────────────────────────────
 @app.route('/api/blacklist', methods=['GET', 'POST'])
+@login_required
 def api_blacklist():
     if request.method == 'POST':
         data = request.json or {}
@@ -2423,6 +2883,7 @@ def api_blacklist():
 
 
 @app.route('/api/blacklist/<int:bid>', methods=['DELETE'])
+@login_required
 def api_blacklist_delete(bid):
     row = Blacklist.query.get(bid)
     if not row:
@@ -2434,8 +2895,1032 @@ def api_blacklist_delete(bid):
     return jsonify({"status": "ok"})
 
 
+# ── Orders (derived ledger, WeParking parity) ────────────────────────────────
+# Orders are NOT a separate table — they're derived on the fly from the two
+# things that actually take money:
+#   • each closed ParkingTransaction  -> "Temporary parking fee" order
+#   • each Whitelist activation payment -> "memberPurchase" order
+# This gives a real, live order list without duplicating data.
+@app.route('/api/orders')
+def api_orders():
+    orders = []
+    txns = (ParkingTransaction.query
+            .filter(ParkingTransaction.exit_at.isnot(None))
+            .order_by(ParkingTransaction.exit_at.desc())
+            .limit(500).all())
+    for t in txns:
+        orders.append({
+            "order_no":   f"PK{t.id:08d}",
+            "type":       "Temporary parking fee",
+            "plate":      t.vehicle or "—",
+            "amount":     t.total_amount or 0,
+            "payment":    t.payment_method or "—",
+            "created_at": t.exit_at.strftime("%Y-%m-%d %H:%M:%S") if t.exit_at else "",
+            "admission":  t.entry_at.strftime("%Y-%m-%d %H:%M:%S") if t.entry_at else "—",
+            "status":     "Paid" if (t.total_amount or 0) > 0 else "Free",
+        })
+    members = (Whitelist.query
+               .filter(Whitelist.paid_at.isnot(None))
+               .order_by(Whitelist.paid_at.desc()).all())
+    for w in members:
+        orders.append({
+            "order_no":   f"MB{w.id:08d}",
+            "type":       "memberPurchase",
+            "plate":      w.number_plate or "—",
+            "amount":     w.payment_amount or 0,
+            "payment":    w.payment_method or "—",
+            "created_at": w.paid_at.strftime("%Y-%m-%d %H:%M:%S") if w.paid_at else "",
+            "admission":  "—",
+            "status":     "Paid",
+        })
+    # Newest first across both kinds.
+    orders.sort(key=lambda o: o["created_at"], reverse=True)
+    return jsonify(orders)
+
+
+# ── Yards (parking lots) ─────────────────────────────────────────────────────
+@app.route('/api/yards', methods=['GET', 'POST'])
+@admin_required
+def api_yards():
+    if request.method == 'POST':
+        data = request.json or {}
+        name = (data.get('name') or '').strip()
+        if not name:
+            return jsonify({"status": "error", "message": "Yard name is required"}), 400
+        try:
+            capacity = max(0, int(data.get('capacity', 0) or 0))
+        except (TypeError, ValueError):
+            capacity = 0
+        if Yard.query.filter(db.func.lower(Yard.name) == name.lower()).first():
+            return jsonify({"status": "error", "message": f"Yard '{name}' already exists"}), 400
+        db.session.add(Yard(name=name, capacity=capacity,
+                            location=(data.get('location') or '').strip() or None,
+                            region=(data.get('region') or '').strip() or None))
+        db.session.commit()
+        AuditEvent.log(f"Yard added: {name}", area='Admin')
+        return jsonify({"status": "ok"})
+    return jsonify([y.to_dict()
+                    for y in Yard.query.order_by(Yard.name).all()])
+
+
+@app.route('/api/yards/<int:yid>', methods=['DELETE'])
+@admin_required
+def api_yards_delete(yid):
+    row = Yard.query.get(yid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    name = row.name
+    db.session.delete(row)
+    db.session.commit()
+    AuditEvent.log(f"Yard removed: {name}", area='Admin')
+    return jsonify({"status": "ok"})
+
+
+# ── Regions (group of yards) ─────────────────────────────────────────────────
+@app.route('/api/regions', methods=['GET', 'POST'])
+@admin_required
+def api_regions():
+    if request.method == 'POST':
+        data = request.json or {}
+        name = (data.get('name') or '').strip()
+        if not name:
+            return jsonify({"status": "error", "message": "Region name is required"}), 400
+        if Region.query.filter(db.func.lower(Region.name) == name.lower()).first():
+            return jsonify({"status": "error", "message": f"Region '{name}' already exists"}), 400
+        db.session.add(Region(name=name,
+                              description=(data.get('description') or '').strip() or None))
+        db.session.commit()
+        AuditEvent.log(f"Region added: {name}", area='Admin')
+        return jsonify({"status": "ok"})
+    return jsonify([r.to_dict()
+                    for r in Region.query.order_by(Region.name).all()])
+
+
+@app.route('/api/regions/<int:rid>', methods=['DELETE'])
+@admin_required
+def api_regions_delete(rid):
+    row = Region.query.get(rid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    name = row.name
+    db.session.delete(row)
+    db.session.commit()
+    AuditEvent.log(f"Region removed: {name}", area='Admin')
+    return jsonify({"status": "ok"})
+
+
+# ── System Management: Accounts ──────────────────────────────────────────────
+@app.route('/api/accounts', methods=['GET', 'POST'])
+@admin_required
+def api_accounts():
+    if request.method == 'POST':
+        data = request.json or {}
+        name = (data.get('name') or '').strip()
+        if not name:
+            return jsonify({"status": "error", "message": "Account name is required"}), 400
+        if Account.query.filter(db.func.lower(Account.name) == name.lower()).first():
+            return jsonify({"status": "error", "message": f"Account '{name}' already exists"}), 400
+        # Optional password on create — if either field is present, both must
+        # be present and match. Allowing creation without a password lets an
+        # admin set it later via PUT (useful for bulk import scenarios).
+        pwd  = data.get('password')
+        pwd2 = data.get('password_confirm')
+        if pwd or pwd2:
+            if (pwd or '') != (pwd2 or ''):
+                return jsonify({"status": "error",
+                                "message": "Passwords do not match"}), 400
+            if len(pwd or '') < 4:
+                return jsonify({"status": "error",
+                                "message": "Password must be at least 4 characters"}), 400
+        acc = Account(name=name,
+                      nickname=(data.get('nickname') or '').strip() or None,
+                      contact=(data.get('contact') or '').strip() or None,
+                      role=(data.get('role') or '').strip() or None)
+        if pwd:
+            acc.set_password(pwd)
+        db.session.add(acc)
+        db.session.commit()
+        AuditEvent.log(f"Account added: {name}", area='System')
+        return jsonify({"status": "ok"})
+    return jsonify([a.to_dict() for a in Account.query.order_by(Account.name).all()])
+
+
+@app.route('/api/accounts/<int:aid>', methods=['DELETE'])
+@admin_required
+def api_accounts_delete(aid):
+    row = Account.query.get(aid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    db.session.delete(row); db.session.commit()
+    AuditEvent.log(f"Account removed: {row.name}", area='System')
+    return jsonify({"status": "ok"})
+
+
+# ── System Management: Roles ─────────────────────────────────────────────────
+@app.route('/api/roles', methods=['GET', 'POST'])
+@admin_required
+def api_roles():
+    if request.method == 'POST':
+        data = request.json or {}
+        name = (data.get('name') or '').strip()
+        if not name:
+            return jsonify({"status": "error", "message": "Role name is required"}), 400
+        if Role.query.filter(db.func.lower(Role.name) == name.lower()).first():
+            return jsonify({"status": "error", "message": f"Role '{name}' already exists"}), 400
+        db.session.add(Role(name=name,
+                            description=(data.get('description') or '').strip() or None))
+        db.session.commit()
+        AuditEvent.log(f"Role added: {name}", area='System')
+        return jsonify({"status": "ok"})
+    return jsonify([r.to_dict() for r in Role.query.order_by(Role.name).all()])
+
+
+@app.route('/api/roles/<int:rid>', methods=['DELETE'])
+@admin_required
+def api_roles_delete(rid):
+    row = Role.query.get(rid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    db.session.delete(row); db.session.commit()
+    AuditEvent.log(f"Role removed: {row.name}", area='System')
+    return jsonify({"status": "ok"})
+
+
+# ── System Management: Dictionary ────────────────────────────────────────────
+@app.route('/api/dictionary', methods=['GET', 'POST'])
+@admin_required
+def api_dictionary():
+    if request.method == 'POST':
+        data = request.json or {}
+        category = (data.get('category') or '').strip()
+        key      = (data.get('key') or '').strip()
+        if not category or not key:
+            return jsonify({"status": "error", "message": "Category and key are required"}), 400
+        db.session.add(DictionaryEntry(category=category, dict_key=key,
+                                       dict_value=(data.get('value') or '').strip() or None))
+        db.session.commit()
+        AuditEvent.log(f"Dictionary entry added: {category}/{key}", area='System')
+        return jsonify({"status": "ok"})
+    return jsonify([d.to_dict()
+                    for d in DictionaryEntry.query.order_by(
+                        DictionaryEntry.category, DictionaryEntry.dict_key).all()])
+
+
+@app.route('/api/dictionary/<int:did>', methods=['DELETE'])
+@admin_required
+def api_dictionary_delete(did):
+    row = DictionaryEntry.query.get(did)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    db.session.delete(row); db.session.commit()
+    AuditEvent.log(f"Dictionary entry removed: {row.category}/{row.dict_key}", area='System')
+    return jsonify({"status": "ok"})
+
+
+# ── System Management: LCD screens (entry/exit displays) ─────────────────────
+@app.route('/api/lcd', methods=['GET', 'POST'])
+@admin_required
+def api_lcd():
+    if request.method == 'POST':
+        data = request.json or {}
+        name = (data.get('name') or '').strip()
+        if not name:
+            return jsonify({"status": "error", "message": "Screen name is required"}), 400
+        db.session.add(LCDScreen(
+            name=name,
+            location=(data.get('location') or '').strip() or None,
+            message=(data.get('message') or '').strip() or None,
+            is_active=bool(data.get('is_active', True)),
+        ))
+        db.session.commit()
+        AuditEvent.log(f"LCD added: {name}", area='System')
+        return jsonify({"status": "ok"})
+    return jsonify([s.to_dict() for s in LCDScreen.query.order_by(LCDScreen.name).all()])
+
+
+@app.route('/api/lcd/<int:sid>', methods=['PUT'])
+@admin_required
+def api_lcd_update(sid):
+    row = LCDScreen.query.get(sid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    d = request.json or {}
+    if 'name' in d:
+        nm = (d.get('name') or '').strip()
+        if not nm: return jsonify({"status": "error", "message": "Screen name required"}), 400
+        row.name = nm
+    if 'location'  in d: row.location  = (d.get('location') or '').strip() or None
+    if 'message'   in d: row.message   = (d.get('message') or '').strip() or None
+    if 'is_active' in d: row.is_active = bool(d.get('is_active'))
+    db.session.commit()
+    AuditEvent.log(f"LCD updated: {row.name}", area='System')
+    return jsonify({"status": "ok", "lcd": row.to_dict()})
+
+
+@app.route('/api/lcd/<int:sid>', methods=['DELETE'])
+@admin_required
+def api_lcd_delete(sid):
+    row = LCDScreen.query.get(sid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    db.session.delete(row); db.session.commit()
+    AuditEvent.log(f"LCD removed: {row.name}", area='System')
+    return jsonify({"status": "ok"})
+
+
+# ── System Management: Menu visibility per role ──────────────────────────────
+@app.route('/api/menu_permissions', methods=['GET', 'POST'])
+@login_required
+def api_menu_perms():
+    if request.method == 'POST':
+        # GET is allowed for any logged-in user so the sidebar can self-filter,
+        # but writes must come from an admin. Inline check instead of stacking
+        # decorators because the GET branch is intentionally not admin-gated.
+        role_cur = (session.get('user_role') or '').strip().lower()
+        if role_cur != 'administrator':
+            return jsonify({"error": "admin_required",
+                            "message": "Administrator role required"}), 403
+        d = request.json or {}
+        role = (d.get('role_name') or '').strip()
+        menu = (d.get('menu_key') or '').strip()
+        if not role or not menu:
+            return jsonify({"status": "error", "message": "Role and menu are required"}), 400
+        existing = MenuPermission.query.filter(
+            MenuPermission.role_name == role,
+            MenuPermission.menu_key  == menu).first()
+        if existing:
+            existing.allowed = bool(d.get('allowed', True))
+        else:
+            db.session.add(MenuPermission(role_name=role, menu_key=menu,
+                                          allowed=bool(d.get('allowed', True))))
+        db.session.commit()
+        AuditEvent.log(f"Menu perm set: {role}/{menu}", area='System')
+        return jsonify({"status": "ok"})
+    return jsonify([m.to_dict() for m in MenuPermission.query
+                    .order_by(MenuPermission.role_name, MenuPermission.menu_key).all()])
+
+
+@app.route('/api/menu_permissions/<int:mid>', methods=['DELETE'])
+@admin_required
+def api_menu_perms_delete(mid):
+    row = MenuPermission.query.get(mid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    db.session.delete(row); db.session.commit()
+    AuditEvent.log(f"Menu perm removed: {row.role_name}/{row.menu_key}", area='System')
+    return jsonify({"status": "ok"})
+
+
+# ── System Management: Role × Section permission grants ─────────────────────
+@app.route('/api/role_permissions', methods=['GET', 'POST'])
+@admin_required
+def api_role_perms():
+    if request.method == 'POST':
+        d = request.json or {}
+        role = (d.get('role_name') or '').strip()
+        sec  = (d.get('section_key') or '').strip()
+        act  = (d.get('action') or 'read').strip().lower()
+        if not role or not sec:
+            return jsonify({"status": "error", "message": "Role and section are required"}), 400
+        if act not in ('read', 'write', 'delete'):
+            return jsonify({"status": "error", "message": "Action must be read/write/delete"}), 400
+        existing = RolePermission.query.filter(
+            RolePermission.role_name   == role,
+            RolePermission.section_key == sec,
+            RolePermission.action      == act).first()
+        if existing:
+            existing.allowed = bool(d.get('allowed', True))
+        else:
+            db.session.add(RolePermission(role_name=role, section_key=sec, action=act,
+                                          allowed=bool(d.get('allowed', True))))
+        db.session.commit()
+        AuditEvent.log(f"Role perm set: {role}/{sec}/{act}", area='System')
+        return jsonify({"status": "ok"})
+    return jsonify([r.to_dict() for r in RolePermission.query
+                    .order_by(RolePermission.role_name, RolePermission.section_key, RolePermission.action).all()])
+
+
+@app.route('/api/role_permissions/<int:rid>', methods=['DELETE'])
+@admin_required
+def api_role_perms_delete(rid):
+    row = RolePermission.query.get(rid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    db.session.delete(row); db.session.commit()
+    AuditEvent.log(f"Role perm removed: {row.role_name}/{row.section_key}/{row.action}", area='System')
+    return jsonify({"status": "ok"})
+
+
+# ── Edit (PUT) endpoints for the CRUD tables ─────────────────────────────────
+# Each updates only the fields present in the body, then returns the row.
+@app.route('/api/accounts/<int:aid>', methods=['PUT'])
+@admin_required
+def api_accounts_update(aid):
+    row = Account.query.get(aid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    d = request.json or {}
+    if 'name' in d:
+        nm = (d.get('name') or '').strip()
+        if not nm:
+            return jsonify({"status": "error", "message": "Account name is required"}), 400
+        row.name = nm
+    if 'nickname' in d: row.nickname = (d.get('nickname') or '').strip() or None
+    if 'contact'  in d: row.contact  = (d.get('contact')  or '').strip() or None
+    if 'role'     in d: row.role     = (d.get('role')     or '').strip() or None
+    # Password change support — same validation rules as the Add form.
+    pwd  = d.get('password')
+    pwd2 = d.get('password_confirm')
+    if pwd or pwd2:
+        if (pwd or '') != (pwd2 or ''):
+            return jsonify({"status": "error",
+                            "message": "Passwords do not match"}), 400
+        if len(pwd or '') < 4:
+            return jsonify({"status": "error",
+                            "message": "Password must be at least 4 characters"}), 400
+        row.set_password(pwd)
+        AuditEvent.log(f"Account password changed: {row.name}", area='Auth')
+    db.session.commit()
+    AuditEvent.log(f"Account updated: {row.name}", area='System')
+    return jsonify({"status": "ok", "account": row.to_dict()})
+
+
+@app.route('/api/roles/<int:rid>', methods=['PUT'])
+@admin_required
+def api_roles_update(rid):
+    row = Role.query.get(rid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    d = request.json or {}
+    if 'name' in d:
+        nm = (d.get('name') or '').strip()
+        if not nm:
+            return jsonify({"status": "error", "message": "Role name is required"}), 400
+        row.name = nm
+    if 'description' in d: row.description = (d.get('description') or '').strip() or None
+    db.session.commit()
+    AuditEvent.log(f"Role updated: {row.name}", area='System')
+    return jsonify({"status": "ok", "role": row.to_dict()})
+
+
+@app.route('/api/dictionary/<int:did>', methods=['PUT'])
+@admin_required
+def api_dictionary_update(did):
+    row = DictionaryEntry.query.get(did)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    d = request.json or {}
+    if 'category' in d:
+        cat = (d.get('category') or '').strip()
+        if not cat:
+            return jsonify({"status": "error", "message": "Category is required"}), 400
+        row.category = cat
+    if 'key' in d:
+        k = (d.get('key') or '').strip()
+        if not k:
+            return jsonify({"status": "error", "message": "Key is required"}), 400
+        row.dict_key = k
+    if 'value' in d: row.dict_value = (d.get('value') or '').strip() or None
+    db.session.commit()
+    AuditEvent.log(f"Dictionary updated: {row.category}/{row.dict_key}", area='System')
+    return jsonify({"status": "ok", "entry": row.to_dict()})
+
+
+@app.route('/api/yards/<int:yid>', methods=['PUT'])
+@admin_required
+def api_yards_update(yid):
+    row = Yard.query.get(yid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    d = request.json or {}
+    if 'name' in d:
+        nm = (d.get('name') or '').strip()
+        if not nm:
+            return jsonify({"status": "error", "message": "Yard name is required"}), 400
+        row.name = nm
+    if 'capacity' in d:
+        try:
+            row.capacity = max(0, int(d.get('capacity', 0) or 0))
+        except (TypeError, ValueError):
+            pass
+    if 'location' in d: row.location = (d.get('location') or '').strip() or None
+    if 'region'   in d: row.region   = (d.get('region')   or '').strip() or None
+    db.session.commit()
+    AuditEvent.log(f"Yard updated: {row.name}", area='Admin')
+    return jsonify({"status": "ok", "yard": row.to_dict()})
+
+
+@app.route('/api/regions/<int:rid>', methods=['PUT'])
+@admin_required
+def api_regions_update(rid):
+    row = Region.query.get(rid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    d = request.json or {}
+    if 'name' in d:
+        nm = (d.get('name') or '').strip()
+        if not nm:
+            return jsonify({"status": "error", "message": "Region name is required"}), 400
+        row.name = nm
+    if 'description' in d: row.description = (d.get('description') or '').strip() or None
+    db.session.commit()
+    AuditEvent.log(f"Region updated: {row.name}", area='Admin')
+    return jsonify({"status": "ok", "region": row.to_dict()})
+
+
+# ── QR codes for visitor / member passes ─────────────────────────────────────
+# Encodes the pass details as JSON inside the QR. Operators can scan at the
+# gate to verify. The qrcode library is optional — endpoints return 503 if
+# it isn't installed (e.g. on a local dev env that hasn't pip-installed it).
+try:
+    import qrcode as _qrcode
+    from io import BytesIO as _QrBytesIO
+    _QR_AVAILABLE = True
+except ImportError:
+    _QR_AVAILABLE = False
+
+# Monthly PDF report (reportlab). Same try-import pattern.
+try:
+    from io import BytesIO as _PdfBytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib import colors as _rl_colors
+    from reportlab.lib.units import cm as _rl_cm
+    _PDF_AVAILABLE = True
+except ImportError:
+    _PDF_AVAILABLE = False
+
+
+@app.route('/api/reports/monthly_pdf')
+def api_monthly_pdf():
+    if not _PDF_AVAILABLE:
+        return jsonify({"status": "error",
+                        "message": "PDF support not installed (reportlab missing)"}), 503
+
+    # Parse ?month=YYYY-MM, default to current month.
+    month_q = (request.args.get('month') or '').strip()
+    try:
+        if month_q:
+            y, m = map(int, month_q.split('-'))
+        else:
+            now = datetime.now(); y, m = now.year, now.month
+    except Exception:
+        now = datetime.now(); y, m = now.year, now.month
+    start = datetime(y, m, 1)
+    end   = datetime(y + 1, 1, 1) if m == 12 else datetime(y, m + 1, 1)
+
+    parking_total = ParkingTransaction.query.filter(
+        ParkingTransaction.entry_at >= start, ParkingTransaction.entry_at < end).count()
+    exited = ParkingTransaction.query.filter(
+        ParkingTransaction.exit_at >= start, ParkingTransaction.exit_at < end).count()
+    revenue = db.session.query(
+        db.func.coalesce(db.func.sum(ParkingTransaction.total_amount), 0)
+    ).filter(ParkingTransaction.exit_at >= start,
+             ParkingTransaction.exit_at <  end).scalar() or 0
+    member_revenue = db.session.query(
+        db.func.coalesce(db.func.sum(Whitelist.payment_amount), 0)
+    ).filter(Whitelist.paid_at >= start, Whitelist.paid_at < end).scalar() or 0
+
+    # Daily entries/exits across the month.
+    daily = [['Date', 'Entries', 'Exits']]
+    cur = start
+    while cur < end:
+        nxt = cur + timedelta(days=1)
+        e = ParkingTransaction.query.filter(
+            ParkingTransaction.entry_at >= cur, ParkingTransaction.entry_at < nxt).count()
+        x = ParkingTransaction.query.filter(
+            ParkingTransaction.exit_at >= cur, ParkingTransaction.exit_at < nxt).count()
+        daily.append([cur.strftime('%Y-%m-%d'), str(e), str(x)])
+        cur = nxt
+
+    buf = _PdfBytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=2 * _rl_cm, rightMargin=2 * _rl_cm,
+                            topMargin=1.5 * _rl_cm, bottomMargin=1.5 * _rl_cm)
+    styles = getSampleStyleSheet()
+    elems = [
+        Paragraph('<b>VayAccess Systems · Monthly Report</b>', styles['Title']),
+        Paragraph(f'Period: {start.strftime("%B %Y")}', styles['Heading3']),
+        Spacer(1, 12),
+    ]
+    summary = [
+        ['Metric', 'Value'],
+        ['Total parking transactions', str(parking_total)],
+        ['Vehicles exited',            str(exited)],
+        ['Temporary parking revenue',  f'Rs {int(revenue):,}'],
+        ['Member purchase revenue',    f'Rs {int(member_revenue):,}'],
+        ['Total revenue',              f'Rs {int(revenue + member_revenue):,}'],
+    ]
+    t1 = Table(summary, colWidths=[8 * _rl_cm, 5 * _rl_cm])
+    t1.setStyle(TableStyle([
+        ('BACKGROUND',  (0, 0), (-1, 0),  _rl_colors.HexColor('#1f73d4')),
+        ('TEXTCOLOR',   (0, 0), (-1, 0),  _rl_colors.white),
+        ('FONTNAME',    (0, 0), (-1, 0),  'Helvetica-Bold'),
+        ('GRID',        (0, 0), (-1, -1), 0.5, _rl_colors.HexColor('#e5e9ef')),
+        ('FONTSIZE',    (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING',    (0, 0), (-1, -1), 6),
+    ]))
+    elems.append(t1)
+    elems.append(Spacer(1, 18))
+    elems.append(Paragraph('<b>Daily Entries / Exits</b>', styles['Heading3']))
+    t2 = Table(daily, colWidths=[5 * _rl_cm, 4 * _rl_cm, 4 * _rl_cm])
+    t2.setStyle(TableStyle([
+        ('BACKGROUND',     (0, 0), (-1, 0),  _rl_colors.HexColor('#1f73d4')),
+        ('TEXTCOLOR',      (0, 0), (-1, 0),  _rl_colors.white),
+        ('FONTNAME',       (0, 0), (-1, 0),  'Helvetica-Bold'),
+        ('GRID',           (0, 0), (-1, -1), 0.5, _rl_colors.HexColor('#e5e9ef')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [_rl_colors.white, _rl_colors.HexColor('#f4f7fa')]),
+        ('FONTSIZE',       (0, 0), (-1, -1), 9),
+    ]))
+    elems.append(t2)
+    doc.build(elems)
+
+    return Response(buf.getvalue(), mimetype='application/pdf', headers={
+        'Content-Disposition': f'attachment; filename="VayAccess-Report-{start.strftime("%Y-%m")}.pdf"',
+        'Cache-Control': 'no-store',
+    })
+
+
+def _make_qr_png(payload):
+    """Generate a PNG of the QR encoding the given payload (str or dict)."""
+    text = payload if isinstance(payload, str) else json.dumps(payload, separators=(',', ':'))
+    img = _qrcode.make(text, box_size=10, border=2)
+    buf = _QrBytesIO()
+    img.save(buf, format='PNG')
+    return buf.getvalue()
+
+
+# Token signing for pass-verification URLs.
+# Token format: <kind><id>-<sig>  where kind ∈ {v,m} and sig is the first 8
+# hex chars of HMAC-SHA256(secret, kind+id). Prevents trivial enumeration by
+# requiring the URL to be issued by us. Override the secret via PASS_SECRET
+# env var on Render (recommended in production).
+import hmac as _hmac
+import hashlib as _hashlib
+
+def _pass_secret():
+    return os.environ.get('PASS_SECRET',
+                          'vayaccess-default-pass-secret-2026-change-me').encode()
+
+def _make_pass_token(kind, row_id):
+    base = f"{kind}{row_id}"
+    sig  = _hmac.new(_pass_secret(), base.encode(), _hashlib.sha256).hexdigest()[:8]
+    return f"{base}-{sig}"
+
+def _verify_pass_token(token):
+    """Return (kind, id) tuple if token is valid, else None."""
+    if not token or '-' not in token:
+        return None
+    base, sig = token.rsplit('-', 1)
+    if not base or len(base) < 2:
+        return None
+    expected = _hmac.new(_pass_secret(), base.encode(), _hashlib.sha256).hexdigest()[:8]
+    if not _hmac.compare_digest(sig, expected):
+        return None
+    kind, rest = base[0], base[1:]
+    if kind not in ('v', 'm'):
+        return None
+    try:
+        return (kind, int(rest))
+    except ValueError:
+        return None
+
+def _build_pass_url(token):
+    # Use the request's host so QR works on any deployment domain (local /
+    # Render / a custom domain) without configuration.
+    return f"{request.host_url.rstrip('/')}/v/{token}"
+
+
+@app.route('/api/visitors/<int:vid>/qr')
+def api_visitor_qr(vid):
+    if not _QR_AVAILABLE:
+        return jsonify({"status": "error",
+                        "message": "QR support not installed (qrcode lib missing)"}), 503
+    v = Visitor.query.get(vid)
+    if not v:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    # QR now encodes the verification URL — phone cameras open it directly
+    # and the operator sees a clean VALID/EXPIRED page.
+    url = _build_pass_url(_make_pass_token('v', v.id))
+    png = _make_qr_png(url)
+    return Response(png, mimetype='image/png',
+                    headers={'Cache-Control': 'no-store'})
+
+
+# Tiny URL accessor used by the WhatsApp share button on each row.
+@app.route('/api/visitors/<int:vid>/pass_url')
+def api_visitor_pass_url(vid):
+    v = Visitor.query.get(vid)
+    if not v:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    return jsonify({"url": _build_pass_url(_make_pass_token('v', v.id))})
+
+
+@app.route('/api/employees/<int:eid>/pass_url')
+def api_employee_pass_url(eid):
+    w = Whitelist.query.get(eid)
+    if not w:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    return jsonify({"url": _build_pass_url(_make_pass_token('m', w.id))})
+
+
+# ── Bulk CSV import for Visitors + Members ───────────────────────────────────
+# Accepts an array of row dicts (parsed client-side from a CSV file). Each row
+# becomes a new Visitor / Whitelist entry. Returns counts of imported / skipped.
+@app.route('/api/bulk_import/visitors', methods=['POST'])
+@admin_required
+def api_bulk_import_visitors():
+    rows = (request.json or {}).get('rows') or []
+    ok = 0
+    rejections = []   # list of {row, reason} for the response
+    now = datetime.now()
+    # Track plates / phones seen inside THIS upload so duplicates within the
+    # same file are also rejected (not just duplicates against the DB).
+    seen_plates, seen_phones = set(), set()
+    for idx, r in enumerate(rows):
+        rownum = idx + 2   # +1 for 0-index, +1 for header row
+        name  = (r.get('name') or r.get('Name') or '').strip()
+        if not name:
+            rejections.append({"row": rownum, "reason": "missing name"}); continue
+        plate = (r.get('number_plate') or r.get('plate') or r.get('Plate') or '').strip().upper() or None
+        contact = (r.get('contact') or r.get('Contact') or '').strip() or None
+        # Within-file duplicate check.
+        if plate and plate in seen_plates:
+            rejections.append({"row": rownum, "reason": f"plate {plate} appears earlier in this file"}); continue
+        if contact and _digits_only(contact) in seen_phones:
+            rejections.append({"row": rownum, "reason": f"phone {contact} appears earlier in this file"}); continue
+        # Cross-table (DB) duplicate check.
+        if plate:
+            clash = _find_plate_conflict(plate)
+            if clash:
+                rejections.append({"row": rownum, "reason": f"plate {plate} already registered to {clash[1]} ({clash[0]})"}); continue
+        if contact:
+            clash = _find_phone_conflict(contact)
+            if clash:
+                rejections.append({"row": rownum, "reason": f"phone {contact} already registered to {clash[1]} ({clash[0]})"}); continue
+        # Optional valid_from/valid_to from CSV; otherwise default to now + 8h.
+        try:
+            start_at = datetime.strptime(r['valid_from'], '%Y-%m-%d %H:%M') if r.get('valid_from') else now
+        except Exception:
+            start_at = now
+        try:
+            end_at = datetime.strptime(r['valid_to'], '%Y-%m-%d %H:%M') if r.get('valid_to') else (now + timedelta(hours=8))
+        except Exception:
+            end_at = now + timedelta(hours=8)
+        try:
+            db.session.add(Visitor(
+                name=name, number_plate=plate, contact=contact,
+                purpose=(r.get('purpose') or r.get('Purpose') or '').strip() or None,
+                host_employee=(r.get('host_employee') or r.get('host') or r.get('Host') or '').strip() or None,
+                start_at=start_at, end_at=end_at,
+            ))
+            ok += 1
+            if plate:   seen_plates.add(plate)
+            if contact: seen_phones.add(_digits_only(contact))
+        except Exception as e:
+            rejections.append({"row": rownum, "reason": f"insert failed ({type(e).__name__})"})
+    db.session.commit()
+    AuditEvent.log(f"Bulk imported {ok} visitor(s) ({len(rejections)} skipped)", area='Admin')
+    return jsonify({"status": "ok", "imported": ok, "skipped": len(rejections),
+                    "rejections": rejections})
+
+
+@app.route('/api/bulk_import/members', methods=['POST'])
+@admin_required
+def api_bulk_import_members():
+    """Bulk-create Whitelist rows. Each row needs at minimum: owner_name + plate.
+    Payment / activation defaults are set so the rows pass the existing
+    not-null constraints; operator can edit specifics after import."""
+    rows = (request.json or {}).get('rows') or []
+    ok = 0
+    rejections = []
+    from dateutil.relativedelta import relativedelta
+    now = datetime.now()
+    seen_plates, seen_phones = set(), set()
+    for idx, r in enumerate(rows):
+        rownum = idx + 2
+        name  = (r.get('owner_name') or r.get('name') or r.get('Name') or '').strip()
+        plate = (r.get('number_plate') or r.get('plate') or r.get('Plate') or '').strip().upper()
+        contact = (r.get('contact_number') or r.get('contact') or '').strip() or None
+        if not name or not plate:
+            rejections.append({"row": rownum, "reason": "missing owner_name or plate"}); continue
+        # Within-file duplicates
+        if plate in seen_plates:
+            rejections.append({"row": rownum, "reason": f"plate {plate} appears earlier in this file"}); continue
+        if contact and _digits_only(contact) in seen_phones:
+            rejections.append({"row": rownum, "reason": f"phone {contact} appears earlier in this file"}); continue
+        # Cross-table DB duplicates
+        clash = _find_plate_conflict(plate)
+        if clash:
+            rejections.append({"row": rownum, "reason": f"plate {plate} already registered to {clash[1]} ({clash[0]})"}); continue
+        if contact:
+            pclash = _find_phone_conflict(contact)
+            if pclash:
+                rejections.append({"row": rownum, "reason": f"phone {contact} already registered to {pclash[1]} ({pclash[0]})"}); continue
+        try:
+            months = int(r.get('activation_months') or r.get('months') or 12)
+        except Exception:
+            months = 12
+        try:
+            db.session.add(Whitelist(
+                owner_name=name,
+                number_plate=plate,
+                rfid_tag=(r.get('rfid_tag') or r.get('tag') or '').strip().upper() or None,
+                department=(r.get('department') or r.get('Department') or '').strip() or None,
+                contact_number=contact,
+                vehicle_type=(r.get('vehicle_type') or r.get('type') or 'Car').strip() or 'Car',
+                activated_at=now,
+                activation_months=months,
+                valid_until=now + relativedelta(months=+months),
+                payment_method='Bulk Import',
+                payment_amount=int(r.get('payment_amount') or r.get('amount') or 0),
+            ))
+            ok += 1
+            seen_plates.add(plate)
+            if contact: seen_phones.add(_digits_only(contact))
+        except Exception as e:
+            rejections.append({"row": rownum, "reason": f"insert failed ({type(e).__name__})"})
+    db.session.commit()
+    AuditEvent.log(f"Bulk imported {ok} member(s) ({len(rejections)} skipped)", area='Admin')
+    return jsonify({"status": "ok", "imported": ok, "skipped": len(rejections),
+                    "rejections": rejections})
+
+
+@app.route('/api/employees/<int:eid>/qr')
+def api_employee_qr(eid):
+    if not _QR_AVAILABLE:
+        return jsonify({"status": "error",
+                        "message": "QR support not installed (qrcode lib missing)"}), 503
+    w = Whitelist.query.get(eid)
+    if not w:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    url = _build_pass_url(_make_pass_token('m', w.id))
+    png = _make_qr_png(url)
+    return Response(png, mimetype='image/png',
+                    headers={'Cache-Control': 'no-store'})
+
+
+# ── Pass verification page (opens when QR is scanned) ────────────────────────
+@app.route('/v/<token>')
+def pass_verify(token):
+    parsed = _verify_pass_token(token)
+    now    = datetime.now()
+    ctx    = {"now": now.strftime("%Y-%m-%d %H:%M:%S"), "error": None, "pass_": None}
+
+    if not parsed:
+        ctx["error"] = "Invalid or tampered pass code. This QR did not originate from VayAccess."
+        return render_template('pass_verify.html', **ctx), 404
+
+    kind, row_id = parsed
+    if kind == 'v':
+        row = Visitor.query.get(row_id)
+        if not row:
+            ctx["error"] = "Visitor pass not found."
+            return render_template('pass_verify.html', **ctx), 404
+        is_valid = bool(row.start_at and row.end_at and row.start_at <= now <= row.end_at)
+        ctx["pass_"] = {
+            "type":       "Visitor",
+            "name":       row.name or "—",
+            "plate":      row.number_plate or "",
+            "subline":    f"Host: {row.host_employee or '—'} · Contact: {row.contact or '—'}",
+            "purpose":    row.purpose or "",
+            "valid_from": row.start_at.strftime("%Y-%m-%d %H:%M") if row.start_at else "—",
+            "valid_to":   row.end_at.strftime("%Y-%m-%d %H:%M")   if row.end_at   else "—",
+            "is_valid":   is_valid,
+            "status":     "VALID" if is_valid else "NOT VALID",
+            "sub":        ("Pass is currently active — admit entry"
+                           if is_valid else
+                           "Pass is outside its validity window — DO NOT ADMIT"),
+        }
+    else:   # 'm' = member
+        row = Whitelist.query.get(row_id)
+        if not row:
+            ctx["error"] = "Member pass not found."
+            return render_template('pass_verify.html', **ctx), 404
+        # Member is valid if valid_until is today or later.
+        is_valid = bool(row.valid_until and row.valid_until >= now)
+        # Recent gate scans for this member (member mobile self-service feature).
+        recent_q = AccessLog.query
+        if row.rfid_tag and row.number_plate:
+            recent_q = recent_q.filter(
+                (AccessLog.rfid_tag == row.rfid_tag) |
+                (AccessLog.number_plate == row.number_plate))
+        elif row.rfid_tag:
+            recent_q = recent_q.filter(AccessLog.rfid_tag == row.rfid_tag)
+        elif row.number_plate:
+            recent_q = recent_q.filter(AccessLog.number_plate == row.number_plate)
+        else:
+            recent_q = None
+        recent = []
+        if recent_q is not None:
+            for r in recent_q.order_by(AccessLog.timestamp.desc()).limit(5).all():
+                recent.append({
+                    "when":   r.timestamp.strftime("%Y-%m-%d %H:%M:%S") if r.timestamp else "—",
+                    "status": r.status or "—",
+                    "ok":     bool(r.status and "grant" in r.status.lower()),
+                })
+        ctx["pass_"] = {
+            "type":       "Member",
+            "name":       row.owner_name or "—",
+            "plate":      row.number_plate or "",
+            "subline":    f"Dept: {row.department or '—'} · Tag: {row.rfid_tag or '—'}",
+            "purpose":    "",
+            "valid_from": row.activated_at.strftime("%Y-%m-%d %H:%M") if row.activated_at else "—",
+            "valid_to":   row.valid_until.strftime("%Y-%m-%d")        if row.valid_until  else "—",
+            "is_valid":   is_valid,
+            "status":     "VALID" if is_valid else "EXPIRED",
+            "sub":        ("Active member — admit entry"
+                           if is_valid else
+                           "Membership has expired — DO NOT ADMIT"),
+            "recent":     recent,
+        }
+    return render_template('pass_verify.html', **ctx)
+
+
+# ── Home Page summary (PDF page 5 layout) ────────────────────────────────────
+# Powers the 4 gradient metric cards + grouped entry/exit bar chart + the
+# Income Statistics donut. Aggregated over the last 8 days so the daily bars
+# match the PDF.
+@app.route('/api/home_summary')
+def api_home_summary():
+    from datetime import date, timedelta as _td
+
+    parking_total = ParkingTransaction.query.count()
+    member_total  = Whitelist.query.filter(Whitelist.department.isnot(None)).count()
+    # 3 hardware devices reported by /api/devices on-site (SRK, gate reader, cam).
+    device_total  = 3
+    # Orders = closed parking txns + paid member activations (same definition as /api/orders).
+    order_total   = (ParkingTransaction.query.filter(ParkingTransaction.exit_at.isnot(None)).count()
+                     + Whitelist.query.filter(Whitelist.paid_at.isnot(None)).count())
+
+    today  = date.today()
+    daily  = []
+    for i in range(7, -1, -1):
+        d     = today - _td(days=i)
+        start = datetime(d.year, d.month, d.day)
+        end   = start + _td(days=1)
+        entries = ParkingTransaction.query.filter(
+            ParkingTransaction.entry_at >= start,
+            ParkingTransaction.entry_at <  end).count()
+        exits   = ParkingTransaction.query.filter(
+            ParkingTransaction.exit_at  >= start,
+            ParkingTransaction.exit_at  <  end).count()
+        daily.append({"date": d.strftime("%Y-%m-%d"),
+                      "entries": entries, "exits": exits})
+
+    temporary_income = db.session.query(
+        db.func.coalesce(db.func.sum(ParkingTransaction.total_amount), 0)
+    ).filter(ParkingTransaction.exit_at.isnot(None)).scalar() or 0
+    member_income = db.session.query(
+        db.func.coalesce(db.func.sum(Whitelist.payment_amount), 0)
+    ).filter(Whitelist.paid_at.isnot(None)).scalar() or 0
+
+    return jsonify({
+        "parking_total": parking_total,
+        "member_total":  member_total,
+        "device_total":  device_total,
+        "order_total":   order_total,
+        "daily":         daily,
+        "income": {"temporary": int(temporary_income),
+                   "member":    int(member_income)},
+    })
+
+
+@app.route('/api/visitors/<int:vid>', methods=['PUT'])
+@login_required
+def api_visitors_update(vid):
+    row = Visitor.query.get(vid)
+    if not row:
+        return jsonify({"status": "error", "message": "not found"}), 404
+    d = request.json or {}
+    if 'name' in d:
+        nm = (d.get('name') or '').strip()
+        if not nm:
+            return jsonify({"status": "error", "message": "Visitor name is required"}), 400
+        row.name = nm
+    if 'number_plate' in d:
+        new_plate = (d.get('number_plate') or '').strip().upper() or None
+        if new_plate:
+            clash = _find_plate_conflict(new_plate, exclude_visitor_id=vid)
+            if clash:
+                return jsonify({"status": "error",
+                                "message": f"Plate {new_plate} is already registered to {clash[1]} ({clash[0]})."}), 400
+        row.number_plate = new_plate
+    if 'contact' in d:
+        new_contact = (d.get('contact') or '').strip() or None
+        if new_contact:
+            clash = _find_phone_conflict(new_contact, exclude_visitor_id=vid)
+            if clash:
+                return jsonify({"status": "error",
+                                "message": f"Phone {new_contact} is already registered to {clash[1]} ({clash[0]})."}), 400
+        row.contact = new_contact
+    if 'purpose'       in d: row.purpose       = (d.get('purpose') or '').strip() or None
+    if 'host_employee' in d: row.host_employee = (d.get('host_employee') or '').strip() or None
+    db.session.commit()
+    AuditEvent.log(f"Visitor updated: {row.name}", area='Admin')
+    return jsonify({"status": "ok", "visitor": row.to_dict()})
+
+
 # ── Visitors (time-bound temporary access) ───────────────────────────────────
+# ── Uniqueness helpers (phone + plate are 1:1 with a person) ─────────────────
+# A phone or plate identifies a person. The same value living on two records
+# is almost always a data-entry mistake (or fraud), so reject it with a clear
+# "already used by X" error. Checks span BOTH whitelist and visitors so a
+# member's plate can't reappear as someone else's visitor pass either.
+def _digits_only(s):
+    return ''.join(c for c in (s or '') if c.isdigit())
+
+
+def _find_phone_conflict(phone, exclude_visitor_id=None, exclude_member_id=None):
+    """Return (kind, name) for whoever already uses this phone, else None."""
+    digits = _digits_only(phone)
+    if len(digits) < 7:
+        return None
+    # Members (whitelist.contact_number)
+    members = Whitelist.query.filter(Whitelist.contact_number.isnot(None))
+    if exclude_member_id is not None:
+        members = members.filter(Whitelist.id != exclude_member_id)
+    for w in members.all():
+        if _digits_only(w.contact_number) == digits:
+            return ('member', w.owner_name or f'member #{w.id}')
+    # Visitors (visitors.contact)
+    visitors = Visitor.query.filter(Visitor.contact.isnot(None))
+    if exclude_visitor_id is not None:
+        visitors = visitors.filter(Visitor.id != exclude_visitor_id)
+    for v in visitors.all():
+        if _digits_only(v.contact) == digits:
+            return ('visitor', v.name or f'visitor #{v.id}')
+    return None
+
+
+def _find_plate_conflict(plate, exclude_visitor_id=None, exclude_member_id=None):
+    """Return (kind, name) for whoever already uses this plate, else None."""
+    if not plate:
+        return None
+    plate = plate.strip().upper()
+    if not plate:
+        return None
+    # Members
+    q = Whitelist.query.filter(db.func.upper(Whitelist.number_plate) == plate)
+    if exclude_member_id is not None:
+        q = q.filter(Whitelist.id != exclude_member_id)
+    w = q.first()
+    if w:
+        return ('member', w.owner_name or f'member #{w.id}')
+    # Visitors
+    q = Visitor.query.filter(db.func.upper(Visitor.number_plate) == plate)
+    if exclude_visitor_id is not None:
+        q = q.filter(Visitor.id != exclude_visitor_id)
+    v = q.first()
+    if v:
+        return ('visitor', v.name or f'visitor #{v.id}')
+    return None
+
+
 @app.route('/api/visitors', methods=['GET', 'POST'])
+@login_required
 def api_visitors():
     if request.method == 'POST':
         data = request.json or {}
@@ -2443,6 +3928,17 @@ def api_visitors():
         plate = clean_plate_number(data.get('number_plate') or '')
         if not name or not plate:
             return jsonify({"status": "error", "message": "name and plate required"}), 400
+        # Uniqueness: phone + plate each belong to exactly one person.
+        contact_in = (data.get('contact') or '').strip()
+        clash = _find_plate_conflict(plate)
+        if clash:
+            return jsonify({"status": "error",
+                            "message": f"Plate {plate} is already registered to {clash[1]} ({clash[0]}). "
+                                       f"Edit that record instead of creating a new one."}), 400
+        clash = _find_phone_conflict(contact_in)
+        if clash:
+            return jsonify({"status": "error",
+                            "message": f"Phone {contact_in} is already registered to {clash[1]} ({clash[0]})."}), 400
         # Accept ISO ('YYYY-MM-DDTHH:MM') or 'YYYY-MM-DD HH:MM' for start/end.
         def _parse(s, default=None):
             if not s:
@@ -2477,6 +3973,7 @@ def api_visitors():
 
 
 @app.route('/api/visitors/<int:vid>', methods=['DELETE'])
+@login_required
 def api_visitors_delete(vid):
     row = Visitor.query.get(vid)
     if not row:
@@ -2490,6 +3987,7 @@ def api_visitors_delete(vid):
 
 # ── Entry-time-rule windows ──────────────────────────────────────────────────
 @app.route('/api/entry_windows', methods=['GET', 'POST'])
+@admin_required
 def api_entry_windows():
     """GET returns the configured blocked windows ('HH:MM-HH:MM,HH:MM-HH:MM').
     POST {'windows': '...'} replaces them. Empty string disables blocking."""
@@ -2593,6 +4091,624 @@ def api_uhf_hourly():
         "exits_total":    len(exits),
         "hours":          hours,
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VayAccess Driver Mobile API
+# Self-service endpoints consumed by the React Native app under /mobile.
+# Separate auth surface from the admin /api/login session cookie — drivers
+# authenticate with `Authorization: Bearer <token>` issued at /api/driver/login.
+# ─────────────────────────────────────────────────────────────────────────────
+import secrets as _drv_secrets
+
+def _driver_from_request():
+    """Resolve the calling driver from the Authorization header. Returns
+    the DriverUser instance or None."""
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        return None
+    token = auth[7:].strip()
+    if not token:
+        return None
+    sess = DriverSession.query.get(token)
+    if not sess:
+        return None
+    try:
+        sess.last_seen = datetime.now()
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+    return DriverUser.query.get(sess.driver_id)
+
+
+def _driver_auth_required(fn):
+    @wraps(fn)
+    def _w(*a, **kw):
+        drv = _driver_from_request()
+        if not drv:
+            return jsonify({"error": "Unauthorized"}), 401
+        request.driver = drv  # type: ignore[attr-defined]
+        return fn(*a, **kw)
+    return _w
+
+
+@app.route('/api/driver/register', methods=['POST'])
+def api_driver_register():
+    data = request.get_json(silent=True) or {}
+    name  = (data.get('name')  or '').strip()
+    email = (data.get('email') or '').strip().lower()
+    phone = (data.get('phone') or '').strip()
+    pwd   = (data.get('password') or '').strip()
+    plate = (data.get('primary_plate') or '').strip().upper()
+    vtype = (data.get('primary_type')  or 'Car').strip()
+    if not name or not email or not pwd:
+        return jsonify({"error": "Name, email and password are required."}), 400
+    if len(pwd) < 6:
+        return jsonify({"error": "Password must be at least 6 characters."}), 400
+    if vtype not in ('Car', 'Bike'):
+        vtype = 'Car'
+    if DriverUser.query.filter_by(email=email).first():
+        return jsonify({"error": "An account with this email already exists."}), 409
+    u = DriverUser(name=name, email=email, phone=phone or None,
+                   primary_plate=plate or None, primary_type=vtype)
+    u.set_password(pwd)
+    db.session.add(u)
+    db.session.commit()
+    token = _drv_secrets.token_urlsafe(32)
+    db.session.add(DriverSession(token=token, driver_id=u.id))
+    db.session.commit()
+    AuditEvent.log(f"Driver registered: {email}", 'Driver')
+    return jsonify({"token": token, "user": u.to_dict()})
+
+
+@app.route('/api/driver/login', methods=['POST'])
+def api_driver_login():
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    pwd   = (data.get('password') or '').strip()
+    if not email or not pwd:
+        return jsonify({"error": "Email and password are required."}), 400
+    u = DriverUser.query.filter_by(email=email).first()
+    if not u or not u.check_password(pwd):
+        return jsonify({"error": "Invalid email or password."}), 401
+    token = _drv_secrets.token_urlsafe(32)
+    db.session.add(DriverSession(token=token, driver_id=u.id))
+    db.session.commit()
+    return jsonify({"token": token, "user": u.to_dict()})
+
+
+@app.route('/api/driver/logout', methods=['POST'])
+@_driver_auth_required
+def api_driver_logout():
+    auth = request.headers.get('Authorization', '')
+    token = auth[7:].strip()
+    sess = DriverSession.query.get(token)
+    if sess:
+        db.session.delete(sess)
+        db.session.commit()
+    return jsonify({"ok": True})
+
+
+@app.route('/api/driver/me')
+@_driver_auth_required
+def api_driver_me():
+    return jsonify(request.driver.to_dict())
+
+
+@app.route('/api/driver/me', methods=['PUT'])
+@_driver_auth_required
+def api_driver_me_update():
+    data = request.get_json(silent=True) or {}
+    drv = request.driver
+    for fld, key in (('name', 'name'), ('phone', 'phone'),
+                     ('primary_plate', 'primary_plate'),
+                     ('primary_type', 'primary_type'),
+                     ('fastag_id', 'fastag_id')):
+        if key in data:
+            val = (data.get(key) or '').strip()
+            if fld == 'primary_plate':
+                val = val.upper()
+            if fld == 'primary_type' and val and val not in ('Car', 'Bike'):
+                val = 'Car'
+            setattr(drv, fld, val or None)
+    pwd = (data.get('password') or '').strip()
+    if pwd:
+        if len(pwd) < 6:
+            return jsonify({"error": "Password must be at least 6 characters."}), 400
+        drv.set_password(pwd)
+    db.session.commit()
+    return jsonify(drv.to_dict())
+
+
+@app.route('/api/driver/facilities')
+@_driver_auth_required
+def api_driver_facilities():
+    """List parking facilities (Yards) with live availability + tariffs.
+    Optional filter: ?region=<name>"""
+    region = (request.args.get('region') or '').strip()
+    q = Yard.query
+    if region:
+        q = q.filter(Yard.region == region)
+    yards = q.order_by(Yard.name.asc()).all()
+    tariffs = {t.vehicle_type: t.to_dict() for t in Tariff.query.all()}
+    out = []
+    for y in yards:
+        d = y.to_dict()
+        d['tariffs'] = tariffs
+        out.append(d)
+    return jsonify(out)
+
+
+@app.route('/api/driver/facilities/<int:yid>')
+@_driver_auth_required
+def api_driver_facility_detail(yid):
+    y = Yard.query.get_or_404(yid)
+    tariffs = {t.vehicle_type: t.to_dict() for t in Tariff.query.all()}
+    d = y.to_dict()
+    d['tariffs'] = tariffs
+    return jsonify(d)
+
+
+@app.route('/api/driver/regions')
+@_driver_auth_required
+def api_driver_regions():
+    return jsonify([r.to_dict() for r in Region.query.order_by(Region.name.asc()).all()])
+
+
+@app.route('/api/driver/reservations', methods=['GET', 'POST'])
+@_driver_auth_required
+def api_driver_reservations():
+    drv = request.driver
+    if request.method == 'GET':
+        rows = (DriverReservation.query
+                .filter_by(driver_id=drv.id)
+                .order_by(DriverReservation.start_at.desc()).all())
+        return jsonify([r.to_dict() for r in rows])
+    data = request.get_json(silent=True) or {}
+    yard_name = (data.get('yard') or '').strip()
+    plate     = (data.get('vehicle_plate') or drv.primary_plate or '').strip().upper()
+    vtype     = (data.get('vehicle_type')  or drv.primary_type  or 'Car').strip()
+    start_str = (data.get('start_at') or '').strip()
+    end_str   = (data.get('end_at')   or '').strip()
+    pay_meth  = (data.get('payment_method') or '').strip()
+    upi_id    = (data.get('upi_id') or '').strip()
+    txn_id    = (data.get('transaction_id') or '').strip()
+    amount    = data.get('amount') or 0
+    if not yard_name or not plate or not start_str or not end_str:
+        return jsonify({"error": "yard, vehicle_plate, start_at and end_at required."}), 400
+    if vtype not in ('Car', 'Bike'):
+        vtype = 'Car'
+    try:
+        start_at = datetime.strptime(start_str, '%Y-%m-%d %H:%M')
+        end_at   = datetime.strptime(end_str,   '%Y-%m-%d %H:%M')
+    except ValueError:
+        return jsonify({"error": "Use 'YYYY-MM-DD HH:MM' for start_at / end_at."}), 400
+    if end_at <= start_at:
+        return jsonify({"error": "end_at must be after start_at."}), 400
+    yard = Yard.query.filter_by(name=yard_name).first()
+    if not yard:
+        return jsonify({"error": "Unknown facility."}), 404
+    # Capacity guard — refuse if the yard is full at the requested moment.
+    if yard.occupied() >= (yard.capacity or 0) > 0:
+        return jsonify({"error": "Facility is full. Try another one."}), 409
+    r = DriverReservation(
+        driver_id=drv.id, yard_name=yard_name,
+        vehicle_plate=plate, vehicle_type=vtype,
+        start_at=start_at, end_at=end_at,
+        amount=int(amount) if amount else None,
+        payment_method=pay_meth or None,
+        upi_id=upi_id or None,
+        transaction_id=txn_id or None,
+        status='confirmed',
+    )
+    db.session.add(r)
+    db.session.flush()
+    # Notify the driver of the booking
+    db.session.add(DriverNotification(
+        driver_id=drv.id,
+        title=f"Reservation confirmed: {yard_name}",
+        body=f"{plate} · {start_at.strftime('%d %b %H:%M')} → {end_at.strftime('%H:%M')}",
+        kind='reservation',
+    ))
+    db.session.commit()
+    AuditEvent.log(f"Driver {drv.email} reserved {yard_name} for {plate}", 'Driver')
+    return jsonify(r.to_dict())
+
+
+@app.route('/api/driver/reservations/<int:rid>', methods=['DELETE'])
+@_driver_auth_required
+def api_driver_reservation_cancel(rid):
+    drv = request.driver
+    r = DriverReservation.query.filter_by(id=rid, driver_id=drv.id).first_or_404()
+    if r.status in ('consumed', 'cancelled'):
+        return jsonify({"error": f"Reservation already {r.status}."}), 409
+    r.status = 'cancelled'
+    db.session.add(DriverNotification(
+        driver_id=drv.id,
+        title=f"Reservation cancelled: {r.yard_name}",
+        body=f"{r.vehicle_plate} · {r.start_at.strftime('%d %b %H:%M')}",
+        kind='reservation',
+    ))
+    db.session.commit()
+    return jsonify(r.to_dict())
+
+
+@app.route('/api/driver/sessions/active')
+@_driver_auth_required
+def api_driver_active_session():
+    """Returns the driver's currently-open ParkingTransaction (if any), keyed
+    by their primary plate or any plate they've ever reserved on."""
+    drv = request.driver
+    plates = set()
+    if drv.primary_plate:
+        plates.add(drv.primary_plate.upper())
+    for r in DriverReservation.query.filter_by(driver_id=drv.id).all():
+        if r.vehicle_plate:
+            plates.add(r.vehicle_plate.upper())
+    if not plates:
+        return jsonify(None)
+    tx = (ParkingTransaction.query
+          .filter(ParkingTransaction.vehicle.in_(list(plates)))
+          .filter(ParkingTransaction.exit_at.is_(None))
+          .order_by(ParkingTransaction.entry_at.desc()).first())
+    return jsonify(tx.to_dict() if tx else None)
+
+
+@app.route('/api/driver/sessions/history')
+@_driver_auth_required
+def api_driver_history():
+    drv = request.driver
+    plates = set()
+    if drv.primary_plate:
+        plates.add(drv.primary_plate.upper())
+    for r in DriverReservation.query.filter_by(driver_id=drv.id).all():
+        if r.vehicle_plate:
+            plates.add(r.vehicle_plate.upper())
+    if not plates:
+        return jsonify([])
+    rows = (ParkingTransaction.query
+            .filter(ParkingTransaction.vehicle.in_(list(plates)))
+            .order_by(ParkingTransaction.entry_at.desc()).limit(200).all())
+    return jsonify([r.to_dict() for r in rows])
+
+
+@app.route('/api/driver/notifications')
+@_driver_auth_required
+def api_driver_notifications():
+    drv = request.driver
+    rows = (DriverNotification.query
+            .filter_by(driver_id=drv.id)
+            .order_by(DriverNotification.created_at.desc()).limit(100).all())
+    return jsonify([r.to_dict() for r in rows])
+
+
+@app.route('/api/driver/notifications/<int:nid>/read', methods=['POST'])
+@_driver_auth_required
+def api_driver_notification_read(nid):
+    drv = request.driver
+    n = DriverNotification.query.filter_by(id=nid, driver_id=drv.id).first_or_404()
+    if not n.read_at:
+        n.read_at = datetime.now()
+        db.session.commit()
+    return jsonify(n.to_dict())
+
+
+@app.route('/api/driver/qr_pass')
+@_driver_auth_required
+def api_driver_qr_pass():
+    """Issue a signed QR token for the driver's current/upcoming reservation
+    so the gate kiosk's scanner can verify it via /v/<token>."""
+    drv = request.driver
+    now = datetime.now()
+    r = (DriverReservation.query
+         .filter_by(driver_id=drv.id, status='confirmed')
+         .filter(DriverReservation.end_at >= now)
+         .order_by(DriverReservation.start_at.asc()).first())
+    if not r:
+        return jsonify({"error": "No active reservation."}), 404
+    # Reuse the existing pass-token signer used for visitor QR codes.
+    token = _make_pass_token('reservation', r.id)
+    return jsonify({
+        "reservation": r.to_dict(),
+        "token":       token,
+        "pass_url":    request.host_url.rstrip('/') + f"/v/{token}",
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Zone-wise gate entry — live snapshot. Each ParkingTransaction is tagged with
+# the zone its UHF/ANPR reader sits in (e.g. Basement A, North Gate). This
+# endpoint buckets currently-parked vehicles by zone + lists each zone's most
+# recent gate entries. Powers both the admin Zone Live widget and the mobile
+# Zones screen.
+# ─────────────────────────────────────────────────────────────────────────────
+def _build_zone_snapshot(recent_limit=8, since_hours=1):
+    """Returns [{ zone, capacity, occupied, available, recent: [...] }, ...]
+    Yards drive the canonical zone list (so a zone with capacity but no
+    vehicles still shows). Any ParkingTransaction zone that isn't a yard is
+    appended as an 'Other' bucket so nothing gets swallowed."""
+    since = datetime.now() - timedelta(hours=since_hours)
+    yards = Yard.query.order_by(Yard.name.asc()).all()
+    by_zone = {}
+    for y in yards:
+        by_zone[y.name] = {
+            "zone":      y.name,
+            "region":    y.region or "",
+            "location":  y.location or "",
+            "capacity":  y.capacity or 0,
+            "occupied":  0,
+            "available": y.capacity or 0,
+            "recent":    [],
+            "entries_last_hour": 0,
+            "exits_last_hour":   0,
+        }
+
+    # Currently-parked vehicles per zone
+    open_tx = (ParkingTransaction.query
+               .filter(ParkingTransaction.exit_at.is_(None)).all())
+    for tx in open_tx:
+        z = tx.zone or 'Unzoned'
+        if z not in by_zone:
+            by_zone[z] = {"zone": z, "region": "", "location": "",
+                          "capacity": 0, "occupied": 0, "available": 0,
+                          "recent": [], "entries_last_hour": 0,
+                          "exits_last_hour": 0}
+        by_zone[z]['occupied'] += 1
+        cap = by_zone[z]['capacity']
+        by_zone[z]['available'] = max(0, cap - by_zone[z]['occupied']) if cap else 0
+
+    # Recent gate entries (window = since_hours)
+    recent_entries = (ParkingTransaction.query
+                      .filter(ParkingTransaction.entry_at >= since)
+                      .order_by(ParkingTransaction.entry_at.desc()).all())
+    for tx in recent_entries:
+        z = tx.zone or 'Unzoned'
+        if z not in by_zone:
+            by_zone[z] = {"zone": z, "region": "", "location": "",
+                          "capacity": 0, "occupied": 0, "available": 0,
+                          "recent": [], "entries_last_hour": 0,
+                          "exits_last_hour": 0}
+        by_zone[z]['entries_last_hour'] += 1
+        if len(by_zone[z]['recent']) < recent_limit:
+            by_zone[z]['recent'].append({
+                "id":           tx.id,
+                "vehicle":      tx.vehicle,
+                "vehicle_type": tx.vehicle_type,
+                "owner":        tx.owner_name or "",
+                "mode":         tx.mode,
+                "entry_at":     tx.entry_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "still_parked": tx.exit_at is None,
+            })
+
+    recent_exits = (ParkingTransaction.query
+                    .filter(ParkingTransaction.exit_at.isnot(None))
+                    .filter(ParkingTransaction.exit_at >= since).all())
+    for tx in recent_exits:
+        z = tx.zone or 'Unzoned'
+        if z in by_zone:
+            by_zone[z]['exits_last_hour'] += 1
+
+    # Stable order: yards first (alpha), then any unzoned/foreign buckets.
+    yard_names = [y.name for y in yards]
+    ordered = [by_zone[n] for n in yard_names if n in by_zone]
+    extras  = [v for k, v in by_zone.items() if k not in yard_names]
+    extras.sort(key=lambda r: r['zone'].lower())
+    return ordered + extras
+
+
+@app.route('/api/zones')
+@login_required
+def api_zones():
+    """Admin webportal: zone-wise live gate entry snapshot."""
+    return jsonify(_build_zone_snapshot())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Combined snapshot for mobile (one round-trip live refresh) + admin-side
+# driver-user operations that the mobile sees immediately.
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route('/api/driver/live')
+@_driver_auth_required
+def api_driver_live():
+    """Single-shot snapshot the mobile app polls every few seconds while
+    foregrounded. Returns the driver's profile, active parking session,
+    upcoming + recent reservations, last 20 notifications, and unread count
+    in one response so we don't fan-out 4 GETs from the device."""
+    drv = request.driver
+
+    # Active session — joined by any plate the driver has used.
+    plates = set()
+    if drv.primary_plate: plates.add(drv.primary_plate.upper())
+    res_rows = (DriverReservation.query
+                .filter_by(driver_id=drv.id)
+                .order_by(DriverReservation.start_at.desc()).all())
+    for r in res_rows:
+        if r.vehicle_plate: plates.add(r.vehicle_plate.upper())
+
+    active = None
+    if plates:
+        tx = (ParkingTransaction.query
+              .filter(ParkingTransaction.vehicle.in_(list(plates)))
+              .filter(ParkingTransaction.exit_at.is_(None))
+              .order_by(ParkingTransaction.entry_at.desc()).first())
+        if tx:
+            active = tx.to_dict()
+
+    notifs = (DriverNotification.query
+              .filter_by(driver_id=drv.id)
+              .order_by(DriverNotification.created_at.desc()).limit(20).all())
+    unread = (DriverNotification.query
+              .filter_by(driver_id=drv.id)
+              .filter(DriverNotification.read_at.is_(None)).count())
+
+    return jsonify({
+        "user":          drv.to_dict(),
+        "active":        active,
+        "reservations":  [r.to_dict() for r in res_rows[:20]],
+        "notifications": [n.to_dict() for n in notifs],
+        "unread":        unread,
+        # Zone-wise gate entries — driver sees every zone's live occupancy +
+        # recent entries (helps locate their own vehicle if they forgot the gate).
+        "zones":         _build_zone_snapshot(recent_limit=5, since_hours=1),
+        "server_time":   datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin → Driver Users operations (visible to a specific user immediately
+# because the mobile polls /api/driver/live).
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route('/api/admin/drivers', methods=['GET'])
+@login_required
+def api_admin_drivers():
+    """Admin webportal: list registered mobile drivers with live status flags
+    (currently parked? unread alerts? last seen via session row)."""
+    q = (request.args.get('q') or '').strip().lower()
+    rows = DriverUser.query.order_by(DriverUser.created_at.desc()).all()
+    out = []
+    for u in rows:
+        d = u.to_dict()
+        # Live flags — kept cheap; each is one indexed query.
+        plates = set()
+        if u.primary_plate: plates.add(u.primary_plate.upper())
+        for r in DriverReservation.query.filter_by(driver_id=u.id).all():
+            if r.vehicle_plate: plates.add(r.vehicle_plate.upper())
+        d['active'] = bool(plates and ParkingTransaction.query
+                           .filter(ParkingTransaction.vehicle.in_(list(plates)))
+                           .filter(ParkingTransaction.exit_at.is_(None))
+                           .first())
+        d['unread'] = (DriverNotification.query
+                       .filter_by(driver_id=u.id)
+                       .filter(DriverNotification.read_at.is_(None)).count())
+        d['reservation_count'] = DriverReservation.query.filter_by(driver_id=u.id).count()
+        last = (DriverSession.query.filter_by(driver_id=u.id)
+                .order_by(DriverSession.last_seen.desc()).first())
+        d['last_seen'] = last.last_seen.strftime("%Y-%m-%d %H:%M") if last and last.last_seen else ""
+        if q:
+            blob = f"{u.name} {u.email} {u.phone or ''} {u.primary_plate or ''}".lower()
+            if q not in blob: continue
+        out.append(d)
+    return jsonify(out)
+
+
+@app.route('/api/admin/drivers/<int:did>')
+@login_required
+def api_admin_driver_detail(did):
+    u = DriverUser.query.get_or_404(did)
+    reservations = (DriverReservation.query.filter_by(driver_id=did)
+                    .order_by(DriverReservation.start_at.desc()).all())
+    notifs = (DriverNotification.query.filter_by(driver_id=did)
+              .order_by(DriverNotification.created_at.desc()).limit(50).all())
+    plates = set()
+    if u.primary_plate: plates.add(u.primary_plate.upper())
+    for r in reservations:
+        if r.vehicle_plate: plates.add(r.vehicle_plate.upper())
+    sessions = []
+    if plates:
+        sessions = (ParkingTransaction.query
+                    .filter(ParkingTransaction.vehicle.in_(list(plates)))
+                    .order_by(ParkingTransaction.entry_at.desc()).limit(50).all())
+    return jsonify({
+        "user":         u.to_dict(),
+        "reservations": [r.to_dict() for r in reservations],
+        "sessions":     [s.to_dict() for s in sessions],
+        "notifications":[n.to_dict() for n in notifs],
+    })
+
+
+@app.route('/api/admin/drivers/<int:did>', methods=['PUT'])
+@admin_required
+def api_admin_driver_update(did):
+    """Admin edits driver fields. Mobile sees the change on its next live poll."""
+    u = DriverUser.query.get_or_404(did)
+    data = request.get_json(silent=True) or {}
+    for fld, key in (('name','name'), ('phone','phone'),
+                     ('primary_plate','primary_plate'),
+                     ('primary_type','primary_type'),
+                     ('fastag_id','fastag_id')):
+        if key in data:
+            val = (data.get(key) or '').strip()
+            if fld == 'primary_plate': val = val.upper()
+            if fld == 'primary_type' and val and val not in ('Car','Bike'): val = 'Car'
+            setattr(u, fld, val or None)
+    pwd = (data.get('password') or '').strip()
+    if pwd:
+        if len(pwd) < 6:
+            return jsonify({"error": "Password must be at least 6 characters."}), 400
+        u.set_password(pwd)
+        # Force-logout all existing sessions so old token stops working.
+        DriverSession.query.filter_by(driver_id=u.id).delete()
+    db.session.add(DriverNotification(
+        driver_id=u.id, title="Account updated by admin",
+        body=", ".join([k for k in ('name','phone','primary_plate','primary_type','fastag_id') if k in data]) or "Profile changes applied.",
+        kind='system',
+    ))
+    db.session.commit()
+    AuditEvent.log(f"Admin updated driver {u.email}", 'Driver')
+    return jsonify(u.to_dict())
+
+
+@app.route('/api/admin/drivers/<int:did>', methods=['DELETE'])
+@admin_required
+def api_admin_driver_delete(did):
+    u = DriverUser.query.get_or_404(did)
+    email = u.email
+    # Cascade clean — wipe their auth + alerts + reservations.
+    DriverSession.query.filter_by(driver_id=did).delete()
+    DriverNotification.query.filter_by(driver_id=did).delete()
+    DriverReservation.query.filter_by(driver_id=did).delete()
+    db.session.delete(u)
+    db.session.commit()
+    AuditEvent.log(f"Admin deleted driver {email}", 'Driver')
+    return jsonify({"ok": True})
+
+
+@app.route('/api/admin/drivers/<int:did>/notify', methods=['POST'])
+@login_required
+def api_admin_driver_notify(did):
+    """Admin pushes a notification to a specific driver. Surfaces on mobile
+    within the next live-poll tick (~5s)."""
+    DriverUser.query.get_or_404(did)
+    data = request.get_json(silent=True) or {}
+    title = (data.get('title') or '').strip()
+    body  = (data.get('body')  or '').strip()
+    kind  = (data.get('kind')  or 'system').strip()
+    if not title:
+        return jsonify({"error": "Title is required."}), 400
+    n = DriverNotification(driver_id=did, title=title, body=body, kind=kind)
+    db.session.add(n)
+    db.session.commit()
+    AuditEvent.log(f"Admin notified driver {did}: {title}", 'Driver')
+    return jsonify(n.to_dict())
+
+
+@app.route('/api/admin/drivers/<int:did>/reservations/<int:rid>/cancel', methods=['POST'])
+@admin_required
+def api_admin_cancel_reservation(did, rid):
+    r = DriverReservation.query.filter_by(id=rid, driver_id=did).first_or_404()
+    if r.status in ('consumed','cancelled'):
+        return jsonify({"error": f"Already {r.status}."}), 409
+    r.status = 'cancelled'
+    db.session.add(DriverNotification(
+        driver_id=did,
+        title=f"Reservation cancelled by admin: {r.yard_name}",
+        body=f"{r.vehicle_plate} · {r.start_at.strftime('%d %b %H:%M')}",
+        kind='reservation',
+    ))
+    db.session.commit()
+    AuditEvent.log(f"Admin cancelled reservation {rid} for driver {did}", 'Driver')
+    return jsonify(r.to_dict())
+
+
+@app.route('/api/admin/drivers/<int:did>/logout_all', methods=['POST'])
+@admin_required
+def api_admin_driver_logout_all(did):
+    """Revoke every active mobile session — useful for stolen device / abuse."""
+    DriverUser.query.get_or_404(did)
+    n = DriverSession.query.filter_by(driver_id=did).delete()
+    db.session.commit()
+    AuditEvent.log(f"Admin revoked {n} sessions for driver {did}", 'Driver')
+    return jsonify({"revoked": n})
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,256 @@
+appId: com.farmleysfa
+---
+# === DEMO: Promoter Full E2E with API Validation ===
+# Login: nisha sahani / farmley123 (Promoter role)
+# Deep: Order (filters, qty), Store Check, Planogram
+
+# ── STEP 1: Login ──
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- takeScreenshot: screenshots/demo-promo-01-login
+- tapOn:
+    id: "username-input"
+- inputText: "nisha sahani"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- takeScreenshot: screenshots/demo-promo-02-dashboard
+
+# ── API: Get token ──
+- runScript:
+    file: ../scripts/api/promo-login.js
+- assertTrue:
+    condition: ${output.token != null}
+    label: "API auth — token acquired"
+
+# ── STEP 2: Dashboard — no TL cards ──
+- assertVisible: "Today's Stores"
+- assertNotVisible: "My Team"
+- takeScreenshot: screenshots/demo-promo-03-no-tl-cards
+
+# ── API: Dashboard KPIs ──
+- runScript:
+    file: ../scripts/api/promo-dashboard.js
+- assertTrue:
+    condition: ${output.activeUsers > 0}
+    label: "API: activeUsers=${output.activeUsers}"
+
+# ── STEP 3: Stores → Unplanned Visit → Check In ──
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-04-stores
+- tapOn: "+"
+- extendedWaitUntil:
+    visible: "Unplanned Visit"
+    timeout: 5000
+- tapOn: "Customer code or name"
+- inputText: "C"
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-05-search
+- tapOn:
+    index: 0
+    below: "Search"
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 10000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-06-checked-in
+- assertVisible: "Place Order"
+- assertVisible: "Store Check"
+- assertVisible: "Planogram"
+- takeScreenshot: screenshots/demo-promo-07-activities
+
+# ══════════════ ORDER — DEEP TESTING ══════════════
+
+# ── STEP 4: Open Order ──
+- longPressOn:
+    id: "activity-place-order"
+- extendedWaitUntil:
+    visible: "New Order"
+    timeout: 30000
+- takeScreenshot: screenshots/demo-promo-08-order-initial
+
+# ── STEP 5: Category filter — MAKHANA ──
+- tapOn: "MAKHANA"
+- takeScreenshot: screenshots/demo-promo-09-makhana
+
+# ── STEP 6: Quantity + (3 times) ──
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- assertVisible: "3"
+- takeScreenshot: screenshots/demo-promo-10-qty-3
+
+# ── STEP 7: Quantity - (once) ──
+- tapOn:
+    text: "−"
+    index: 0
+- assertVisible: "2"
+- takeScreenshot: screenshots/demo-promo-11-qty-2
+
+# ── STEP 8: Switch to DATES, add items ──
+- tapOn: "DATES"
+- takeScreenshot: screenshots/demo-promo-12-dates
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- takeScreenshot: screenshots/demo-promo-13-dates-items
+
+# ── STEP 9: Back to ALL — cross-category verify ──
+- tapOn: "ALL"
+- takeScreenshot: screenshots/demo-promo-14-all-with-items
+
+# ── STEP 10: Place Order ──
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible: "Order Placed"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-15-order-placed
+- tapOn: "OK"
+
+# ── API: Verify order ──
+- runScript:
+    file: ../scripts/api/promo-verify-orders.js
+- assertTrue:
+    condition: ${output.orderCount > 0}
+    label: "API: orders=${output.orderCount}, total=${output.latestOrderTotal}"
+- takeScreenshot: screenshots/demo-promo-16-api-order
+
+# ══════════════ STORE CHECK ══════════════
+
+# ── STEP 11: Open Store Check ──
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- longPressOn:
+    id: "activity-store-check"
+- extendedWaitUntil:
+    visible: "Store Check"
+    timeout: 15000
+- takeScreenshot: screenshots/demo-promo-17-storecheck
+
+# ── STEP 12: Toggle In Stock + shelf qty ──
+- tapOn:
+    text: "In Stock"
+    index: 0
+- takeScreenshot: screenshots/demo-promo-18-in-stock
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- takeScreenshot: screenshots/demo-promo-19-shelf-qty
+
+# ── STEP 13: Toggle Out of Stock ──
+- scroll
+- tapOn:
+    text: "Out"
+    index: 0
+- takeScreenshot: screenshots/demo-promo-20-out-stock
+
+# ── STEP 14: Save Store Check ──
+- scroll
+- scroll
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-21-storecheck-saved
+
+# ══════════════ PLANOGRAM ══════════════
+
+# ── STEP 15: Open Planogram ──
+- longPressOn:
+    id: "activity-planogram"
+- extendedWaitUntil:
+    visible: "Planogram"
+    timeout: 15000
+- takeScreenshot: screenshots/demo-promo-22-planogram-grid
+
+# ── STEP 16: MAKHANA compliance ──
+- tapOn: "MAKHANA"
+- takeScreenshot: screenshots/demo-promo-23-planogram-makhana
+- tapOn: "Yes, Followed"
+- takeScreenshot: screenshots/demo-promo-24-planogram-followed
+- back
+- takeScreenshot: screenshots/demo-promo-25-planogram-done
+
+# ══════════════ OTHER ACTIVITIES ══════════════
+
+- back
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- scroll
+- longPressOn: "Ageing / Expiry"
+- extendedWaitUntil:
+    visible: "Add Item"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-26-expiry
+- back
+
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- longPressOn: "Competitor Observation"
+- extendedWaitUntil:
+    visible: "Add Observation"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-27-competitor
+- back
+
+# ── STEP 17: Check Out ──
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 5000
+- scroll
+- tapOn: "Check Out"
+- extendedWaitUntil:
+    visible: "Checked Out"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-28-checked-out
+- tapOn: "OK"
+
+# ── STEP 18: Order History ──
+- tapOn: "Orders"
+- extendedWaitUntil:
+    visible: "Order"
+    timeout: 10000
+- takeScreenshot: screenshots/demo-promo-29-order-history
+
+# ── API: Verify store check ──
+- runScript:
+    file: ../scripts/api/promo-verify-storecheck.js
+- assertTrue:
+    condition: ${output.storeCheckCount > 0}
+    label: "API: storeChecks=${output.storeCheckCount}"
+- takeScreenshot: screenshots/demo-promo-30-api-storecheck
+
+# ── DONE ──
+- takeScreenshot: screenshots/demo-promo-31-complete

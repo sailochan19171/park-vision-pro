@@ -1,0 +1,42 @@
+appId: com.farmleysfa
+---
+# TEST 12: Skip Visit
+# Verify: Before check-in, Skip Visit button is visible on customer visit screen
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Navigate to stores
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+
+# Tap first store
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- takeScreenshot: screenshots/test-12-before-checkin
+
+# Verify Skip Visit button is visible (before check-in)
+- assertVisible: "Skip Visit"
+- takeScreenshot: screenshots/test-12-skip-visit-visible

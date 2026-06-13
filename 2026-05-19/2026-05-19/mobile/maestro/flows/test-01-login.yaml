@@ -1,0 +1,34 @@
+appId: com.farmleysfa
+---
+# TEST 01: Login Happy Path
+# Verify: login with valid credentials, dashboard loads, stores visible
+
+- launchApp:
+    clearState: true
+
+# Wait for login screen
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- assertVisible: "Sales Force Automation"
+- takeScreenshot: screenshots/test-01-login-screen
+
+# Enter credentials
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+
+# Wait for sync + dashboard
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+
+# Verify dashboard loaded with stores
+- assertVisible: "Today's Stores"
+- assertVisible: "See all"
+- takeScreenshot: screenshots/test-01-dashboard-loaded

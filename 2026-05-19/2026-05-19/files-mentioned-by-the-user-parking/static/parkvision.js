@@ -3,19 +3,181 @@
  * Entry/Exit/Tariffs/Reports are scaffolded placeholders for now.
  */
 
+// ── Session gate ─────────────────────────────────────────────────────────────
+// Run BEFORE the rest of this file does any work. If /api/me reports the user
+// is not logged in and we're on the dashboard root, bounce to /login. We keep
+// this fire-and-forget — the rest of the page still hydrates, but any
+// protected /api/* calls will 401 and the user lands on /login almost
+// immediately anyway.
+window.__currentUser = null;
+(function _gateSession() {
+  const path = window.location.pathname || '/';
+  // /login and /v/* are public; never redirect them from here.
+  if (path === '/login' || path.indexOf('/v/') === 0) return;
+  fetch('/api/me', { cache: 'no-store', credentials: 'same-origin' })
+    .then(r => r.ok ? r.json() : { logged_in: false })
+    .then(js => {
+      if (!js || js.logged_in !== true) {
+        // Only force the redirect on the dashboard root — sub-pages may be
+        // served standalone (e.g. /activate) and shouldn't be hijacked.
+        if (path === '/') window.location.href = '/login';
+        return;
+      }
+      window.__currentUser = { id: js.id, name: js.name, role: js.role || '' };
+      _hydrateTopbarUser();
+      // Sidebar filter runs after DOM is ready + currentUser known.
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyMenuPermissions);
+      } else {
+        applyMenuPermissions();
+      }
+    })
+    .catch(() => { /* network blip — skip silently */ });
+})();
+
+function _hydrateTopbarUser() {
+  const u = window.__currentUser;
+  if (!u) return;
+  // Topbar chip — show username + caret; full info in the dropdown.
+  const nameEl = document.getElementById('topbar-username');
+  if (nameEl) {
+    // Preserve the caret span if it exists, otherwise inject it.
+    const caret = nameEl.querySelector('.topbar-caret');
+    nameEl.textContent = u.name || '';
+    if (caret) nameEl.appendChild(caret);
+    else nameEl.insertAdjacentHTML('beforeend', ' <span class="topbar-caret">▾</span>');
+  }
+  const av = document.getElementById('topbar-avatar');
+  if (av) av.textContent = (u.name || '?').trim().charAt(0).toUpperCase();
+  const infoName = document.getElementById('topbar-user-info-name');
+  if (infoName) infoName.textContent = u.name || '—';
+  const infoRole = document.getElementById('topbar-user-info-role');
+  if (infoRole) infoRole.textContent = u.role || 'No role assigned';
+  // Welcome line in the topbar header. Replaces the hardcoded "Hello root".
+  const greeting = document.getElementById('welcome-greeting');
+  if (greeting && u.name) {
+    greeting.textContent = `Hello ${u.name}, Welcome to VayAccess Management System`;
+  }
+}
+
+// Topbar user dropdown — click to toggle, click-outside or Escape to close,
+// Logout item posts to /api/logout then hard-redirects to /login.
+document.addEventListener('DOMContentLoaded', function () {
+  const wrap = document.getElementById('topbar-user');
+  const menu = document.getElementById('topbar-user-menu');
+  const logoutBtn = document.getElementById('topbar-logout');
+  if (!wrap || !menu) return;
+
+  function setOpen(open) {
+    wrap.setAttribute('aria-expanded', String(!!open));
+    if (open) menu.removeAttribute('hidden');
+    else      menu.setAttribute('hidden', '');
+  }
+
+  // Toggle on click of the chip (but ignore clicks inside the menu itself —
+  // those are handled by the menu items' own listeners).
+  wrap.addEventListener('click', function (e) {
+    if (menu.contains(e.target)) return;
+    setOpen(wrap.getAttribute('aria-expanded') !== 'true');
+  });
+  // Keyboard: Enter/Space toggles, Escape closes.
+  wrap.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(wrap.getAttribute('aria-expanded') !== 'true'); }
+    if (e.key === 'Escape') setOpen(false);
+  });
+  // Click outside closes.
+  document.addEventListener('click', function (e) {
+    if (!wrap.contains(e.target)) setOpen(false);
+  });
+  // Logout.
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async function () {
+      try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); }
+      catch (_) { /* bounce to login even if the call fails */ }
+      window.location.href = '/login';
+    });
+  }
+});
+
+// applyMenuPermissions — hide sidebar items the current role isn't allowed
+// to see. Administrator bypasses entirely. Filter is best-effort: a missing
+// row defaults to allowed so an admin who hasn't configured permissions yet
+// still has a working UI.
+async function applyMenuPermissions() {
+  const cur = window.__currentUser;
+  if (!cur) return;
+  if ((cur.role || '').trim().toLowerCase() === 'administrator') return;
+  try {
+    const res = await fetch('/api/menu_permissions', { cache: 'no-store', credentials: 'same-origin' });
+    if (!res.ok) return;
+    const all = await res.json();
+    if (!Array.isArray(all)) return;
+    const blocked = new Set(
+      all.filter(p => (p.role_name || '').trim().toLowerCase() === (cur.role || '').trim().toLowerCase())
+         .filter(p => p.allowed === false)
+         .map(p => p.menu_key));
+    if (!blocked.size) return;
+    document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+      if (blocked.has(btn.dataset.view)) btn.style.display = 'none';
+    });
+  } catch (_) { /* ignore — sidebar stays open */ }
+}
+
 const $ = (id) => document.getElementById(id);
 
 // ── View switching (sidebar nav) ─────────────────────────────────────────────
+// Branded view-switch loader: brief logo+spinner overlay shown every time
+// the user picks a section so the transition feels intentional.
+function showViewLoader(minMs) {
+  const el = document.getElementById('view-loader');
+  if (!el) return;
+  el.hidden = false;
+  el.setAttribute('aria-hidden', 'false');
+  clearTimeout(showViewLoader._t);
+  showViewLoader._t = setTimeout(() => {
+    el.hidden = true;
+    el.setAttribute('aria-hidden', 'true');
+  }, minMs || 450);
+}
+
 function switchView(name) {
+  showViewLoader();
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === name));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active',
                                                                         b.dataset.view === name));
+  // Labels match the WeParking sidebar from VAY Parking Management.pdf.
   const titleMap = {
-    dashboard: 'Dashboard', entry: 'Entry', exit: 'Exit', tariffs: 'Tariffs',
-    devices:   'Devices',   reports: 'Reports', admin: 'Admin',
+    dashboard: 'Home Page',          reports: 'Statistical Management',
+    video: 'Video Monitoring',       'parking-records': 'Parking Records',
+    'scanning-record': 'Scanning Record', devices: 'Lane Monitoring',
+    exit: 'Manual Exit Record',      orders: 'Order Management',
+    'manual-entry': 'Manual Entry',
+    admin: 'Whitelist',              registered: 'Registered Vehicle',
+    blacklist: 'Black List',         yard: 'Yard Management',
+    region: 'Region Management',     entry: 'Entry', tariffs: 'Tariffs',
+    membership: 'Monthly Membership', 'type-mgmt': 'Type Management',
+    visitors: 'Visitor Management',  equipment: 'Equipment Management',
+    'settings-basic': 'Basic Settings', 'settings-entry-exit': 'Entry / Exit Settings',
+    account: 'Account Management',   lcd: 'LCD Display',
+    'menu-mgmt': 'Menu Management',  role: 'Role Management',
+    'role-perm': 'Role Permission',  dictionary: 'Dictionary Managed',
+    'audit-log': 'Audit Log',         'uhf-captures': 'UHF Captures',
   };
-  $('view-title').textContent = titleMap[name] || 'Dashboard';
+  $('view-title').textContent = titleMap[name] || 'Home Page';
 }
+
+// ── Sidebar expandable groups (Parking Inquiry, etc.) ────────────────────────
+// A .nav-group toggles the .nav-sub block that follows it. Clicking a group
+// header expands/collapses; it does NOT switch a view (groups have no data-view).
+document.querySelectorAll('.nav-group').forEach(group => {
+  group.addEventListener('click', () => {
+    const key  = group.dataset.group;
+    const body = document.querySelector(`[data-group-body="${key}"]`);
+    const open = group.getAttribute('aria-expanded') === 'true';
+    group.setAttribute('aria-expanded', String(!open));
+    if (body) body.classList.toggle('open', !open);
+  });
+});
 // Scroll to top of the page whenever the user lands on a new view —
 // applies to sidebar nav clicks AND in-content "jump" buttons.
 function scrollMainToTop() {
@@ -31,7 +193,14 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.addEventListener('load', () => scrollMainToTop());
 window.addEventListener('beforeunload', () => scrollMainToTop());
 document.querySelectorAll('.nav-item').forEach(btn => {
-  btn.addEventListener('click', () => { switchView(btn.dataset.view); scrollMainToTop(); });
+  btn.addEventListener('click', () => {
+    // Group headers (Parking Inquiry) only expand/collapse — they have no
+    // data-view, so don't try to switch to an undefined view (that would
+    // blank the page).
+    if (!btn.dataset.view) return;
+    switchView(btn.dataset.view);
+    scrollMainToTop();
+  });
 });
 // In-content "jump" buttons (e.g. "+ Activate New Tag →")
 document.querySelectorAll('[data-jump]').forEach(el => {
@@ -389,9 +558,66 @@ function recalcValidity() {
 $('emp-months').addEventListener('change', recalcValidity);
 recalcValidity();
 
-function setSubmitState() {
-  $('emp-submit').disabled = !$('emp-tag').value.trim();
+// Mirror the server-side regex so we don't enable the button for inputs the
+// backend will reject. Same patterns as in templates/activate.html.
+const EMP_UPI_RE = /^[a-zA-Z0-9._\-]{2,256}@[a-zA-Z][a-zA-Z0-9.\-]{1,64}$/;
+const EMP_TXN_RE = /^[A-Za-z0-9]{8,30}$/;
+
+// Cash skips the UPI fields entirely (no VPA, no provider txn ID to capture).
+// Anything else in this set is a UPI provider and requires both.
+const UPI_PAYMENT_METHODS = new Set([
+  'PhonePe', 'Paytm', 'Google Pay', 'BHIM', 'Amazon Pay', 'Other UPI'
+]);
+
+function syncUpiVisibility() {
+  const method = $('emp-pay-method') ? $('emp-pay-method').value : '';
+  const wrap   = $('upi-fields');
+  if (!wrap) return;
+  const upiInput = $('emp-pay-upi');
+  const txnInput = $('emp-pay-txn');
+  if (UPI_PAYMENT_METHODS.has(method)) {
+    wrap.style.display = '';
+    if (upiInput) { upiInput.required = true;  upiInput.disabled = false; }
+    if (txnInput) { txnInput.required = true;  txnInput.disabled = false; }
+  } else {
+    // Cash (or unselected) — hide the UPI block and disable+blank the inputs so
+    // (a) the form's required-validity doesn't gate on hidden fields, and
+    // (b) stale values from a previous UPI selection don't get submitted.
+    wrap.style.display = 'none';
+    if (upiInput) { upiInput.required = false; upiInput.disabled = true;  upiInput.value = ''; }
+    if (txnInput) { txnInput.required = false; txnInput.disabled = true;  txnInput.value = ''; }
+  }
 }
+
+function setSubmitState() {
+  const hasTag = !!$('emp-tag').value.trim();
+  const method = $('emp-pay-method') ? $('emp-pay-method').value : '';
+  const amount = $('emp-pay-amount') ? parseInt($('emp-pay-amount').value, 10) : 0;
+  if (!method || !(amount > 0)) {
+    $('emp-submit').disabled = !hasTag || true;
+    return;
+  }
+  let payOk;
+  if (UPI_PAYMENT_METHODS.has(method)) {
+    const upi = $('emp-pay-upi') ? $('emp-pay-upi').value.trim() : '';
+    const txn = $('emp-pay-txn') ? $('emp-pay-txn').value.trim() : '';
+    payOk = EMP_UPI_RE.test(upi) && EMP_TXN_RE.test(txn);
+  } else {
+    // Cash — amount alone is sufficient.
+    payOk = true;
+  }
+  $('emp-submit').disabled = !(hasTag && payOk);
+}
+
+// Re-check button state + UPI visibility whenever any payment field changes.
+['emp-pay-method', 'emp-pay-amount', 'emp-pay-upi', 'emp-pay-txn'].forEach(id => {
+  const el = $(id);
+  if (!el) return;
+  el.addEventListener('input',  () => { syncUpiVisibility(); setSubmitState(); });
+  el.addEventListener('change', () => { syncUpiVisibility(); setSubmitState(); });
+});
+// Run once on load so an unselected method already hides the UPI block.
+syncUpiVisibility();
 
 function clearEmpForm() {
   $('emp-name').value    = '';
@@ -498,6 +724,10 @@ $('emp-form').addEventListener('submit', async (e) => {
     activation_months: parseInt($('emp-months').value, 10),
     number_plate:      $('emp-plate').value.trim(),
     vehicle_type:      $('emp-vtype').value,
+    payment_method:    $('emp-pay-method').value,
+    payment_amount:    parseInt($('emp-pay-amount').value, 10) || 0,
+    upi_id:            $('emp-pay-upi').value.trim(),
+    transaction_id:    $('emp-pay-txn').value.trim(),
   };
   $('emp-submit').disabled = true;
   $('emp-submit').textContent = 'Activating…';
@@ -925,7 +1155,7 @@ async function refreshAccessEvents() {
     _rptRows.access = filtered;
     rptUpdatePaginator('access');
     if (!filtered.length) {
-      tb.innerHTML = `<tr><td colspan="11" style="text-align:center; opacity:0.6; padding:20px;">No access events match the filters.</td></tr>`;
+      tb.innerHTML = `<tr><td colspan="12" style="text-align:center; opacity:0.6; padding:20px;">No access events match the filters.</td></tr>`;
       return;
     }
     const pageRows = rptPageSlice('access');
@@ -978,8 +1208,18 @@ async function refreshAccessEvents() {
         ? `data-live-dur="1" data-entry-at="${tx.entryAt || 0}" data-exit-at="${tx.exitAt || 0}"`
         : '';
       const durStr   = tx ? dur(tx.entryAt, tx.exitAt) : '—';
+      // UHF capture photos (attached server-side in /api/logs by joining
+      // access_logs with uhf_entry_events on tag + timestamp ±30s).
+      const photoCell = (full, plate) => {
+        if (!full && !plate) return '<span style="opacity:0.4;">—</span>';
+        const t = (fn, lbl) => fn
+          ? `<a href="/image/${encodeURIComponent(fn)}" target="_blank" rel="noopener" title="${lbl}"><img src="/image/${encodeURIComponent(fn)}" alt="${lbl}" style="width:48px; height:32px; object-fit:cover; border-radius:4px; border:1px solid var(--line); display:block;"></a>`
+          : '';
+        return `<div style="display:flex; gap:4px;">${t(full, 'Vehicle')}${t(plate, 'Plate')}</div>`;
+      };
       return `
       <tr>
+        <td>${photoCell(l.full_image, l.plate_image)}</td>
         <td style="font-size: 0.85em; opacity: 0.85;">${l.timestamp || '—'}</td>
         <td style="font-family: monospace;">${(l.number_plate && l.number_plate !== 'N/A') ? l.number_plate : '—'}</td>
         <td style="font-family: monospace; font-size: 0.82em;">${(l.rfid_tag && l.rfid_tag !== 'N/A') ? l.rfid_tag : '—'}</td>
@@ -996,7 +1236,7 @@ async function refreshAccessEvents() {
       </tr>`;
     }).join('');
   } catch (err) {
-    tb.innerHTML = `<tr><td colspan="8" style="text-align:center; color: #b74a42; padding:20px;">Failed to load access events: ${err.message}</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="12" style="text-align:center; color: #b74a42; padding:20px;">Failed to load access events: ${err.message}</td></tr>`;
   }
 }
 
@@ -1310,7 +1550,7 @@ async function loadEmployees() {
     const js = await r.json();
     const tb = $('emp-tbody');
     if (!Array.isArray(js) || !js.length) {
-      tb.innerHTML = `<tr><td colspan="9" style="text-align:center; opacity:0.6; padding:20px;">No employees activated yet.</td></tr>`;
+      tb.innerHTML = `<tr><td colspan="10" style="text-align:center; opacity:0.6; padding:20px;">No employees activated yet.</td></tr>`;
       $('emp-count').textContent = '';
       return;
     }
@@ -1353,6 +1593,16 @@ async function loadEmployees() {
                         data-renew-tag="${e.rfid_tag || ''}"
                         style="padding:4px 10px; font-size:0.78em;">↻ Extend</button>`
             : `<span style="opacity:0.45; font-size:0.85em;">—</span>`;
+      // Compact payment cell: "PhonePe · ₹2500" with the rest of the
+      // payment details exposed via title= tooltip so the row stays narrow.
+      // Legacy rows (no payment captured) get a muted "—".
+      const payCell = e.payment_method
+        ? `<span title="UPI ID: ${e.upi_id || '—'}\nTxn: ${e.transaction_id || '—'}\nPaid: ${e.paid_at || '—'}"
+                 style="white-space:nowrap; cursor:help;">
+              <b>${e.payment_method}</b><br>
+              <small style="opacity:0.75;">₹${e.payment_amount || 0}${e.paid_at ? ' · ' + e.paid_at.slice(0,10) : ''}</small>
+           </span>`
+        : `<span style="opacity:0.45; font-size:0.85em;">—</span>`;
       return `
       <tr>
         <td>${e.owner_name || '—'}</td>
@@ -1360,6 +1610,7 @@ async function loadEmployees() {
         <td>${e.contact_number || '—'}</td>
         <td style="font-family:monospace; font-size:0.85em;">${e.rfid_tag || '—'}</td>
         <td>${(e.number_plate || '').startsWith('EMP-') ? '<i style="opacity:0.5;">(none)</i>' : (e.number_plate || '—')}</td>
+        <td>${payCell}</td>
         <td>${e.activated_at ? e.activated_at.slice(0,10) : '—'}</td>
         <td>${validLabel}</td>
         <td>${statusBadge}</td>
@@ -1798,3 +2049,1985 @@ document.querySelectorAll('.nav-item[data-view="reports"]').forEach(btn => {
 
 loadUhfHourly();
 setInterval(loadUhfHourly, 20000);
+
+
+// ──────────────────────────────────────────────────────────────────────────
+// Mobile hamburger drawer — toggle .sidebar-open on <body>.
+// Hidden on desktop via media query; no behavior change there.
+// ──────────────────────────────────────────────────────────────────────────
+(function mobileNav() {
+  const toggle   = document.getElementById('mobile-menu-toggle');
+  const backdrop = document.getElementById('mobile-backdrop');
+  if (!toggle || !backdrop) return;
+
+  const setOpen = (open) => {
+    document.body.classList.toggle('sidebar-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  toggle.addEventListener('click', () => setOpen(!document.body.classList.contains('sidebar-open')));
+  backdrop.addEventListener('click', () => setOpen(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  // Closing on nav-item click is essential on mobile so users see the view they picked.
+  document.querySelectorAll('.sidebar .nav-item').forEach(b =>
+    b.addEventListener('click', () => setOpen(false))
+  );
+})();
+
+// ── Phase 2: live data sections ───────────────────────────────────────────────
+// Parking Records / Scanning Record / Registered Vehicle / Black List each fetch
+// an existing API and render an auto-refreshing table. The 4 sections that still
+// need new backends (Video, Order, Yard, Region) remain stub panels.
+function _fmtTs(ms) {
+  if (!ms) return '—';
+  const d = new Date(ms);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function _dwell(a, b) {
+  if (!a) return '—';
+  const end = b || Date.now();
+  let s = Math.max(0, Math.floor((end - a) / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return `${h}h ${m}m`;
+}
+function _emptyRow(cols, msg) {
+  return `<tr><td colspan="${cols}" style="text-align:center; opacity:0.6; padding:20px;">${msg}</td></tr>`;
+}
+function _esc(s) {
+  return (s == null ? '' : String(s)).replace(/[&<>"]/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+// ── Reusable client-side paginator ───────────────────────────────────────────
+// Every data table routes its rows through paginate(); the helper slices the
+// rows into pages, renders the current page into the tbody, and injects a
+// First/Prev/Next/Last control directly after the table's .table-wrap.
+// Per-table state (current page) lives in _pager keyed by a unique id.
+const _pager = {};
+const PAGE_SIZE = 10;
+
+function paginate(key, rows, tbodyId, rowFn, colspan, afterRender) {
+  const prevPage = _pager[key] ? _pager[key].page : 1;
+  _pager[key] = { rows, page: prevPage, tbodyId, rowFn, colspan, afterRender };
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  if (_pager[key].page > pages) _pager[key].page = pages;
+  if (_pager[key].page < 1) _pager[key].page = 1;
+  _renderPage(key);
+}
+
+function _renderPage(key) {
+  const s = _pager[key]; if (!s) return;
+  const tb = document.getElementById(s.tbodyId); if (!tb) return;
+  const total = s.rows.length;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (s.page > pages) s.page = pages;
+  if (s.page < 1) s.page = 1;
+  const start = (s.page - 1) * PAGE_SIZE;
+  const slice = s.rows.slice(start, start + PAGE_SIZE);
+  tb.innerHTML = slice.length
+    ? slice.map(s.rowFn).join('')
+    : _emptyRow(s.colspan, 'No matching rows.');
+  if (s.afterRender) s.afterRender(tb);
+  _renderPaginatorEl(key, s.page, pages, total, start, slice.length);
+}
+
+function _renderPaginatorEl(key, page, pages, total, start, count) {
+  const tb = document.getElementById(_pager[key].tbodyId);
+  const wrap = tb && tb.closest('.table-wrap');
+  if (!wrap) return;
+  let pg = wrap.nextElementSibling;
+  if (!pg || !pg.classList.contains('tbl-paginator')) {
+    pg = document.createElement('div');
+    pg.className = 'tbl-paginator';
+    wrap.parentNode.insertBefore(pg, wrap.nextSibling);
+  }
+  const dF = page <= 1 ? 'disabled' : '';
+  const dL = page >= pages ? 'disabled' : '';
+  const from = total ? start + 1 : 0;
+  pg.innerHTML = `
+    <button class="ghost-button" data-pg="first" ${dF} title="First page">⏮</button>
+    <button class="ghost-button" data-pg="prev"  ${dF} title="Previous page">◀</button>
+    <span class="tbl-page-info">Page <b>${page}</b> of <b>${pages}</b>
+      <span class="tbl-page-meta">· ${from}–${start + count} of ${total}</span></span>
+    <button class="ghost-button" data-pg="next" ${dL} title="Next page">▶</button>
+    <button class="ghost-button" data-pg="last" ${dL} title="Last page">⏭</button>`;
+  pg.querySelectorAll('button[data-pg]').forEach(b => b.addEventListener('click', () => {
+    const s = _pager[key]; if (!s) return;
+    const p = Math.max(1, Math.ceil(s.rows.length / PAGE_SIZE));
+    if (b.dataset.pg === 'first') s.page = 1;
+    else if (b.dataset.pg === 'prev') s.page = Math.max(1, s.page - 1);
+    else if (b.dataset.pg === 'next') s.page = Math.min(p, s.page + 1);
+    else if (b.dataset.pg === 'last') s.page = p;
+    _renderPage(key);
+  }));
+}
+
+// Generic case-insensitive substring filter over a set of fields.
+function _filterRows(rows, query, fields) {
+  const q = (query || '').trim().toUpperCase();
+  if (!q) return rows;
+  return rows.filter(r => fields.some(f => String(r[f] == null ? '' : r[f]).toUpperCase().includes(q)));
+}
+
+async function loadParkingRecords() {
+  const tb = $('pr-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/transactions?limit=500', { cache: 'no-store' });
+    const js = await r.json();
+    // Multi-field Search Conditions: Plate / Vehicle Type / Match Status /
+    // Entry from / Entry to.
+    const plate = ($('pr-search')?.value || '').trim().toUpperCase();
+    const vty   = $('pr-type')?.value   || '';
+    const st    = $('pr-status')?.value || '';   // '' | 'parked' | 'exited'
+    const dFrom = $('pr-from')?.value || '';
+    const dTo   = $('pr-to')?.value   || '';
+    const rows = (Array.isArray(js) ? js : []).filter(t => {
+      if (plate && !(t.vehicle || '').toUpperCase().includes(plate)) return false;
+      if (vty   && t.type !== vty) return false;
+      if (st === 'parked' && !t.isActive) return false;
+      if (st === 'exited' &&  t.isActive) return false;
+      if ((dFrom || dTo) && t.entryAt) {
+        const day = new Date(t.entryAt).toISOString().slice(0, 10);
+        if (dFrom && day < dFrom) return false;
+        if (dTo   && day > dTo)   return false;
+      }
+      return true;
+    });
+    if ($('pr-meta')) $('pr-meta').textContent = `${rows.length} record(s)`;
+    paginate('pr', rows, 'pr-body', t => `<tr>
+      <td style="font-family:monospace;">${_esc(t.vehicle) || '—'}</td>
+      <td>${_esc(t.type) || '—'}</td>
+      <td>${_fmtTs(t.entryAt)}</td>
+      <td>${_fmtTs(t.exitAt)}</td>
+      <td>${_dwell(t.entryAt, t.exitAt)}</td>
+      <td>₹${t.total || 0}</td>
+      <td>${_esc(t.payment) || '—'}</td>
+      <td>${t.isActive ? '<span class="scan-status-badge scanning">Parked</span>' : '<span class="scan-status-badge granted">Exited</span>'}</td>
+    </tr>`, 8);
+  } catch (e) { tb.innerHTML = _emptyRow(8, 'Failed to load.'); }
+}
+
+async function loadScanningRecord() {
+  const tb = $('sr-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/logs?limit=500', { cache: 'no-store' });
+    const js = await r.json();
+    const q = ($('sr-search')?.value || '').trim().toUpperCase();
+    const rows = (Array.isArray(js) ? js : []).filter(l =>
+      !q || (l.number_plate || '').toUpperCase().includes(q) || (l.rfid_tag || '').toUpperCase().includes(q));
+    if ($('sr-meta')) $('sr-meta').textContent = `${rows.length} scan(s)`;
+    const badge = (st) => /grant/i.test(st) ? '<span class="scan-status-badge granted">Granted</span>'
+      : /den/i.test(st) ? '<span class="scan-status-badge denied">Denied</span>'
+      : `<span class="scan-status-badge scanning">${_esc(st) || '—'}</span>`;
+    paginate('sr', rows, 'sr-body', l => `<tr>
+      <td>${_esc(l.timestamp)}</td>
+      <td style="font-family:monospace;">${_esc(l.number_plate) || '—'}</td>
+      <td style="font-family:monospace; font-size:0.88em;">${_esc(l.rfid_tag) || '—'}</td>
+      <td>${_esc(l.owner_name) || '—'}</td>
+      <td>${_esc(l.department) || '—'}</td>
+      <td>${_esc(l.vehicle_type) || '—'}</td>
+      <td>${badge(l.status)}</td>
+    </tr>`, 7);
+  } catch (e) { tb.innerHTML = _emptyRow(7, 'Failed to load.'); }
+}
+
+async function loadRegisteredVehicles() {
+  const tb = $('rv-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/employees', { cache: 'no-store' });
+    const js = await r.json();
+    const q = ($('rv-search')?.value || '').trim().toUpperCase();
+    const rows = (Array.isArray(js) ? js : []).filter(e =>
+      !q || (e.number_plate || '').toUpperCase().includes(q) || (e.owner_name || '').toUpperCase().includes(q));
+    if ($('rv-meta')) $('rv-meta').textContent = `${rows.length} vehicle(s)`;
+    paginate('rv', rows, 'rv-body', e => {
+      const pay = e.payment_method ? `${_esc(e.payment_method)} ₹${e.payment_amount || 0}` : '—';
+      const badge = e.status === 'Active'
+        ? '<span class="scan-status-badge granted">Active</span>'
+        : '<span class="scan-status-badge denied">Expired</span>';
+      const plate = (e.number_plate || '').startsWith('EMP-') ? '<i style="opacity:0.5;">(none)</i>' : (_esc(e.number_plate) || '—');
+      return `<tr>
+        <td>${_esc(e.owner_name) || '—'}</td>
+        <td style="font-family:monospace;">${plate}</td>
+        <td style="font-family:monospace; font-size:0.88em;">${_esc(e.rfid_tag) || '—'}</td>
+        <td>${_esc(e.vehicle_type) || '—'}</td>
+        <td>${_esc(e.department) || '—'}</td>
+        <td>${pay}</td>
+        <td>${_esc(e.valid_until) || '—'}</td>
+        <td>${badge}</td>
+        <td><button class="ghost-button" data-qr data-qr-kind="member" data-qr-id="${e.id}"
+            data-qr-title="Member Pass — ${_esc(e.owner_name) || ''}"
+            data-qr-meta="<b>${_esc(e.owner_name) || '—'}</b><br>Plate: ${plate}<br>Tag: ${_esc(e.rfid_tag) || '—'}<br>Dept: ${_esc(e.department) || '—'}<br>Valid until: ${_esc(e.valid_until) || '—'}"
+            style="padding:4px 10px; font-size:0.8em; margin-right:4px;">QR</button><button class="ghost-button" data-wa data-wa-kind="m" data-wa-id="${e.id}"
+            data-wa-phone="${_esc((e.contact_number||'').replace(/\\D/g,''))}"
+            data-wa-name="${_esc(e.owner_name) || ''}"
+            style="padding:4px 10px; font-size:0.8em; background:#25d366; color:#fff; border-color:#1ea152;">WhatsApp</button></td>
+      </tr>`;
+    }, 9);
+  } catch (e) { tb.innerHTML = _emptyRow(9, 'Failed to load.'); }
+}
+
+async function loadBlacklistView() {
+  const tb = $('bl-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/blacklist', { cache: 'no-store' });
+    const js = await r.json();
+    const q = ($('bl-search')?.value || '').trim().toUpperCase();
+    const rows = (Array.isArray(js) ? js : []).filter(b =>
+      !q || (b.number_plate || '').toUpperCase().includes(q) || (b.rfid_tag || '').toUpperCase().includes(q));
+    if ($('bl-meta')) $('bl-meta').textContent = `${rows.length} banned entr${rows.length === 1 ? 'y' : 'ies'}`;
+    paginate('bl', rows, 'bl-body', b => `<tr>
+      <td style="font-family:monospace;">${_esc(b.number_plate) || '—'}</td>
+      <td style="font-family:monospace; font-size:0.88em;">${_esc(b.rfid_tag) || '—'}</td>
+      <td>${_esc(b.reason) || '—'}</td>
+      <td>${_esc(b.added_by) || '—'}</td>
+      <td>${_esc(b.created_at) || '—'}</td>
+    </tr>`, 5);
+  } catch (e) { tb.innerHTML = _emptyRow(5, 'Failed to load.'); }
+}
+
+// Wire loaders: load when the section is opened, on search input, and on refresh.
+const _liveLoaders = {
+  'parking-records': loadParkingRecords,
+  'scanning-record': loadScanningRecord,
+  'registered':      loadRegisteredVehicles,
+  'blacklist':       loadBlacklistView,
+};
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  const v = btn.dataset.view || btn.dataset.jump;
+  if (v && _liveLoaders[v]) btn.addEventListener('click', () => setTimeout(_liveLoaders[v], 30));
+});
+$('pr-search')?.addEventListener('input', loadParkingRecords);
+$('pr-refresh')?.addEventListener('click', loadParkingRecords);
+$('sr-search')?.addEventListener('input', loadScanningRecord);
+$('sr-refresh')?.addEventListener('click', loadScanningRecord);
+$('rv-search')?.addEventListener('input', loadRegisteredVehicles);
+$('bl-search')?.addEventListener('input', loadBlacklistView);
+
+// Real-time: every 5s, refresh whichever live section is currently visible.
+setInterval(() => {
+  for (const [view, fn] of Object.entries(_liveLoaders)) {
+    if (document.getElementById(view)?.classList.contains('active')) fn();
+  }
+}, 5000);
+
+// ── Phase 3: Order Management / Yard Management / Region Management ───────────
+async function loadOrders() {
+  const tb = $('od-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/orders', { cache: 'no-store' });
+    const js = await r.json();
+    // Multi-field Search Conditions: Order Number / Type / Status / Plate /
+    // Start Time / End Time — each empty = no constraint.
+    const orderNo = ($('od-search')?.value || '').trim().toUpperCase();
+    const orderTy = $('od-type')?.value || '';
+    const orderSt = $('od-status')?.value || '';
+    const plate   = ($('od-plate')?.value || '').trim().toUpperCase();
+    const dFrom   = $('od-from')?.value || '';
+    const dTo     = $('od-to')?.value || '';
+    const rows = (Array.isArray(js) ? js : []).filter(o => {
+      if (orderNo && !(o.order_no || '').toUpperCase().includes(orderNo)) return false;
+      if (orderTy && o.type   !== orderTy) return false;
+      if (orderSt && o.status !== orderSt) return false;
+      if (plate   && !(o.plate || '').toUpperCase().includes(plate))   return false;
+      const day = (o.created_at || '').slice(0, 10);  // "yyyy-mm-dd"
+      if (dFrom && day && day < dFrom) return false;
+      if (dTo   && day && day > dTo)   return false;
+      return true;
+    });
+    if ($('od-meta')) $('od-meta').textContent = `${rows.length} order(s)`;
+    paginate('od', rows, 'od-body', o => `<tr>
+      <td style="font-family:monospace; font-size:0.88em;">${_esc(o.order_no)}</td>
+      <td>${_esc(o.type)}</td>
+      <td style="font-family:monospace;">${_esc(o.plate)}</td>
+      <td>₹${o.amount || 0}</td>
+      <td>${_esc(o.payment)}</td>
+      <td>${_esc(o.created_at)}</td>
+      <td>${_esc(o.admission)}</td>
+      <td><span class="scan-status-badge ${o.status === 'Paid' ? 'granted' : 'scanning'}">${_esc(o.status)}</span></td>
+    </tr>`, 8);
+  } catch (e) { tb.innerHTML = _emptyRow(8, 'Failed to load.'); }
+}
+
+async function loadYards() {
+  const tb = $('yard-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/yards', { cache: 'no-store' });
+    const js = await r.json();
+    const rows = _filterRows(Array.isArray(js) ? js : [], $('yard-search')?.value, ['name', 'region', 'location']);
+    if ($('yard-meta')) $('yard-meta').textContent = `${rows.length} yard(s)`;
+    paginate('yard', rows, 'yard-body', y => `<tr>
+      <td><b>${_esc(y.name)}</b></td>
+      <td>${y.capacity}</td>
+      <td>${y.occupied}</td>
+      <td>${y.available}</td>
+      <td>${_esc(y.location) || '—'}</td>
+      <td>${_esc(y.region) || '—'}</td>
+      <td><button class="ghost-button" data-edit="${y.id}" data-edit-sec="yard" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Edit</button><button class="ghost-button yard-del" data-id="${y.id}"
+             style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button></td>
+    </tr>`, 7, (tb) => {
+      tb.querySelectorAll('.yard-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this yard?')) return;
+        await fetch(`/api/yards/${b.dataset.id}`, { method: 'DELETE' });
+        loadYards();
+      }));
+    });
+  } catch (e) { tb.innerHTML = _emptyRow(7, 'Failed to load.'); }
+}
+
+async function loadRegions() {
+  const tb = $('region-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/regions', { cache: 'no-store' });
+    const js = await r.json();
+    const rows = _filterRows(Array.isArray(js) ? js : [], $('region-search')?.value, ['name', 'description']);
+    if ($('region-meta')) $('region-meta').textContent = `${rows.length} region(s)`;
+    paginate('region', rows, 'region-body', rg => `<tr>
+      <td><b>${_esc(rg.name)}</b></td>
+      <td>${rg.yard_count}</td>
+      <td>${_esc(rg.description) || '—'}</td>
+      <td>${_esc(rg.created_at)}</td>
+      <td><button class="ghost-button" data-edit="${rg.id}" data-edit-sec="region" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Edit</button><button class="ghost-button region-del" data-id="${rg.id}"
+             style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button></td>
+    </tr>`, 5, (tb) => {
+      tb.querySelectorAll('.region-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this region?')) return;
+        await fetch(`/api/regions/${b.dataset.id}`, { method: 'DELETE' });
+        loadRegions();
+      }));
+    });
+    // Keep the Yard form's region dropdown in sync with existing regions.
+    const sel = $('yard-region');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— none —</option>' +
+        rows.map(rg => `<option value="${_esc(rg.name)}">${_esc(rg.name)}</option>`).join('');
+      sel.value = cur;
+    }
+  } catch (e) { tb.innerHTML = _emptyRow(5, 'Failed to load.'); }
+}
+
+// Add-yard form
+$('yard-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    name:     $('yard-name').value.trim(),
+    capacity: parseInt($('yard-capacity').value, 10) || 0,
+    location: $('yard-location').value.trim(),
+    region:   $('yard-region').value,
+  };
+  const btn = $('yard-submit'); btn.disabled = true;
+  try {
+    const r = await fetch('/api/yards', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const js = await r.json();
+    if (r.ok && js.status === 'ok') { toast(`✓ Yard "${body.name}" added`, 'ok'); $('yard-form').reset(); loadYards(); }
+    else { toast('✗ ' + (js.message || 'Failed'), 'err'); }
+  } catch (err) { toast('✗ Network error', 'err'); }
+  finally { btn.disabled = false; }
+});
+
+// Add-region form
+$('region-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = { name: $('region-name').value.trim(), description: $('region-desc').value.trim() };
+  const btn = $('region-submit'); btn.disabled = true;
+  try {
+    const r = await fetch('/api/regions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const js = await r.json();
+    if (r.ok && js.status === 'ok') { toast(`✓ Region "${body.name}" added`, 'ok'); $('region-form').reset(); loadRegions(); }
+    else { toast('✗ ' + (js.message || 'Failed'), 'err'); }
+  } catch (err) { toast('✗ Network error', 'err'); }
+  finally { btn.disabled = false; }
+});
+
+// Register the 3 new sections with the same open-on-click + live-refresh system.
+Object.assign(_liveLoaders, {
+  'orders': loadOrders,
+  'yard':   () => { loadRegions(); loadYards(); },   // regions first so the dropdown fills
+  'region': loadRegions,
+});
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  const v = btn.dataset.view || btn.dataset.jump;
+  if (v && ['orders', 'yard', 'region'].includes(v)) {
+    btn.addEventListener('click', () => setTimeout(_liveLoaders[v], 30));
+  }
+});
+$('od-search')?.addEventListener('input', loadOrders);
+$('od-type')?.addEventListener('change', loadOrders);
+$('od-refresh')?.addEventListener('click', loadOrders);
+// Extra Search Conditions fields for Order Management (PDF p13 pattern).
+$('od-status')?.addEventListener('change', loadOrders);
+$('od-plate') ?.addEventListener('input',  loadOrders);
+$('od-from')  ?.addEventListener('change', loadOrders);
+$('od-to')    ?.addEventListener('change', loadOrders);
+$('od-reset') ?.addEventListener('click', () => {
+  ['od-status', 'od-type', 'od-search', 'od-plate', 'od-from', 'od-to']
+    .forEach(id => { const el = $(id); if (el) el.value = ''; });
+  loadOrders();
+});
+// Extra Search Conditions fields for Parking Records (PDF p8 pattern).
+$('pr-type')  ?.addEventListener('change', loadParkingRecords);
+$('pr-status')?.addEventListener('change', loadParkingRecords);
+$('pr-from')  ?.addEventListener('change', loadParkingRecords);
+$('pr-to')    ?.addEventListener('change', loadParkingRecords);
+$('pr-reset') ?.addEventListener('click', () => {
+  ['pr-search', 'pr-type', 'pr-status', 'pr-from', 'pr-to']
+    .forEach(id => { const el = $(id); if (el) el.value = ''; });
+  loadParkingRecords();
+});
+
+// ── Phase 10: per-table Refresh + CSV Export + Member-expiry alerts ──────────
+// Each data table's panel-head gets a small action group (Refresh + 📥 CSV)
+// injected once at load. Avoids editing every section's HTML by hand.
+const _exportCfg = {
+  pr:     { loader: 'parking-records', name: 'parking-records',
+            cols: [['vehicle','License Plate'],['type','Vehicle Type'],['entryAt','Entry Time'],['exitAt','Exit Time'],['total','Amount'],['payment','Payment'],['isActive','Active']] },
+  sr:     { loader: 'scanning-record', name: 'scanning-record',
+            cols: [['timestamp','Scan Time'],['number_plate','License Plate'],['rfid_tag','Tag (EPC)'],['owner_name','Owner'],['department','Department'],['vehicle_type','Type'],['status','Status']] },
+  rv:     { loader: 'registered', name: 'registered-vehicles',
+            cols: [['owner_name','Owner'],['number_plate','License Plate'],['rfid_tag','Tag (EPC)'],['vehicle_type','Type'],['department','Department'],['payment_method','Payment'],['payment_amount','Amount'],['valid_until','Valid Until'],['status','Status']] },
+  bl:     { loader: 'blacklist', name: 'blacklist',
+            cols: [['number_plate','License Plate'],['rfid_tag','Tag (EPC)'],['reason','Reason'],['added_by','Added By'],['created_at','Added On']] },
+  od:     { loader: 'orders', name: 'orders',
+            cols: [['order_no','Order Number'],['type','Order Type'],['plate','License Plate'],['amount','Amount'],['payment','Payment'],['created_at','Created'],['admission','Admission'],['status','Status']] },
+  mm:     { loader: 'membership', name: 'monthly-membership',
+            cols: [['owner_name','Member'],['number_plate','License Plate'],['rfid_tag','Tag (EPC)'],['department','Department'],['activation_months','Plan (months)'],['payment_amount','Amount'],['valid_until','Valid Until'],['status','Status']] },
+  tm:     { loader: 'type-mgmt', name: 'vehicle-types',
+            cols: [['type','Vehicle Type'],['model','Tariff Model'],['rate','Hourly Rate'],['dailyCap','Daily Cap'],['lost','Lost Ticket']] },
+  vis:    { loader: 'visitors', name: 'visitors',
+            cols: [['name','Visitor'],['number_plate','License Plate'],['contact','Contact'],['purpose','Purpose'],['host_employee','Host'],['start_at','Valid From'],['end_at','Valid To'],['status','Status']] },
+  eq:     { loader: 'equipment', name: 'equipment',
+            cols: [['name','Device'],['type','Type'],['status','Status'],['lastSeen','Last Seen']] },
+  yard:   { loader: 'yard', name: 'yards',
+            cols: [['name','Yard'],['capacity','Capacity'],['occupied','Occupied'],['available','Available'],['location','Location'],['region','Region']] },
+  region: { loader: 'region', name: 'regions',
+            cols: [['name','Region'],['yard_count','Yards'],['description','Description'],['created_at','Created']] },
+  acc:    { loader: 'account', name: 'accounts',
+            cols: [['name','Account'],['nickname','Nickname'],['contact','Contact'],['role','Role'],['created_at','Created']] },
+  rl:     { loader: 'role', name: 'roles',
+            cols: [['name','Role'],['account_count','Accounts'],['description','Description'],['created_at','Created']] },
+  dc:     { loader: 'dictionary', name: 'dictionary',
+            cols: [['category','Category'],['key','Key'],['value','Value'],['created_at','Created']] },
+};
+
+function _csvEscape(v) {
+  if (v == null) return '';
+  let s = String(v);
+  // Convert millisecond timestamps to ISO date for time fields.
+  if (typeof v === 'number' && v > 1_000_000_000_000) {
+    try { s = new Date(v).toISOString().replace('T', ' ').slice(0, 19); } catch (e) {}
+  }
+  // Excel auto-formats date-looking strings into a date type that shows as
+  // ##### whenever the column is too narrow. Force text rendering via the
+  // ="…" formula trick so dates ALWAYS display in full regardless of width.
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    return `="${s.replace(/"/g, '""')}"`;
+  }
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function exportTableCSV(key) {
+  const cfg = _exportCfg[key]; if (!cfg) return;
+  const rows = _pager[key]?.rows || [];
+  if (!rows.length) { toast('Nothing to export', 'err'); return; }
+  const header = cfg.cols.map(c => c[1]).join(',');
+  const body = rows.map(r => cfg.cols.map(([k]) => _csvEscape(r[k])).join(',')).join('\n');
+  // UTF-8 BOM (﻿) so Excel opens the CSV with the right encoding instead
+  // of mojibake-ing rupee signs and Indian script.
+  const blob = new Blob(['﻿', header + '\n' + body], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${cfg.name}-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 0);
+}
+
+// Inject Refresh + 📥 CSV buttons into every data table's panel-head once.
+function _injectTableActions() {
+  Object.keys(_exportCfg).forEach(key => {
+    const cfg = _exportCfg[key];
+    const tbl = document.getElementById(`${key}-table`); if (!tbl) return;
+    const panel = tbl.closest('.panel');
+    const head  = panel && panel.querySelector('.panel-head');
+    if (!head || head.querySelector('.table-actions')) return;  // already done
+    const actions = document.createElement('div');
+    actions.className = 'table-actions';
+    actions.innerHTML = `
+      <button class="ghost-button" data-refresh="${cfg.loader}" title="Refresh">↻</button>
+      <button class="ghost-button" data-export-key="${key}" title="Export CSV">📥 CSV</button>`;
+    head.appendChild(actions);
+  });
+}
+_injectTableActions();
+
+// Delegated: refresh + export.
+document.addEventListener('click', (e) => {
+  const ref = e.target.closest && e.target.closest('[data-refresh]');
+  if (ref) {
+    const fn = _liveLoaders[ref.dataset.refresh];
+    if (fn) { fn(); toast('↻ Refreshed', 'ok'); }
+    return;
+  }
+  const exp = e.target.closest && e.target.closest('[data-export-key]');
+  if (exp) { exportTableCSV(exp.dataset.exportKey); return; }
+});
+
+// Member-expiry alerts on the dashboard. Renders a banner+list of members
+// whose validity ends in the next 14 days OR has already passed (Expired).
+async function loadExpiryAlerts() {
+  const host = $('hs-expiry-host'); if (!host) return;
+  try {
+    const all = await (await fetch('/api/employees', { cache: 'no-store' })).json();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today.getTime() + 14 * 86_400_000);
+    const items = (Array.isArray(all) ? all : [])
+      .filter(e => e.valid_until)
+      .map(e => ({ ...e, _vd: new Date(e.valid_until + 'T00:00:00') }))
+      .filter(e => e._vd <= horizon)
+      .sort((a, b) => a._vd - b._vd);
+    if (!items.length) { host.style.display = 'none'; return; }
+    host.style.display = '';
+    $('hs-expiry-count').textContent = items.length;
+    $('hs-expiry-list').innerHTML = items.slice(0, 12).map(e => {
+      const days = Math.ceil((e._vd - today) / 86_400_000);
+      const tag = days < 0 ? `<span style="color:#b74a42; font-weight:700;">Expired ${Math.abs(days)}d ago</span>`
+        : days === 0 ? `<span style="color:#b74a42; font-weight:700;">Expires today</span>`
+        : `<span style="color:#a87217; font-weight:700;">${days}d left</span>`;
+      return `<div class="hs-expiry-item">
+        <span><b>${_esc(e.owner_name) || '—'}</b> <span style="opacity:0.6;">${_esc(e.number_plate) || '—'}</span></span>
+        <span style="font-size:0.85em;">${_esc(e.valid_until)} · ${tag}</span>
+      </div>`;
+    }).join('') + (items.length > 12 ? `<div style="opacity:0.7; font-size:0.85em; margin-top:6px;">+${items.length - 12} more</div>` : '');
+  } catch (e) { /* ignore */ }
+}
+// Update the dashboard's live-refresh hook so the 5s tick AND nav-click
+// refresh the expiry alerts alongside the home summary. (Just replacing the
+// _liveLoaders.dashboard reference — no need to mutate loadHomeSummary itself.)
+_liveLoaders.dashboard = async function () {
+  await loadHomeSummary();
+  await loadExpiryAlerts();
+};
+// Initial load of expiry alerts (home summary was already loaded above).
+loadExpiryAlerts();
+
+// ── Phase 4: Member sub-menu / Type / Visitors / Equipment / Settings ────────
+async function loadMembership() {
+  const tb = $('mm-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/employees', { cache: 'no-store' });
+    const js = await r.json();
+    const q = ($('mm-search')?.value || '').trim().toUpperCase();
+    const rows = (Array.isArray(js) ? js : []).filter(e =>
+      !q || (e.owner_name || '').toUpperCase().includes(q) || (e.number_plate || '').toUpperCase().includes(q));
+    if ($('mm-meta')) $('mm-meta').textContent = `${rows.length} member(s)`;
+    paginate('mm', rows, 'mm-body', e => {
+      const plan = e.activation_months ? `${e.activation_months} month${e.activation_months > 1 ? 's' : ''}` : '—';
+      const badge = e.status === 'Active'
+        ? '<span class="scan-status-badge granted">Active</span>'
+        : '<span class="scan-status-badge denied">Expired</span>';
+      return `<tr>
+        <td><b>${_esc(e.owner_name) || '—'}</b></td>
+        <td style="font-family:monospace;">${_esc(e.number_plate) || '—'}</td>
+        <td style="font-family:monospace; font-size:0.88em;">${_esc(e.rfid_tag) || '—'}</td>
+        <td>${_esc(e.department) || '—'}</td>
+        <td>${plan}</td>
+        <td>₹${e.payment_amount || 0}</td>
+        <td>${_esc(e.valid_until) || '—'}</td>
+        <td>${badge}</td>
+        <td><button class="ghost-button" data-qr data-qr-kind="member" data-qr-id="${e.id}"
+            data-qr-title="Member Pass — ${_esc(e.owner_name) || ''}"
+            data-qr-meta="<b>${_esc(e.owner_name) || '—'}</b><br>Plate: ${_esc(e.number_plate) || '—'}<br>Tag: ${_esc(e.rfid_tag) || '—'}<br>Dept: ${_esc(e.department) || '—'}<br>Valid until: ${_esc(e.valid_until) || '—'}"
+            style="padding:4px 10px; font-size:0.8em; margin-right:4px;">QR</button><button class="ghost-button" data-wa data-wa-kind="m" data-wa-id="${e.id}"
+            data-wa-phone="${_esc((e.contact_number||'').replace(/\\D/g,''))}"
+            data-wa-name="${_esc(e.owner_name) || ''}"
+            style="padding:4px 10px; font-size:0.8em; background:#25d366; color:#fff; border-color:#1ea152;">WhatsApp</button></td>
+      </tr>`;
+    }, 9);
+  } catch (e) { tb.innerHTML = _emptyRow(9, 'Failed to load.'); }
+}
+
+async function loadTypes() {
+  const tb = $('tm-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/tariffs', { cache: 'no-store' });
+    const js = await r.json();
+    const rows = _filterRows(Array.isArray(js) ? js : [], $('tm-search')?.value, ['type', 'model']);
+    if ($('tm-meta')) $('tm-meta').textContent = `${rows.length} type(s)`;
+    paginate('tm', rows, 'tm-body', t => `<tr>
+      <td><b>${_esc(t.type)}</b></td>
+      <td>${_esc(t.model) || '—'}</td>
+      <td>₹${t.rate || 0}/hr</td>
+      <td>₹${t.dailyCap || 0}</td>
+      <td>₹${t.lost || 0}</td>
+    </tr>`, 5);
+  } catch (e) { tb.innerHTML = _emptyRow(5, 'Failed to load.'); }
+}
+
+async function loadVisitorsView() {
+  const tb = $('vis-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/visitors', { cache: 'no-store' });
+    const js = await r.json();
+    const rows = _filterRows(Array.isArray(js) ? js : [], $('vis-search')?.value,
+      ['name', 'number_plate', 'contact', 'purpose', 'host_employee']);
+    if ($('vis-meta')) $('vis-meta').textContent = `${rows.length} visitor(s)`;
+    paginate('vis', rows, 'vis-body', v => {
+      const st = (v.status || '').toLowerCase();
+      const badge = st.includes('active') ? 'granted' : st.includes('expir') ? 'denied' : 'scanning';
+      return `<tr>
+        <td><b>${_esc(v.name)}</b></td>
+        <td style="font-family:monospace;">${_esc(v.number_plate) || '—'}</td>
+        <td>${_esc(v.contact) || '—'}</td>
+        <td>${_esc(v.purpose) || '—'}</td>
+        <td>${_esc(v.host_employee) || '—'}</td>
+        <td>${_esc(v.start_at) || '—'}</td>
+        <td>${_esc(v.end_at) || '—'}</td>
+        <td><span class="scan-status-badge ${badge}">${_esc(v.status) || '—'}</span></td>
+        <td>
+          <button class="ghost-button" data-qr data-qr-kind="visitor" data-qr-id="${v.id}"
+                  data-qr-title="Visitor Pass — ${_esc(v.name)}"
+                  data-qr-meta="<b>${_esc(v.name)}</b><br>Plate: ${_esc(v.number_plate) || '—'}<br>Host: ${_esc(v.host_employee) || '—'}<br>Valid: ${_esc(v.start_at) || '—'} → ${_esc(v.end_at) || '—'}"
+                  style="padding:4px 10px; font-size:0.8em; margin-right:4px;">QR</button><button class="ghost-button" data-wa data-wa-kind="v" data-wa-id="${v.id}"
+                  data-wa-phone="${_esc((v.contact||'').replace(/\\D/g,''))}"
+                  data-wa-name="${_esc(v.name)}"
+                  style="padding:4px 10px; font-size:0.8em; margin-right:4px; background:#25d366; color:#fff; border-color:#1ea152;">WhatsApp</button><button class="ghost-button" data-edit="${v.id}" data-edit-sec="vis" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Edit</button><button class="ghost-button vis-del" data-id="${v.id}"
+               style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button></td>
+      </tr>`;
+    }, 9, (tb) => {
+      tb.querySelectorAll('.vis-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this visitor pass?')) return;
+        await fetch(`/api/visitors/${b.dataset.id}`, { method: 'DELETE' });
+        loadVisitorsView();
+      }));
+    });
+  } catch (e) { tb.innerHTML = _emptyRow(9, 'Failed to load.'); }
+}
+
+$('vis-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    name:          $('vis-name').value.trim(),
+    number_plate:  $('vis-plate').value.trim(),
+    contact:       $('vis-contact').value.trim(),
+    purpose:       $('vis-purpose').value.trim(),
+    host_employee: $('vis-host').value.trim(),
+  };
+  const btn = $('vis-submit'); btn.disabled = true;
+  try {
+    const r = await fetch('/api/visitors', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const js = await r.json();
+    if (r.ok && (js.status === 'ok' || js.id)) { toast(`✓ Visitor "${body.name}" added`, 'ok'); $('vis-form').reset(); loadVisitorsView(); }
+    else { toast('✗ ' + (js.message || 'Failed'), 'err'); }
+  } catch (err) { toast('✗ Network error', 'err'); }
+  finally { btn.disabled = false; }
+});
+
+async function loadEquipment() {
+  const tb = $('eq-body'); if (!tb) return;
+  try {
+    const r = await fetch('/api/devices', { cache: 'no-store' });
+    const js = await r.json();
+    const rows = _filterRows(Array.isArray(js) ? js : [], $('eq-search')?.value, ['name', 'type', 'status']);
+    if ($('eq-meta')) $('eq-meta').textContent = `${rows.length} device(s)`;
+    const badge = (s) => /online|connected|ready|streaming/i.test(s)
+      ? `<span class="scan-status-badge granted">${_esc(s)}</span>`
+      : `<span class="scan-status-badge denied">${_esc(s)}</span>`;
+    paginate('eq', rows, 'eq-body', d => `<tr>
+      <td><b>${_esc(d.name)}</b></td>
+      <td>${_esc(d.type)}</td>
+      <td>${badge(d.status)}</td>
+      <td>${_esc(d.lastSeen) || '—'}</td>
+    </tr>`, 4);
+  } catch (e) { tb.innerHTML = _emptyRow(4, 'Failed to load.'); }
+}
+
+async function loadBasicSettings() {
+  try {
+    const s = await (await fetch('/api/settings', { cache: 'no-store' })).json();
+    if ($('sb-capacity')) $('sb-capacity').value = s.capacity ?? '';
+    if ($('sb-zone'))     $('sb-zone').value     = s.default_entry_zone ?? '';
+    if ($('sb-backup'))   $('sb-backup').value   = s.backup_schedule ?? '';
+    if ($('se-entry-grace')) $('se-entry-grace').value = s.entry_grace_minutes ?? '';
+    if ($('se-exit-grace'))  $('se-exit-grace').value  = s.exit_grace_minutes ?? '';
+    if ($('se-cooldown'))    $('se-cooldown').value    = s.rescan_cooldown_seconds ?? '';
+    if ($('se-auto-barrier')) $('se-auto-barrier').value = String(s.auto_open_barrier ?? '1');
+  } catch (e) { /* ignore */ }
+}
+
+$('sb-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    capacity:           parseInt($('sb-capacity').value, 10) || 0,
+    default_entry_zone: $('sb-zone').value.trim(),
+    backup_schedule:    $('sb-backup').value.trim(),
+  };
+  try {
+    const r = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    toast(r.ok ? '✓ Basic settings saved' : '✗ Failed', r.ok ? 'ok' : 'err');
+  } catch (err) { toast('✗ Network error', 'err'); }
+});
+
+$('se-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    entry_grace_minutes:     parseInt($('se-entry-grace').value, 10) || 0,
+    exit_grace_minutes:      parseInt($('se-exit-grace').value, 10) || 0,
+    auto_open_barrier:       $('se-auto-barrier').value,
+    rescan_cooldown_seconds: parseInt($('se-cooldown').value, 10) || 0,
+  };
+  try {
+    const r = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    toast(r.ok ? '✓ Entry/Exit settings saved' : '✗ Failed', r.ok ? 'ok' : 'err');
+  } catch (err) { toast('✗ Network error', 'err'); }
+});
+
+// Register Phase-4 sections with the open-on-click + live-refresh system.
+Object.assign(_liveLoaders, {
+  'membership':          loadMembership,
+  'type-mgmt':           loadTypes,
+  'visitors':            loadVisitorsView,
+  'equipment':           loadEquipment,
+  'settings-basic':      loadBasicSettings,
+  'settings-entry-exit': loadBasicSettings,   // same endpoint feeds both forms
+});
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  const v = btn.dataset.view || btn.dataset.jump;
+  if (v && _liveLoaders[v] && ['membership','type-mgmt','visitors','equipment','settings-basic','settings-entry-exit'].includes(v)) {
+    btn.addEventListener('click', () => setTimeout(_liveLoaders[v], 30));
+  }
+});
+$('mm-search')?.addEventListener('input', loadMembership);
+$('vis-search')?.addEventListener('input', loadVisitorsView);
+
+// ── Phase 5: System Management CRUD (Accounts / Roles / Dictionary) ──────────
+async function loadAccounts() {
+  const tb = $('acc-body'); if (!tb) return;
+  try {
+    const raw = await (await fetch('/api/accounts', { cache: 'no-store' })).json();
+    const rows = _filterRows(Array.isArray(raw) ? raw : [], $('acc-search')?.value, ['name', 'nickname', 'contact', 'role']);
+    if ($('acc-meta')) $('acc-meta').textContent = `${rows.length} account(s)`;
+    paginate('acc', rows, 'acc-body', a => `<tr>
+      <td><b>${_esc(a.name)}</b></td>
+      <td>${_esc(a.nickname) || '—'}</td>
+      <td>${_esc(a.contact) || '—'}</td>
+      <td>${_esc(a.role) || '—'}</td>
+      <td>${_esc(a.created_at)}</td>
+      <td>
+        <button class="ghost-button" data-edit="${a.id}" data-edit-sec="acc" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Edit</button>
+        <button class="ghost-button acc-pwd" data-id="${a.id}" data-name="${_esc(a.name)}" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Change Password</button>
+        <button class="ghost-button acc-del" data-id="${a.id}" style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button>
+      </td>
+    </tr>`, 6, (tb) => {
+      tb.querySelectorAll('.acc-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this account?')) return;
+        await fetch(`/api/accounts/${b.dataset.id}`, { method: 'DELETE' }); loadAccounts();
+      }));
+      // Change Password: two prompts (new + confirm). window.prompt is OK
+      // per the task spec — keeps the row UI from getting cluttered.
+      tb.querySelectorAll('.acc-pwd').forEach(b => b.addEventListener('click', async () => {
+        const name = b.dataset.name || 'account';
+        const p1 = window.prompt(`Set new password for "${name}":`, '');
+        if (p1 === null) return;
+        if ((p1 || '').length < 4) { toast('✗ Password must be at least 4 characters', 'err'); return; }
+        const p2 = window.prompt('Re-enter new password to confirm:', '');
+        if (p2 === null) return;
+        if (p1 !== p2) { toast('✗ Passwords do not match', 'err'); return; }
+        try {
+          const r = await fetch(`/api/accounts/${b.dataset.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ password: p1, password_confirm: p2 }),
+          });
+          const js = await r.json();
+          if (r.ok && js.status === 'ok') toast('✓ Password updated', 'ok');
+          else toast('✗ ' + (js.message || 'Failed'), 'err');
+        } catch (_) { toast('✗ Network error', 'err'); }
+      }));
+    });
+  } catch (e) { tb.innerHTML = _emptyRow(6, 'Failed to load.'); }
+}
+
+async function loadRolesView() {
+  const tb = $('rl-body'); if (!tb) return;
+  try {
+    const all = await (await fetch('/api/roles', { cache: 'no-store' })).json();
+    const allRoles = Array.isArray(all) ? all : [];
+    const rows = _filterRows(allRoles, $('rl-search')?.value, ['name', 'description']);
+    if ($('rl-meta')) $('rl-meta').textContent = `${rows.length} role(s)`;
+    paginate('rl', rows, 'rl-body', r => `<tr>
+      <td><b>${_esc(r.name)}</b></td>
+      <td>${r.account_count}</td>
+      <td>${_esc(r.description) || '—'}</td>
+      <td>${_esc(r.created_at)}</td>
+      <td><button class="ghost-button" data-edit="${r.id}" data-edit-sec="rl" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Edit</button><button class="ghost-button rl-del" data-id="${r.id}" style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button></td>
+    </tr>`, 5, (tb) => {
+      tb.querySelectorAll('.rl-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this role?')) return;
+        await fetch(`/api/roles/${b.dataset.id}`, { method: 'DELETE' }); loadRolesView();
+      }));
+    });
+    // Feed the Account form's role dropdown.
+    const sel = $('acc-role');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">— none —</option>' +
+        allRoles.map(r => `<option value="${_esc(r.name)}">${_esc(r.name)}</option>`).join('');
+      sel.value = cur;
+    }
+  } catch (e) { tb.innerHTML = _emptyRow(5, 'Failed to load.'); }
+}
+
+async function loadDictionary() {
+  const tb = $('dc-body'); if (!tb) return;
+  try {
+    const raw = await (await fetch('/api/dictionary', { cache: 'no-store' })).json();
+    const rows = _filterRows(Array.isArray(raw) ? raw : [], $('dc-search')?.value, ['category', 'key', 'value']);
+    if ($('dc-meta')) $('dc-meta').textContent = `${rows.length} entr${rows.length === 1 ? 'y' : 'ies'}`;
+    paginate('dc', rows, 'dc-body', d => `<tr>
+      <td><b>${_esc(d.category)}</b></td>
+      <td>${_esc(d.key)}</td>
+      <td>${_esc(d.value) || '—'}</td>
+      <td>${_esc(d.created_at)}</td>
+      <td><button class="ghost-button" data-edit="${d.id}" data-edit-sec="dc" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Edit</button><button class="ghost-button dc-del" data-id="${d.id}" style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button></td>
+    </tr>`, 5, (tb) => {
+      tb.querySelectorAll('.dc-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this entry?')) return;
+        await fetch(`/api/dictionary/${b.dataset.id}`, { method: 'DELETE' }); loadDictionary();
+      }));
+    });
+  } catch (e) { tb.innerHTML = _emptyRow(5, 'Failed to load.'); }
+}
+
+function _wireAddForm(formId, btnId, buildBody, url, okMsg, reload) {
+  $(formId)?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $(btnId); btn.disabled = true;
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildBody()) });
+      const js = await r.json();
+      if (r.ok && js.status === 'ok') { toast(okMsg, 'ok'); $(formId).reset(); reload(); }
+      else { toast('✗ ' + (js.message || 'Failed'), 'err'); }
+    } catch (err) { toast('✗ Network error', 'err'); }
+    finally { btn.disabled = false; }
+  });
+}
+// Client-side password match check — abort with a toast instead of letting
+// the request hit the server when the two fields differ. The server still
+// enforces this, but a snappy local check feels better.
+$('acc-form')?.addEventListener('submit', function (e) {
+  const p1 = $('acc-password')?.value || '';
+  const p2 = $('acc-password2')?.value || '';
+  if (p1 || p2) {
+    if (p1 !== p2) { e.preventDefault(); e.stopImmediatePropagation(); toast('✗ Passwords do not match', 'err'); return; }
+    if (p1.length < 4) { e.preventDefault(); e.stopImmediatePropagation(); toast('✗ Password must be at least 4 characters', 'err'); return; }
+  }
+}, true);  // capture phase — runs before _wireAddForm's submit handler
+
+_wireAddForm('acc-form', 'acc-submit', () => ({
+  name: $('acc-name').value.trim(), nickname: $('acc-nick').value.trim(),
+  contact: $('acc-contact').value.trim(), role: $('acc-role').value,
+  password:         $('acc-password')?.value  || '',
+  password_confirm: $('acc-password2')?.value || '',
+}), '/api/accounts', '✓ Account added', loadAccounts);
+_wireAddForm('role-mgmt-form', 'rl-submit', () => ({
+  name: $('rl-name').value.trim(), description: $('rl-desc').value.trim(),
+}), '/api/roles', '✓ Role added', loadRolesView);
+_wireAddForm('dict-form', 'dc-submit', () => ({
+  category: $('dc-cat').value.trim(), key: $('dc-key').value.trim(), value: $('dc-val').value.trim(),
+}), '/api/dictionary', '✓ Dictionary entry added', loadDictionary);
+
+Object.assign(_liveLoaders, {
+  'account':    () => { loadRolesView(); loadAccounts(); },  // roles first so dropdown fills
+  'role':       loadRolesView,
+  'dictionary': loadDictionary,
+});
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  const v = btn.dataset.view || btn.dataset.jump;
+  if (v && ['account', 'role', 'dictionary'].includes(v)) {
+    btn.addEventListener('click', () => setTimeout(_liveLoaders[v], 30));
+  }
+});
+
+// Filter inputs for the CRUD/list tables that previously lacked one.
+$('tm-search')?.addEventListener('input', loadTypes);
+$('eq-search')?.addEventListener('input', loadEquipment);
+$('yard-search')?.addEventListener('input', loadYards);
+$('region-search')?.addEventListener('input', loadRegions);
+$('acc-search')?.addEventListener('input', loadAccounts);
+$('rl-search')?.addEventListener('input', loadRolesView);
+$('dc-search')?.addEventListener('input', loadDictionary);
+
+// ── Phase 6: generic Edit modal for all CRUD tables ──────────────────────────
+// A single modal edits any row. The Edit button in each table row carries
+// data-edit (id) + data-edit-sec (section key). We look the row up in the
+// paginator's stored rows, populate the modal, and PUT on save. This never
+// touches the Add forms, so create/edit stay independent.
+const _editCrud = {
+  acc:    { url: '/api/accounts', title: 'Edit Account', reload: () => loadAccounts(),
+            fields: [{ k: 'name', label: 'Account Name' }, { k: 'nickname', label: 'Nickname' },
+                     { k: 'contact', label: 'Contact' }, { k: 'role', label: 'Role', selectFrom: 'acc-role' }] },
+  rl:     { url: '/api/roles', title: 'Edit Role', reload: () => loadRolesView(),
+            fields: [{ k: 'name', label: 'Role Name' }, { k: 'description', label: 'Description' }] },
+  dc:     { url: '/api/dictionary', title: 'Edit Dictionary Entry', reload: () => loadDictionary(),
+            fields: [{ k: 'category', label: 'Category' }, { k: 'key', label: 'Key' }, { k: 'value', label: 'Value' }] },
+  yard:   { url: '/api/yards', title: 'Edit Yard', reload: () => { loadRegions(); loadYards(); },
+            fields: [{ k: 'name', label: 'Yard Name' }, { k: 'capacity', label: 'Capacity', type: 'number' },
+                     { k: 'location', label: 'Location' }, { k: 'region', label: 'Region', selectFrom: 'yard-region' }] },
+  region: { url: '/api/regions', title: 'Edit Region', reload: () => loadRegions(),
+            fields: [{ k: 'name', label: 'Region Name' }, { k: 'description', label: 'Description' }] },
+  vis:    { url: '/api/visitors', title: 'Edit Visitor', reload: () => loadVisitorsView(),
+            fields: [{ k: 'name', label: 'Visitor Name' }, { k: 'number_plate', label: 'License Plate' },
+                     { k: 'contact', label: 'Contact' }, { k: 'purpose', label: 'Purpose' },
+                     { k: 'host_employee', label: 'Host Employee' }] },
+};
+let _editCtx = null;
+
+function openEditModal(sec, id) {
+  const cfg = _editCrud[sec]; if (!cfg) return;
+  const row = (_pager[sec]?.rows || []).find(r => String(r.id) === String(id));
+  if (!row) return;
+  _editCtx = { sec, id };
+  $('edit-modal-title').textContent = cfg.title;
+  const host = $('edit-modal-fields');
+  host.innerHTML = cfg.fields.map(f => {
+    const val = row[f.k] != null ? row[f.k] : '';
+    if (f.selectFrom) {
+      const src = $(f.selectFrom);
+      return `<label>${f.label}<select data-fk="${f.k}">${src ? src.innerHTML : ''}</select></label>`;
+    }
+    return `<label>${f.label}<input type="${f.type || 'text'}" data-fk="${f.k}" value="${_esc(val)}"></label>`;
+  }).join('');
+  // Set select values after the options are in the DOM.
+  cfg.fields.filter(f => f.selectFrom).forEach(f => {
+    const el = host.querySelector(`[data-fk="${f.k}"]`);
+    if (el) el.value = row[f.k] != null ? row[f.k] : '';
+  });
+  $('edit-modal').style.display = 'flex';
+}
+function closeEditModal() { const m = $('edit-modal'); if (m) m.style.display = 'none'; _editCtx = null; }
+
+$('edit-modal-cancel')?.addEventListener('click', closeEditModal);
+$('edit-modal-x')?.addEventListener('click', closeEditModal);
+$('edit-modal')?.addEventListener('click', (e) => { if (e.target.id === 'edit-modal') closeEditModal(); });
+$('edit-modal-save')?.addEventListener('click', async () => {
+  if (!_editCtx) return;
+  const cfg = _editCrud[_editCtx.sec];
+  const body = {};
+  $('edit-modal-fields').querySelectorAll('[data-fk]').forEach(el => {
+    body[el.dataset.fk] = el.type === 'number' ? (parseInt(el.value, 10) || 0) : el.value.trim();
+  });
+  const btn = $('edit-modal-save'); btn.disabled = true;
+  try {
+    const r = await fetch(`${cfg.url}/${_editCtx.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const js = await r.json();
+    if (r.ok && js.status === 'ok') { toast('✓ Updated', 'ok'); const reload = cfg.reload; closeEditModal(); reload(); }
+    else { toast('✗ ' + (js.message || 'Failed'), 'err'); }
+  } catch (e) { toast('✗ Network error', 'err'); }
+  finally { btn.disabled = false; }
+});
+// Delegated: any [data-edit] button opens the modal for its section + id.
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('[data-edit]');
+  if (b) openEditModal(b.dataset.editSec, b.dataset.edit);
+});
+
+// ── Phase 7: Monitoring Center (PDF p4) — Video Monitoring section ───────────
+const _MC_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function _mcSpread(s) {
+  return (s && s !== '—') ? String(s).split('').join(' ') : '— — — — — — —';
+}
+
+function _mcSetCam(imgId) {
+  const img = $(imgId); if (!img) return;
+  const offline = img.nextElementSibling;
+  img.onload  = () => { img.style.display = '';     if (offline) offline.style.display = 'none'; };
+  img.onerror = () => { img.style.display = 'none'; if (offline) offline.style.display = 'flex'; };
+  img.src = '/api/latest_frame.jpg?t=' + Date.now();
+}
+
+async function loadMonitoring() {
+  if (!$('mc-clock')) return;
+  // Clock + date (same layout as the PDF: time on one line, "yyyy-mm-dd" + day name).
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  $('mc-clock').textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  $('mc-date').innerHTML = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}<br>${_MC_DAYS[d.getDay()]}`;
+
+  // Area 1 — Entrance: latest scan from /api/state (dashboard_state).
+  try {
+    const s = await (await fetch('/api/state', { cache: 'no-store' })).json();
+    const plate = (s.latest_plate && !/wait/i.test(s.latest_plate)) ? s.latest_plate : '—';
+    $('mc-entry-plate').textContent = plate;
+    $('mc-entry-type').textContent  = s.vehicle_type || '—';
+    $('mc-entry-time').textContent  = s.latest_tag_time || '—';
+    $('mc-entry-mag').textContent   = _mcSpread(plate);
+  } catch (e) { /* leave dashes */ }
+
+  // Area 2 — Exit: most recent closed transaction.
+  try {
+    const txns = await (await fetch('/api/transactions?limit=1', { cache: 'no-store' })).json();
+    const t = Array.isArray(txns) && txns[0];
+    if (t) {
+      $('mc-exit-plate').textContent  = t.vehicle || '—';
+      $('mc-exit-type').textContent   = t.type    || '—';
+      $('mc-exit-dwell').textContent  = _dwell(t.entryAt, t.exitAt);
+      $('mc-exit-charge').textContent = '₹' + (t.total || 0);
+      $('mc-exit-mag').textContent    = _mcSpread(t.vehicle);
+    }
+  } catch (e) { /* leave dashes */ }
+
+  // Cache-bust the camera images so they refresh; onerror swaps in the offline
+  // overlay (cloud can't reach the LAN cameras; on-site streams via MJPEG).
+  _mcSetCam('mc-cam-entry');
+  _mcSetCam('mc-cam-exit');
+}
+
+// Wire to the open-on-click + 5s live-refresh system.
+Object.assign(_liveLoaders, { 'video': loadMonitoring });
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  if ((btn.dataset.view || btn.dataset.jump) === 'video') {
+    btn.addEventListener('click', () => setTimeout(loadMonitoring, 30));
+  }
+});
+// Tick the clock every second while the Monitoring Center is visible.
+setInterval(() => {
+  if (document.getElementById('video')?.classList.contains('active')) {
+    const d = new Date(); const p = (n) => String(n).padStart(2, '0');
+    if ($('mc-clock')) $('mc-clock').textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+}, 1000);
+
+// ── Phase 8: Home Page summary (PDF p5 layout) — gradient cards + charts ─────
+function _hsAnimateValue(elId, target) {
+  const el = $(elId); if (!el) return;
+  const start = parseInt(el.textContent.replace(/[^\d-]/g, ''), 10) || 0;
+  const dur = 600; const t0 = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    el.textContent = Math.round(start + (target - start) * t).toLocaleString();
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function _hsRenderBars(daily) {
+  const root = $('hs-bar-chart'); if (!root) return;
+  if (!daily || !daily.length) { root.innerHTML = '<div style="margin:auto; color:var(--muted);">No data</div>'; return; }
+  const maxV = Math.max(1, ...daily.flatMap(d => [d.entries, d.exits]));
+  root.innerHTML = daily.map(d => {
+    const ePct = (d.entries / maxV) * 100;
+    const xPct = (d.exits / maxV) * 100;
+    return `<div class="home-bar-group">
+      <div class="home-bar" style="height:${ePct}%;">${d.entries ? `<span class="home-bar-value">${d.entries}</span>` : ''}</div>
+      <div class="home-bar home-bar-exit" style="height:${xPct}%;">${d.exits ? `<span class="home-bar-value">${d.exits}</span>` : ''}</div>
+      <span class="home-bar-label">${d.date.slice(5)}</span>
+    </div>`;
+  }).join('');
+}
+
+function _hsRenderDonut(temp, member) {
+  const svg = $('hs-donut'); if (!svg) return;
+  const total = temp + member;
+  const R = 80, CX = 100, CY = 100, SW = 28;
+  const circ = 2 * Math.PI * R;
+  if (!total) {
+    svg.innerHTML = `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#e5e9ef" stroke-width="${SW}"/>`;
+  } else {
+    const tempFrac = temp / total;
+    const tempLen  = circ * tempFrac;
+    const memLen   = circ * (1 - tempFrac);
+    svg.innerHTML = `
+      <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#2cd47f" stroke-width="${SW}"
+        stroke-dasharray="${tempLen} ${circ - tempLen}" stroke-dashoffset="0"/>
+      <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#f59e0b" stroke-width="${SW}"
+        stroke-dasharray="${memLen} ${circ - memLen}" stroke-dashoffset="-${tempLen}"/>
+    `;
+  }
+  if ($('hs-income-total')) $('hs-income-total').textContent = '₹' + total.toLocaleString();
+  if ($('hs-income-temp'))  $('hs-income-temp').textContent  = '₹' + temp.toLocaleString();
+  if ($('hs-income-mem'))   $('hs-income-mem').textContent   = '₹' + member.toLocaleString();
+}
+
+async function loadHomeSummary() {
+  if (!$('hs-parking-total')) return;
+  try {
+    const s = await (await fetch('/api/home_summary', { cache: 'no-store' })).json();
+    _hsAnimateValue('hs-parking-total', s.parking_total || 0);
+    _hsAnimateValue('hs-member-total',  s.member_total  || 0);
+    _hsAnimateValue('hs-device-total',  s.device_total  || 0);
+    _hsAnimateValue('hs-order-total',   s.order_total   || 0);
+    _hsRenderBars(s.daily || []);
+    _hsRenderDonut(s.income?.temporary || 0, s.income?.member || 0);
+  } catch (e) { /* ignore */ }
+}
+
+// Register with the open-on-click + 5s live-refresh system.
+Object.assign(_liveLoaders, { 'dashboard': loadHomeSummary });
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  if ((btn.dataset.view || btn.dataset.jump) === 'dashboard') {
+    btn.addEventListener('click', () => setTimeout(loadHomeSummary, 30));
+  }
+});
+// Load once on page load so the dashboard (default view) populates immediately.
+loadHomeSummary();
+
+// ── Phase 9: QR pass modal (Visitor + Member passes) ─────────────────────────
+function openQrModal(kind, id, title, meta) {
+  if (!$('qr-modal')) return;
+  const url = kind === 'visitor' ? `/api/visitors/${id}/qr` : `/api/employees/${id}/qr`;
+  $('qr-modal-title').textContent = title || 'Pass QR Code';
+  $('qr-modal-img').src = url + '?t=' + Date.now();
+  $('qr-modal-meta').innerHTML = meta || '';
+  $('qr-modal').style.display = 'flex';
+}
+function closeQrModal() { const m = $('qr-modal'); if (m) m.style.display = 'none'; }
+$('qr-modal-x')?.addEventListener('click', closeQrModal);
+$('qr-modal-close')?.addEventListener('click', closeQrModal);
+$('qr-modal')?.addEventListener('click', (e) => { if (e.target.id === 'qr-modal') closeQrModal(); });
+
+// Print: open a tiny window with just the QR + meta and trigger window.print().
+$('qr-modal-print')?.addEventListener('click', () => {
+  const img = $('qr-modal-img').src;
+  const title = $('qr-modal-title').textContent;
+  const meta = $('qr-modal-meta').innerHTML;
+  const w = window.open('', '_blank', 'width=420,height=620');
+  if (!w) { toast('✗ Pop-up blocked — allow pop-ups to print', 'err'); return; }
+  w.document.write(`<!doctype html><html><head><title>${title}</title>
+    <style>body{font-family:'Inter',sans-serif;text-align:center;padding:24px;color:#1f2a3d;}
+    h2{margin:0 0 16px;font-size:18px;}
+    img{width:280px;height:280px;background:#fff;border:1px solid #e5e9ef;border-radius:8px;padding:8px;}
+    .meta{margin-top:14px;font-size:13px;line-height:1.6;}
+    @media print{button{display:none;}}</style></head>
+    <body onload="setTimeout(()=>window.print(),250);">
+    <h2>${title}</h2><img src="${img}"><div class="meta">${meta}</div></body></html>`);
+  w.document.close();
+});
+
+// Delegated [data-qr] click: data-qr="visitor:42:Display Title:meta html" or
+// data-qr="member:7:Member Name:meta html". Colons in title/meta are escaped
+// by the rowFn (the meta uses _esc + we encode the title plain).
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('[data-qr]');
+  if (!b) return;
+  // data-qr-kind, data-qr-id, data-qr-title, data-qr-meta (separate attrs avoid escaping pain)
+  openQrModal(b.dataset.qrKind, b.dataset.qrId, b.dataset.qrTitle, b.dataset.qrMeta);
+});
+
+// ── WhatsApp share for Visitor + Member passes ───────────────────────────────
+// Click WhatsApp button -> fetch the pass URL from the server (same URL the QR
+// encodes) and open wa.me with a pre-filled message. If the row had a contact
+// phone we prefill the recipient; otherwise the operator picks from contacts.
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('[data-wa]');
+  if (!b) return;
+  const kind  = b.dataset.waKind;
+  const id    = b.dataset.waId;
+  const name  = b.dataset.waName || '';
+  const phone = (b.dataset.waPhone || '').replace(/[^0-9]/g, '');
+  fetch(`/api/${kind === 'v' ? 'visitors' : 'employees'}/${id}/pass_url`, { cache: 'no-store' })
+    .then(r => r.json())
+    .then(js => {
+      const url = js.url;
+      if (!url) { toast('✗ Could not generate pass URL', 'err'); return; }
+      const text = kind === 'v'
+        ? `Hi ${name},\n\nYour VayAccess visitor pass:\n${url}\n\nOpen this link on your phone to view your QR code. Show it at the gate.`
+        : `Hi ${name},\n\nYour VayAccess member pass:\n${url}\n\nOpen this link on your phone any time to verify your membership.`;
+      // Default to India country code if a 10-digit local number was stored.
+      const num = phone ? (phone.length === 10 ? '91' + phone : phone) : '';
+      window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    })
+    .catch(() => toast('✗ Network error', 'err'));
+});
+
+// ── Phase 11: LCD Display CRUD + Batch Delete on CRUD tables ─────────────────
+async function loadLCD() {
+  const tb = $('lcd-body'); if (!tb) return;
+  try {
+    const raw = await (await fetch('/api/lcd', { cache: 'no-store' })).json();
+    const rows = _filterRows(Array.isArray(raw) ? raw : [], $('lcd-search')?.value, ['name', 'location', 'message']);
+    if ($('lcd-meta')) $('lcd-meta').textContent = `${rows.length} screen(s)`;
+    paginate('lcd', rows, 'lcd-body', s => `<tr>
+      <td><b>${_esc(s.name)}</b></td>
+      <td>${_esc(s.location) || '—'}</td>
+      <td>${_esc(s.message) || '—'}</td>
+      <td><span class="scan-status-badge ${s.is_active ? 'granted' : 'denied'}">${_esc(s.status)}</span></td>
+      <td>${_esc(s.created_at)}</td>
+      <td>
+        <button class="ghost-button" data-edit="${s.id}" data-edit-sec="lcd" style="padding:4px 10px; font-size:0.8em; margin-right:4px;">Edit</button>
+        <button class="ghost-button lcd-del" data-id="${s.id}" style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button>
+      </td>
+    </tr>`, 6, (tb) => {
+      tb.querySelectorAll('.lcd-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this LCD screen?')) return;
+        await fetch(`/api/lcd/${b.dataset.id}`, { method: 'DELETE' });
+        loadLCD();
+      }));
+    });
+  } catch (e) { tb.innerHTML = _emptyRow(6, 'Failed to load.'); }
+}
+
+_wireAddForm('lcd-form', 'lcd-submit', () => ({
+  name:      $('lcd-name').value.trim(),
+  location:  $('lcd-location').value.trim(),
+  message:   $('lcd-message').value.trim(),
+  is_active: $('lcd-active').value === '1',
+}), '/api/lcd', '✓ LCD added', loadLCD);
+
+_editCrud.lcd = {
+  url: '/api/lcd', title: 'Edit LCD Display', reload: () => loadLCD(),
+  fields: [{ k: 'name', label: 'Screen Name' }, { k: 'location', label: 'Location' },
+           { k: 'message', label: 'Message' }],
+};
+_exportCfg.lcd = {
+  loader: 'lcd', name: 'lcd-screens',
+  cols: [['name', 'Screen Name'], ['location', 'Location'], ['message', 'Message'],
+         ['status', 'Status'], ['created_at', 'Created']],
+};
+_liveLoaders.lcd = loadLCD;
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  if ((btn.dataset.view || btn.dataset.jump) === 'lcd') {
+    btn.addEventListener('click', () => setTimeout(loadLCD, 30));
+  }
+});
+$('lcd-search')?.addEventListener('input', loadLCD);
+// Re-inject table-actions so the new lcd-table picks up Refresh + 📥 CSV.
+_injectTableActions();
+
+// ── Batch Delete on CRUD tables (deletes all currently-filtered rows) ────────
+// PDF p20 etc. show a "Batch delete" button alongside Add. This implementation
+// deletes all rows currently in the paginator's row set (i.e. everything
+// matching the active filter). Confirms with a count first.
+const _batchable = {
+  acc:    '/api/accounts',
+  rl:     '/api/roles',
+  dc:     '/api/dictionary',
+  yard:   '/api/yards',
+  region: '/api/regions',
+  vis:    '/api/visitors',
+  lcd:    '/api/lcd',
+};
+
+async function batchDelete(key) {
+  const url = _batchable[key]; if (!url) return;
+  const rows = _pager[key]?.rows || [];
+  if (!rows.length) { toast('Nothing to delete', 'err'); return; }
+  if (!confirm(`Delete all ${rows.length} currently-filtered row(s)? This cannot be undone.`)) return;
+  let ok = 0;
+  for (const r of rows) {
+    try {
+      const res = await fetch(`${url}/${r.id}`, { method: 'DELETE' });
+      if (res.ok) ok++;
+    } catch (e) { /* skip */ }
+  }
+  toast(`✓ Deleted ${ok} of ${rows.length} row(s)`, ok ? 'ok' : 'err');
+  _liveLoaders[_exportCfg[key]?.loader]?.();
+}
+
+// Append a 🗑 Batch button to each batchable table's existing action group.
+function _injectBatchButtons() {
+  Object.keys(_batchable).forEach(key => {
+    const tbl = document.getElementById(`${key}-table`); if (!tbl) return;
+    const actions = tbl.closest('.panel')?.querySelector('.table-actions');
+    if (!actions || actions.querySelector('[data-batch-key]')) return;
+    const btn = document.createElement('button');
+    btn.className = 'ghost-button';
+    btn.dataset.batchKey = key;
+    btn.title = 'Delete all currently-filtered rows';
+    btn.style.color = '#b74a42';
+    btn.textContent = '🗑 Batch';
+    actions.appendChild(btn);
+  });
+}
+_injectBatchButtons();
+
+document.addEventListener('click', (e) => {
+  const bd = e.target.closest && e.target.closest('[data-batch-key]');
+  if (bd) batchDelete(bd.dataset.batchKey);
+});
+
+// ── Phase 12: Menu Management + Role Permission (real CRUD) ──────────────────
+// Copy the Menu Management option list into the Role-Permission Section dropdown
+// (avoids duplicating 25 options in the HTML).
+(function _shareMenuOptions() {
+  const src = document.querySelector('#mn-menu[data-menu-options]');
+  const dst = document.querySelector('#rp-section[data-menu-options]');
+  if (src && dst) dst.innerHTML = src.innerHTML.replace('— Select menu —', '— Select section —');
+})();
+
+// Populate Role dropdowns from /api/roles. Refresh whenever Menu/RolePerm loads.
+async function _populateRoleDropdowns() {
+  try {
+    const roles = await (await fetch('/api/roles', { cache: 'no-store' })).json();
+    const opts  = '<option value="">— Select role —</option>' +
+      (Array.isArray(roles) ? roles : []).map(r => `<option value="${_esc(r.name)}">${_esc(r.name)}</option>`).join('');
+    ['mn-role', 'rp-role'].forEach(id => {
+      const el = $(id); if (!el) return;
+      const cur = el.value;
+      el.innerHTML = opts;
+      el.value = cur;
+    });
+  } catch (e) { /* ignore */ }
+}
+
+async function loadMenuPerms() {
+  const tb = $('mn-body'); if (!tb) return;
+  _populateRoleDropdowns();
+  try {
+    const raw = await (await fetch('/api/menu_permissions', { cache: 'no-store' })).json();
+    const rows = _filterRows(Array.isArray(raw) ? raw : [], $('mn-search')?.value, ['role_name', 'menu_key']);
+    if ($('mn-meta')) $('mn-meta').textContent = `${rows.length} rule(s)`;
+    paginate('mn', rows, 'mn-body', m => `<tr>
+      <td><b>${_esc(m.role_name)}</b></td>
+      <td style="font-family:monospace; font-size:0.88em;">${_esc(m.menu_key)}</td>
+      <td><span class="scan-status-badge ${m.allowed ? 'granted' : 'denied'}">${_esc(m.status)}</span></td>
+      <td>${_esc(m.created_at)}</td>
+      <td><button class="ghost-button mn-del" data-id="${m.id}" style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button></td>
+    </tr>`, 5, (tb) => {
+      tb.querySelectorAll('.mn-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this menu permission?')) return;
+        await fetch(`/api/menu_permissions/${b.dataset.id}`, { method: 'DELETE' });
+        loadMenuPerms();
+      }));
+    });
+  } catch (e) { tb.innerHTML = _emptyRow(5, 'Failed to load.'); }
+}
+
+async function loadRolePerms() {
+  const tb = $('rp-body'); if (!tb) return;
+  _populateRoleDropdowns();
+  try {
+    const raw = await (await fetch('/api/role_permissions', { cache: 'no-store' })).json();
+    const rows = _filterRows(Array.isArray(raw) ? raw : [], $('rp-search')?.value, ['role_name', 'section_key', 'action']);
+    if ($('rp-meta')) $('rp-meta').textContent = `${rows.length} grant(s)`;
+    paginate('rp', rows, 'rp-body', r => `<tr>
+      <td><b>${_esc(r.role_name)}</b></td>
+      <td style="font-family:monospace; font-size:0.88em;">${_esc(r.section_key)}</td>
+      <td><span class="scan-status-badge scanning">${_esc(r.action)}</span></td>
+      <td><span class="scan-status-badge ${r.allowed ? 'granted' : 'denied'}">${_esc(r.status)}</span></td>
+      <td>${_esc(r.created_at)}</td>
+      <td><button class="ghost-button rp-del" data-id="${r.id}" style="padding:4px 10px; font-size:0.8em; color:#b74a42;">Delete</button></td>
+    </tr>`, 6, (tb) => {
+      tb.querySelectorAll('.rp-del').forEach(b => b.addEventListener('click', async () => {
+        if (!confirm('Delete this role permission?')) return;
+        await fetch(`/api/role_permissions/${b.dataset.id}`, { method: 'DELETE' });
+        loadRolePerms();
+      }));
+    });
+  } catch (e) { tb.innerHTML = _emptyRow(6, 'Failed to load.'); }
+}
+
+_wireAddForm('mn-form', 'mn-submit', () => ({
+  role_name: $('mn-role').value, menu_key: $('mn-menu').value,
+  allowed: $('mn-allowed').value === '1',
+}), '/api/menu_permissions', '✓ Menu permission saved', loadMenuPerms);
+
+_wireAddForm('rp-form', 'rp-submit', () => ({
+  role_name: $('rp-role').value, section_key: $('rp-section').value,
+  action: $('rp-action').value, allowed: $('rp-allowed').value === '1',
+}), '/api/role_permissions', '✓ Role permission saved', loadRolePerms);
+
+_exportCfg.mn = { loader: 'menu-mgmt', name: 'menu-permissions',
+  cols: [['role_name', 'Role'], ['menu_key', 'Menu'], ['status', 'Status'], ['created_at', 'Created']] };
+_exportCfg.rp = { loader: 'role-perm', name: 'role-permissions',
+  cols: [['role_name', 'Role'], ['section_key', 'Section'], ['action', 'Action'], ['status', 'Status'], ['created_at', 'Created']] };
+Object.assign(_liveLoaders, { 'menu-mgmt': loadMenuPerms, 'role-perm': loadRolePerms });
+_batchable.mn = '/api/menu_permissions';
+_batchable.rp = '/api/role_permissions';
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  const v = btn.dataset.view || btn.dataset.jump;
+  if (v === 'menu-mgmt') btn.addEventListener('click', () => setTimeout(loadMenuPerms, 30));
+  if (v === 'role-perm') btn.addEventListener('click', () => setTimeout(loadRolePerms, 30));
+});
+$('mn-search')?.addEventListener('input', loadMenuPerms);
+$('rp-search')?.addEventListener('input', loadRolePerms);
+// Pick up the new tables in Refresh/Export/Batch button injections.
+_injectTableActions();
+_injectBatchButtons();
+
+// ── Phase 13: Monthly Report (server-rendered PDF download) ──────────────────
+$('rpt-monthly-pdf')?.addEventListener('click', () => {
+  const m = $('rpt-month')?.value || new Date().toISOString().slice(0, 7);
+  const a = document.createElement('a');
+  a.href = `/api/reports/monthly_pdf?month=${encodeURIComponent(m)}`;
+  a.download = `VayAccess-Report-${m}.pdf`;
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('📄 Generating monthly report…', 'ok');
+});
+
+// ── Phase 14: Audit Log viewer + Bulk CSV import (visitors + members) ───────
+async function loadAuditLog() {
+  const tb = $('al-body'); if (!tb) return;
+  try {
+    const raw = await (await fetch('/api/audit', { cache: 'no-store' })).json();
+    const all = Array.isArray(raw) ? raw : [];
+    const q = ($('al-search')?.value || '').trim().toUpperCase();
+    const rows = all.filter(e => !q || (e.area || '').toUpperCase().includes(q) || (e.message || '').toUpperCase().includes(q));
+    if ($('al-meta')) $('al-meta').textContent = `${rows.length} of ${all.length} event(s)`;
+    paginate('al', rows.map(r => ({
+      ...r,
+      when_str: r.at ? new Date(r.at).toLocaleString() : '—',
+    })), 'al-body', a => `<tr>
+      <td>${_esc(a.when_str)}</td>
+      <td><span class="scan-status-badge ${/admin|system/i.test(a.area || '') ? 'scanning' : 'granted'}">${_esc(a.area) || '—'}</span></td>
+      <td>${_esc(a.message)}</td>
+    </tr>`, 3);
+  } catch (e) { tb.innerHTML = _emptyRow(3, 'Failed to load.'); }
+}
+
+_exportCfg.al = { loader: 'audit-log', name: 'audit-log',
+  cols: [['when_str', 'When'], ['area', 'Area'], ['message', 'Message']] };
+_liveLoaders['audit-log'] = loadAuditLog;
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  if ((btn.dataset.view || btn.dataset.jump) === 'audit-log') {
+    btn.addEventListener('click', () => setTimeout(loadAuditLog, 30));
+  }
+});
+$('al-search')?.addEventListener('input', loadAuditLog);
+_injectTableActions();
+
+// ── UHF-triggered ANPR captures (on-site only) ──────────────────────────────
+// Each row shows two thumbnails the on-site PC saved: the full vehicle photo
+// and the plate crop. Images are served by /image/<filename> from the
+// detections/ folder. Cloud deploys will show empty rows since CLOUD_MODE
+// skips the capture pipeline.
+async function loadUhfCaptures() {
+  const tb = $('uc-body'); if (!tb) return;
+  try {
+    const raw = await (await fetch('/api/uhf_captures', { cache: 'no-store' })).json();
+    const q = ($('uc-search')?.value || '').trim().toUpperCase();
+    const rows = (Array.isArray(raw) ? raw : []).filter(e => !q ||
+      (e.rfid_tag || '').toUpperCase().includes(q) ||
+      (e.plate    || '').toUpperCase().includes(q) ||
+      (e.owner_name || '').toUpperCase().includes(q));
+    if ($('uc-meta')) $('uc-meta').textContent =
+      `${rows.length} capture(s) — newest first`;
+    const thumb = (filename, label) => filename
+      ? `<a href="/image/${encodeURIComponent(filename)}" target="_blank" rel="noopener" title="${label} — click to view full">
+           <img src="/image/${encodeURIComponent(filename)}" alt="${label}"
+                style="width:96px; height:60px; object-fit:cover; border-radius:6px; border:1px solid var(--line); display:block;">
+         </a>`
+      : '<span style="opacity:0.45;">—</span>';
+    const badge = (st) => /grant/i.test(st || '') ? `<span class="scan-status-badge granted">${_esc(st)}</span>`
+      : /den/i.test(st || '') ? `<span class="scan-status-badge denied">${_esc(st)}</span>`
+      : `<span class="scan-status-badge scanning">${_esc(st) || '—'}</span>`;
+    paginate('uc', rows, 'uc-body', e => `<tr>
+      <td>${_esc(e.timestamp)}</td>
+      <td>${thumb(e.full_image, 'Vehicle')}</td>
+      <td>${thumb(e.plate_image, 'Plate')}</td>
+      <td style="font-family:monospace; font-size:0.88em;">${_esc(e.rfid_tag)}</td>
+      <td style="font-family:monospace;">${_esc(e.plate) || '—'}</td>
+      <td>${_esc(e.owner_name) || '—'}</td>
+      <td>${badge(e.status)}</td>
+    </tr>`, 7);
+  } catch (e) { tb.innerHTML = _emptyRow(7, 'Failed to load.'); }
+}
+
+_exportCfg.uc = { loader: 'uhf-captures', name: 'uhf-captures',
+  cols: [['timestamp','When'], ['rfid_tag','Tag (EPC)'], ['plate','Plate'],
+         ['owner_name','Owner'], ['vehicle_type','Vehicle Type'], ['status','Status'],
+         ['full_image','Vehicle Photo'], ['plate_image','Plate Photo']] };
+_liveLoaders['uhf-captures'] = loadUhfCaptures;
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  if ((btn.dataset.view || btn.dataset.jump) === 'uhf-captures') {
+    btn.addEventListener('click', () => setTimeout(loadUhfCaptures, 30));
+  }
+});
+$('uc-search')?.addEventListener('input', loadUhfCaptures);
+
+// ── Zone-wise Gate Entry — live per-zone occupancy + recent entries ────────
+async function loadZoneLive() {
+  const grid = $('zl-grid'); const meta = $('zl-meta');
+  if (!grid) return;
+  try {
+    const r = await fetch('/api/zones', { cache: 'no-store' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    let zones = await r.json();
+    const q = ($('zl-search')?.value || '').trim().toLowerCase();
+    if (q) {
+      zones = zones.filter(z =>
+        z.zone.toLowerCase().includes(q) ||
+        (z.region || '').toLowerCase().includes(q) ||
+        (z.recent || []).some(e => (e.vehicle || '').toLowerCase().includes(q)));
+    }
+    if (meta) {
+      const totalOcc = zones.reduce((s, z) => s + (z.occupied || 0), 0);
+      const totalCap = zones.reduce((s, z) => s + (z.capacity || 0), 0);
+      const totalEnt = zones.reduce((s, z) => s + (z.entries_last_hour || 0), 0);
+      meta.textContent =
+        `${zones.length} zones · ${totalOcc}/${totalCap || '∞'} parked · ${totalEnt} entries in the last hour`;
+    }
+    if (!zones.length) {
+      grid.innerHTML = `<div style="padding:40px; text-align:center; opacity:0.6;">No zones match.</div>`;
+      return;
+    }
+    grid.innerHTML = zones.map(z => {
+      const cap = z.capacity || 0;
+      const full = cap > 0 && z.available === 0;
+      const tight = !full && cap > 0 && z.available <= 5;
+      const pillClass = full ? 'full' : (tight ? 'warn' : 'ok');
+      const pillText  = cap > 0 ? `${z.available} / ${cap}` : `${z.occupied} parked`;
+      const cardCls   = full ? 'zone-card is-full' : (tight ? 'zone-card is-tight' : 'zone-card');
+      const recent = (z.recent || []).slice(0, 8);
+      return `
+        <div class="${cardCls}">
+          <div class="zone-card-head">
+            <div>
+              <h3>${z.zone}</h3>
+              ${z.region ? `<div class="region">${z.region}</div>` : ''}
+            </div>
+            <span class="zone-pill ${pillClass}">${pillText}</span>
+          </div>
+          <div class="zone-stats">
+            <div class="zone-stat"><div class="lbl">Occupied</div><div class="val">${z.occupied}</div></div>
+            <div class="zone-stat"><div class="lbl">Entries/hr</div><div class="val">${z.entries_last_hour || 0}</div></div>
+            <div class="zone-stat"><div class="lbl">Exits/hr</div><div class="val">${z.exits_last_hour || 0}</div></div>
+          </div>
+          <div class="zone-recent">
+            ${recent.length === 0
+              ? '<div style="opacity:0.6; padding:6px 0;">No gate entries in the last hour.</div>'
+              : recent.map(e => `
+                  <div class="zone-recent-row">
+                    <div>
+                      <span class="plate">${e.vehicle || '—'}</span>
+                      <span style="opacity:0.6; margin-left:6px;">${e.vehicle_type || ''}</span>
+                    </div>
+                    <div style="text-align:right;">
+                      <span class="scan-status-badge ${e.still_parked ? 'granted' : 'scanning'}">${e.still_parked ? 'IN' : 'OUT'}</span>
+                      <div class="time">${(e.entry_at || '').slice(11, 19)}</div>
+                    </div>
+                  </div>`).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    grid.innerHTML = `<div style="padding:40px; text-align:center; color:#b74a42;">Failed to load: ${err.message}</div>`;
+  }
+}
+_liveLoaders['zone-live'] = loadZoneLive;
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  if ((btn.dataset.view || btn.dataset.jump) === 'zone-live') {
+    btn.addEventListener('click', () => setTimeout(loadZoneLive, 30));
+  }
+});
+$('zl-search')?.addEventListener('input', loadZoneLive);
+$('zl-refresh')?.addEventListener('click', loadZoneLive);
+
+// ── Driver Users (VayAccess mobile) — admin-side live management ───────────
+async function loadDriverUsers() {
+  const tb = $('du-body'); const meta = $('du-meta');
+  if (!tb) return;
+  try {
+    const q = ($('du-search')?.value || '').trim();
+    const r = await fetch('/api/admin/drivers' + (q ? `?q=${encodeURIComponent(q)}` : ''),
+                         { cache: 'no-store' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const rows = await r.json();
+    if (meta) {
+      const live = rows.filter(u => u.active).length;
+      const unread = rows.reduce((s, u) => s + (u.unread || 0), 0);
+      meta.textContent = `${rows.length} users · ${live} currently parked · ${unread} unread alerts across all`;
+    }
+    if (!rows.length) {
+      tb.innerHTML = `<tr><td colspan="10" style="text-align:center; opacity:0.6; padding:20px;">No mobile users registered yet.</td></tr>`;
+      return;
+    }
+    tb.innerHTML = rows.map(u => `
+      <tr data-driver="${u.id}">
+        <td><b>${u.name || '—'}</b></td>
+        <td style="font-size:0.85em;">${u.email || '—'}</td>
+        <td style="font-family:monospace; font-size:0.85em;">${u.phone || '—'}</td>
+        <td style="font-family:monospace;">${u.primary_plate || '—'}</td>
+        <td>${u.primary_type || 'Car'}</td>
+        <td>${u.active
+          ? '<span class="scan-status-badge granted">PARKED</span>'
+          : '<span style="opacity:0.5;">—</span>'}</td>
+        <td>${u.unread > 0
+          ? `<span class="scan-status-badge denied">${u.unread}</span>`
+          : '<span style="opacity:0.5;">0</span>'}</td>
+        <td>${u.reservation_count || 0}</td>
+        <td style="font-size:0.82em; opacity:0.85;">${u.last_seen || '—'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn-sm" data-du-notify="${u.id}" title="Send a push alert to this user">Send Alert</button>
+          <button class="btn-sm" data-du-edit="${u.id}" title="Edit profile">Edit</button>
+          <button class="btn-sm" data-du-logout="${u.id}" title="Revoke every active mobile session">Force Logout</button>
+          <button class="btn-sm danger" data-du-delete="${u.id}" title="Delete account + all reservations">Delete</button>
+        </td>
+      </tr>`).join('');
+  } catch (err) {
+    tb.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#b74a42; padding:20px;">Failed to load: ${err.message}</td></tr>`;
+  }
+}
+_liveLoaders['driver-users'] = loadDriverUsers;
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  if ((btn.dataset.view || btn.dataset.jump) === 'driver-users') {
+    btn.addEventListener('click', () => setTimeout(loadDriverUsers, 30));
+  }
+});
+$('du-search')?.addEventListener('input', loadDriverUsers);
+$('du-refresh')?.addEventListener('click', loadDriverUsers);
+
+// Delegated action handlers for the Driver Users row buttons.
+document.addEventListener('click', async (ev) => {
+  const t = ev.target;
+  if (!t || !t.dataset) return;
+  const id = t.dataset.duNotify || t.dataset.duLogout || t.dataset.duDelete || t.dataset.duEdit;
+  if (!id) return;
+  try {
+    if (t.dataset.duNotify) {
+      const title = prompt('Alert title:'); if (!title) return;
+      const body  = prompt('Alert message (optional):') || '';
+      const r = await fetch(`/api/admin/drivers/${id}/notify`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, kind: 'system' }),
+      });
+      if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+      alert('Alert sent — it will surface on the user\'s phone within ~5 seconds.');
+      loadDriverUsers();
+    } else if (t.dataset.duLogout) {
+      if (!confirm('Revoke every active mobile session for this user?')) return;
+      const r = await fetch(`/api/admin/drivers/${id}/logout_all`, { method: 'POST' });
+      if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+      const j = await r.json();
+      alert(`Revoked ${j.revoked} session(s).`);
+      loadDriverUsers();
+    } else if (t.dataset.duDelete) {
+      if (!confirm('Delete this driver account and ALL their reservations? This cannot be undone.')) return;
+      const r = await fetch(`/api/admin/drivers/${id}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+      loadDriverUsers();
+    } else if (t.dataset.duEdit) {
+      const row = t.closest('tr');
+      const cur = {
+        name: row.children[0].innerText.trim(),
+        phone: row.children[2].innerText.trim().replace(/^—$/, ''),
+        primary_plate: row.children[3].innerText.trim().replace(/^—$/, ''),
+        primary_type: row.children[4].innerText.trim(),
+      };
+      const name  = prompt('Name:',  cur.name)  ?? cur.name;
+      const phone = prompt('Phone:', cur.phone) ?? cur.phone;
+      const plate = prompt('Primary Plate:', cur.primary_plate) ?? cur.primary_plate;
+      const type  = prompt('Vehicle Type (Car / Bike):', cur.primary_type || 'Car') ?? cur.primary_type;
+      const pwd   = prompt('Reset password (leave blank to keep current):') || '';
+      const r = await fetch(`/api/admin/drivers/${id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, primary_plate: plate, primary_type: type, password: pwd }),
+      });
+      if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
+      loadDriverUsers();
+    }
+  } catch (e) {
+    alert('Failed: ' + e.message);
+  }
+});
+
+_injectTableActions();
+
+// ── Bulk CSV import (Visitors + Members) ────────────────────────────────────
+// Injects a "📤 Import" button next to Refresh/CSV/Batch on importable tables.
+// Click opens a file picker, parses CSV client-side (tolerant of headers in
+// any order), POSTs the rows to the matching bulk endpoint.
+const _bulkImportable = {
+  vis: { url: '/api/bulk_import/visitors', loader: 'visitors',
+         template: 'name,number_plate,contact,purpose,host_employee\n"John Doe","TS09AB1234","9876543210","Meeting","Satya"' },
+  mm:  { url: '/api/bulk_import/members',  loader: 'membership',
+         template: 'owner_name,number_plate,rfid_tag,department,contact_number,vehicle_type,activation_months\n"John Doe","TS09AB1234","E2806894...","Engineering","9876543210","Car",12' },
+};
+
+function _parseCSV(text) {
+  // Tiny CSV parser (handles quoted fields + commas inside quotes).
+  const lines = text.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim());
+  if (!lines.length) return [];
+  const parseLine = (l) => {
+    const out = []; let cur = '', inQ = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (inQ) {
+        if (c === '"' && l[i + 1] === '"') { cur += '"'; i++; }
+        else if (c === '"') { inQ = false; }
+        else cur += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ',') { out.push(cur); cur = ''; }
+        else cur += c;
+      }
+    }
+    out.push(cur);
+    return out;
+  };
+  const header = parseLine(lines[0]).map(h => h.trim());
+  return lines.slice(1).map(l => {
+    const cells = parseLine(l);
+    const row = {};
+    header.forEach((h, i) => { row[h] = (cells[i] || '').trim(); });
+    return row;
+  });
+}
+
+// Per-import-type schema. Each column lists its accepted header aliases
+// (case-insensitive), whether it's required, and a validator key.
+const _bulkImportSchemas = {
+  vis: {
+    label: 'visitor',
+    columns: {
+      name:          { aliases: ['name'],                          required: true,  type: 'text' },
+      number_plate:  { aliases: ['number_plate', 'plate'],         required: false, type: 'plate' },
+      contact:       { aliases: ['contact'],                       required: false, type: 'phone' },
+      purpose:       { aliases: ['purpose'],                       required: false, type: 'text' },
+      host_employee: { aliases: ['host_employee', 'host'],         required: false, type: 'text' },
+      valid_from:    { aliases: ['valid_from'],                    required: false, type: 'datetime' },
+      valid_to:      { aliases: ['valid_to'],                      required: false, type: 'datetime' },
+    },
+  },
+  mm: {
+    label: 'member',
+    columns: {
+      owner_name:        { aliases: ['owner_name', 'name'],            required: true,  type: 'text' },
+      number_plate:      { aliases: ['number_plate', 'plate'],         required: true,  type: 'plate' },
+      rfid_tag:          { aliases: ['rfid_tag', 'tag'],               required: false, type: 'text' },
+      department:        { aliases: ['department'],                    required: false, type: 'text' },
+      contact_number:    { aliases: ['contact_number', 'contact'],     required: false, type: 'phone' },
+      vehicle_type:      { aliases: ['vehicle_type', 'type'],          required: false, type: 'vehicle' },
+      activation_months: { aliases: ['activation_months', 'months'],   required: false, type: 'months' },
+      payment_amount:    { aliases: ['payment_amount', 'amount'],      required: false, type: 'amount' },
+    },
+  },
+};
+
+// Validators return null on success or a short error message on failure.
+const _bulkValidators = {
+  text:     (v) => v.length > 0 ? null : 'must not be empty',
+  plate:    (v) => /^[A-Z0-9\-\s]{4,15}$/i.test(v) ? null : 'must look like a plate (4–15 letters/digits, e.g. TS09AB1234)',
+  phone:    (v) => /^[+0-9\s\-]{7,20}$/.test(v) ? null : 'must be 7–20 digits (with optional + - space)',
+  datetime: (v) => /^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/.test(v) ? null : 'must be YYYY-MM-DD or YYYY-MM-DD HH:MM',
+  vehicle:  (v) => /^(Car|Bike)$/i.test(v) ? null : 'must be "Car" or "Bike"',
+  months:   (v) => { const n = parseInt(v, 10); return (!isNaN(n) && n >= 1 && n <= 60) ? null : 'must be an integer between 1 and 60'; },
+  amount:   (v) => { const n = parseInt(v, 10); return (!isNaN(n) && n >= 0) ? null : 'must be a non-negative integer (in INR)'; },
+};
+
+function _validateBulkRows(key, headerRow, rows) {
+  const schema = _bulkImportSchemas[key]; if (!schema) return { errors: [], warnings: [] };
+  const errors = [], warnings = [];
+  const headerLC = headerRow.map(h => (h || '').trim().toLowerCase());
+
+  // Map canonical field names -> actual header strings present in the CSV.
+  const fieldToHeader = {};
+  const allAliasesLC = new Set();
+  for (const [field, cfg] of Object.entries(schema.columns)) {
+    for (const alias of cfg.aliases) allAliasesLC.add(alias.toLowerCase());
+    const idx = cfg.aliases
+      .map(a => headerLC.indexOf(a.toLowerCase()))
+      .find(i => i >= 0);
+    if (idx !== undefined && idx >= 0) {
+      fieldToHeader[field] = headerRow[idx];
+    }
+  }
+
+  // 1. Required columns must be in the header.
+  for (const [field, cfg] of Object.entries(schema.columns)) {
+    if (cfg.required && !fieldToHeader[field]) {
+      errors.push({ row: 0, column: field, message: `required column "${field}" not in CSV header` });
+    }
+  }
+
+  // 2. Unknown columns -> warning (we'll ignore them, but tell the user).
+  headerRow.forEach((h) => {
+    const lc = (h || '').trim().toLowerCase();
+    if (lc && !allAliasesLC.has(lc)) {
+      warnings.push({ row: 0, column: h, message: `unknown column "${h}" — will be ignored` });
+    }
+  });
+
+  // 3. Per-row data-type validation.
+  rows.forEach((row, idx) => {
+    const rowNum = idx + 2;   // +1 for 0-index, +1 for the header line
+    for (const [field, cfg] of Object.entries(schema.columns)) {
+      const h = fieldToHeader[field];
+      const val = h ? String(row[h] ?? '').trim() : '';
+      if (!val) {
+        if (cfg.required) errors.push({ row: rowNum, column: field, message: 'required, but empty' });
+        continue;
+      }
+      const v = _bulkValidators[cfg.type];
+      const err = v ? v(val) : null;
+      if (err) errors.push({ row: rowNum, column: field, message: `${err} (got "${val}")` });
+    }
+  });
+
+  return { errors, warnings };
+}
+
+function _formatBulkIssues(label, issues, max) {
+  const lines = issues.slice(0, max).map(e =>
+    e.row === 0
+      ? `• ${label} — "${e.column}": ${e.message}`
+      : `• Row ${e.row}, "${e.column}": ${e.message}`
+  );
+  if (issues.length > max) lines.push(`…and ${issues.length - max} more`);
+  return lines.join('\n');
+}
+
+function bulkImport(key) {
+  const cfg = _bulkImportable[key]; if (!cfg) return;
+  const schema = _bulkImportSchemas[key];
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv,text/csv';
+  input.onchange = async () => {
+    const file = input.files && input.files[0]; if (!file) return;
+    try {
+      const text = await file.text();
+      const rows = _parseCSV(text);
+      if (!rows.length) { alert('CSV is empty — nothing to import.'); return; }
+
+      // Schema validation BEFORE we send anything to the server.
+      const headerRow = Object.keys(rows[0] || {});
+      const { errors, warnings } = _validateBulkRows(key, headerRow, rows);
+
+      if (errors.length) {
+        const errBlock = _formatBulkIssues('Header', errors, 20);
+        alert(
+          `Cannot import — ${errors.length} validation error(s) in "${file.name}":\n\n` +
+          errBlock + '\n\n' +
+          `Please fix these in your CSV and try again.\n\n` +
+          `Expected columns for ${schema.label} import:\n` +
+          Object.entries(schema.columns)
+            .map(([f, c]) => `  ${c.required ? '* ' : '  '}${f}${c.aliases.length > 1 ? ' (or ' + c.aliases.slice(1).join('/') + ')' : ''} — ${c.type}`)
+            .join('\n')
+        );
+        return;
+      }
+
+      // Soft warnings (unknown columns) — show before confirm but don't block.
+      let confirmMsg = `Import ${rows.length} ${schema.label} row(s) from "${file.name}"?`;
+      if (warnings.length) {
+        confirmMsg = `Warning — ${warnings.length} issue(s) found:\n\n` +
+                     _formatBulkIssues('Header', warnings, 10) + '\n\n' + confirmMsg;
+      }
+      if (!confirm(confirmMsg)) return;
+
+      toast(`📤 Importing ${rows.length} row(s)…`, 'ok');
+      const r = await fetch(cfg.url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      const js = await r.json();
+      if (r.ok && js.status === 'ok') {
+        if (js.skipped && Array.isArray(js.rejections) && js.rejections.length) {
+          // Show the operator EXACTLY which rows were rejected and why
+          // (duplicate plate, duplicate phone, etc.).
+          const lines = js.rejections.slice(0, 30)
+            .map(rej => `• Row ${rej.row}: ${rej.reason}`);
+          if (js.rejections.length > 30) lines.push(`…and ${js.rejections.length - 30} more`);
+          alert(`Imported ${js.imported} row(s) successfully.\n\n` +
+                `${js.skipped} row(s) were REJECTED by the server:\n\n` +
+                lines.join('\n') + '\n\n' +
+                `Common reasons: duplicate plate, duplicate phone number, ` +
+                `or a value already in use by another visitor / member.`);
+        } else {
+          toast(`✓ Imported ${js.imported}`, 'ok');
+        }
+        _liveLoaders[cfg.loader]?.();
+      } else if (r.status === 401) {
+        alert('Login required — your session has expired. Sign in again to bulk import.');
+      } else if (r.status === 403) {
+        alert('Access denied — bulk import requires an Administrator account.');
+      } else {
+        alert('✗ Import failed: ' + (js.message || `HTTP ${r.status}`));
+      }
+    } catch (e) {
+      alert('✗ Could not read CSV: ' + (e.message || 'unknown error'));
+    }
+  };
+  input.click();
+}
+
+function _injectImportButtons() {
+  Object.keys(_bulkImportable).forEach(key => {
+    const tbl = document.getElementById(`${key}-table`); if (!tbl) return;
+    const actions = tbl.closest('.panel')?.querySelector('.table-actions');
+    if (!actions || actions.querySelector('[data-bulk-key]')) return;
+    const btn = document.createElement('button');
+    btn.className = 'ghost-button';
+    btn.dataset.bulkKey = key;
+    btn.title = 'Bulk import from CSV';
+    btn.textContent = '📤 Import';
+    actions.appendChild(btn);
+  });
+}
+_injectImportButtons();
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('[data-bulk-key]');
+  if (b) bulkImport(b.dataset.bulkKey);
+});
+
+// ── Manual Entry workflow (me-form) ──────────────────────────────────────────
+// Operator-driven fallback when ANPR / RFID miss a vehicle. POSTs the same
+// JSON body shape used by the Dashboard entry form so the backend code path
+// is canonical. On success we display the new ticket number inline.
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('me-form');
+  if (!form) return;
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('me-submit');
+    const result = document.getElementById('me-result');
+    const plate = ($('me-plate')?.value || '').trim().toUpperCase();
+    if (!plate) { toast('✗ License plate is required', 'err'); return; }
+    const body = {
+      vehicle:  plate,
+      type:     $('me-type')?.value     || 'Car',
+      mode:     $('me-mode')?.value     || 'Manual Ticket',
+      identity: ($('me-identity')?.value || '').trim().toUpperCase(),
+      zone:     ($('me-zone')?.value    || '').trim() || 'GMR Cargo Staff Parking',
+      emp_name: ($('me-owner')?.value   || '').trim(),
+      vip:      !!$('me-vip')?.checked,
+      staff:    !!$('me-staff')?.checked,
+      // notes is metadata-only; backend ignores unknown keys.
+      notes:    ($('me-notes')?.value   || '').trim(),
+    };
+    if (btn) btn.disabled = true;
+    try {
+      const r = await fetch('/api/entries', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body:    JSON.stringify(body),
+      });
+      const js = await r.json();
+      if (r.ok && js.status === 'ok') {
+        const tx = js.transaction || {};
+        const ticket = tx.id ? ('PK' + String(tx.id).padStart(8, '0')) : '—';
+        if (result) {
+          result.style.display = 'block';
+          result.innerHTML = '<b>✓ Entry recorded.</b> Ticket: <code>' + ticket
+                           + '</code> · Vehicle: <b>' + (tx.vehicle || plate) + '</b>'
+                           + ' · Mode: ' + (tx.mode || body.mode);
+        }
+        toast('✓ Entry recorded: ticket ' + ticket, 'ok');
+        form.reset();
+        // Reset the zone to the operational default after the form clears.
+        if ($('me-zone')) $('me-zone').value = 'GMR Cargo Staff Parking';
+        // Refresh dashboard widgets if they're around.
+        if (typeof refreshAll === 'function') { try { refreshAll(); } catch (_) {} }
+      } else {
+        toast('✗ ' + (js.message || 'Entry failed'), 'err');
+      }
+    } catch (err) {
+      toast('✗ Network error', 'err');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+});

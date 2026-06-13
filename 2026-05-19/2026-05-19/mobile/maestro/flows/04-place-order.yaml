@@ -1,0 +1,38 @@
+appId: com.farmleysfa
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      text: "Dashboard"
+    timeout: 10000
+# Navigate to Stores
+- tapOn: "Stores"
+- assertVisible: "My Stores"
+# Tap first customer
+- tapOn:
+    text: "KPN Fresh"
+    index: 0
+# Check in
+- tapOn: "Check In"
+# Tap Place Order
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible:
+      text: "New Order"
+    timeout: 5000
+# Should see product list
+- assertVisible: "Makhana"
+# Add item quantity
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+# Place the order
+- tapOn: "Place Order"
+- assertVisible: "Order placed"
+- takeScreenshot: screenshots/04-order-placed

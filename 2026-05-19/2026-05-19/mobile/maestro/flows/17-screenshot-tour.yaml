@@ -1,0 +1,72 @@
+appId: com.farmleysfa
+---
+# ── Login ──────────────────────────────────────────────────────────
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- takeScreenshot: screenshots/01-login-screen
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+
+# ── Dashboard ──────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- takeScreenshot: screenshots/02-dashboard
+
+# ── Stores Tab ─────────────────────────────────────────────────────
+- tapOn: "Stores"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/03-journey-plan
+
+# ── Customer Visit (map + check-in screen) ─────────────────────────
+- tapOn:
+    index: 0
+    label: "Visit"
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 10000
+- takeScreenshot: screenshots/04-customer-visit-map
+
+# ── Check In ───────────────────────────────────────────────────────
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Place Order"
+    timeout: 15000
+- takeScreenshot: screenshots/05-customer-dashboard
+
+# ── Place Order ────────────────────────────────────────────────────
+- tapOn: "Place Order"
+- extendedWaitUntil:
+    visible: "New Order"
+    timeout: 10000
+- takeScreenshot: screenshots/06-order-screen
+- pressKey: Back
+- extendedWaitUntil:
+    visible: "Place Order"
+    timeout: 8000
+
+# ── Store Check ────────────────────────────────────────────────────
+- tapOn: "Store Check"
+- extendedWaitUntil:
+    visible: "Store Check"
+    timeout: 10000
+- takeScreenshot: screenshots/07-store-check
+- pressKey: Back
+
+# ── Settings ───────────────────────────────────────────────────────
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 8000
+- takeScreenshot: screenshots/08-settings

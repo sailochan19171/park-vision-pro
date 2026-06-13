@@ -1,0 +1,38 @@
+appId: com.farmleysfa
+---
+# TEST 02: Offline Data / Initial Sync
+# Verify: after login, initial sync downloads data and stores are visible
+
+- launchApp:
+    clearState: true
+
+# Login
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 10000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+
+# Wait for sync to complete (up to 60s for initial data download)
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- takeScreenshot: screenshots/test-02-sync-complete
+
+# Verify stores were synced and are visible
+- assertVisible: "Today's Stores"
+- assertVisible: "See all"
+- takeScreenshot: screenshots/test-02-stores-visible
+
+# Navigate to stores list to confirm data downloaded
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- takeScreenshot: screenshots/test-02-stores-list

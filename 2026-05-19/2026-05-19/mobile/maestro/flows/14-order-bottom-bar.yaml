@@ -1,0 +1,67 @@
+appId: com.farmleysfa
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Farmley"
+    timeout: 15000
+- tapOn:
+    id: "username-input"
+- inputText: "admin"
+- tapOn:
+    id: "password-input"
+- inputText: "farmley123"
+- hideKeyboard
+- tapOn: "Sign In"
+- extendedWaitUntil:
+    visible: "Start Day"
+    timeout: 60000
+- tapOn: "See all"
+- extendedWaitUntil:
+    visible: "My Stores"
+    timeout: 10000
+- tapOn:
+    text: "MT"
+    index: 0
+- extendedWaitUntil:
+    visible: "Check In"
+    timeout: 5000
+- tapOn: "Check In"
+- extendedWaitUntil:
+    visible: "Checked in"
+    timeout: 10000
+# Open Order screen
+- swipe:
+    start: "50%,47%"
+    end: "51%,47%"
+    duration: 100
+- extendedWaitUntil:
+    visible: "ALL"
+    timeout: 15000
+# Add 3 items from first product
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+- tapOn:
+    text: "+"
+    index: 0
+# Verify bottom bar shows count and total
+- assertVisible: "Place Order"
+- takeScreenshot: screenshots/order-bottom-1-top
+
+# Scroll down in product list
+- swipe:
+    start: "70%,70%"
+    end: "70%,30%"
+    duration: 300
+- swipe:
+    start: "70%,70%"
+    end: "70%,30%"
+    duration: 300
+
+# Bottom bar should still be visible after scrolling
+- assertVisible: "Place Order"
+- takeScreenshot: screenshots/order-bottom-2-scrolled
