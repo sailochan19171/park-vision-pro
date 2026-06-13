@@ -4,8 +4,8 @@
 //   Android emulator  → http://10.0.2.2:5002
 //   iOS simulator     → http://localhost:5002
 //   Real device (LAN) → http://<your-laptop-ip>:5002
-//   Cloud (Render)    → https://vayaccess.onrender.com   (or your live URL)
-export const API_BASE_URL = 'https://vayaccess.onrender.com';
+//   Cloud (Render)    → https://vayaccess-cloud.onrender.com   (live URL)
+export const API_BASE_URL = 'https://vayaccess-cloud.onrender.com';
 
 export const API_URL = `${API_BASE_URL}/api/driver`;
 
