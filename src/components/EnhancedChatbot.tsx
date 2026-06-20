@@ -1041,13 +1041,17 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
   return (
     <Card
       className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-[400px] shadow-2xl border-2 border-blue-200 z-50 transition-all duration-300 flex flex-col overflow-hidden ${
-        isMinimized
-          ? 'h-16'
-          // 100dvh adapts to the visible viewport on mobile when the soft
-          // keyboard opens — without it the input slides under the keyboard.
-          : 'h-[min(600px,calc(100dvh-2rem))]'
+        isMinimized ? 'h-16' : ''
       }`}
-      style={{ overscrollBehavior: 'contain' }}
+      // Inline style for height — Tailwind drops arbitrary values whose
+      // expression contains a comma inside parentheses, which silently
+      // removed the height cap and let the children push the input below
+      // the viewport. Inline CSS is parser-agnostic and always wins.
+      style={{
+        overscrollBehavior: 'contain',
+        height: isMinimized ? undefined : 'min(580px, calc(100dvh - 2rem))',
+        maxHeight: isMinimized ? undefined : 'calc(100dvh - 2rem)',
+      }}
     >
       <CardHeader className={`bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex-shrink-0 ${
         isMinimized ? 'rounded-lg' : 'rounded-t-lg'
@@ -1192,17 +1196,19 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
             </div>
           </ScrollArea>
 
-          {/* Quick Questions — only shown until the user sends their first message */}
+          {/* Quick Questions — one row, horizontal scroll on overflow so it
+              never pushes the input row below the viewport. flex-shrink-0
+              ensures it keeps its natural height (single row, ~52 px). */}
           {!hasUserInteracted && (
-            <div className="px-3 pt-2 pb-3 border-t bg-gray-50/80">
-              <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-2">Suggested</p>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="px-3 pt-2 pb-2 border-t bg-gray-50/80 flex-shrink-0">
+              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1.5">Suggested</p>
+              <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
                 {quickQuestions.map((question, index) => (
                   <button
                     key={index}
                     type="button"
                     onClick={() => handleQuickQuestion(question)}
-                    className="text-xs px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors duration-200"
+                    className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors duration-200 whitespace-nowrap"
                   >
                     {question}
                   </button>
@@ -1244,13 +1250,14 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
               </Button>
             </div>
             
-            {/* Status indicator */}
-            <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+            {/* Status indicator — kept compact so the input row stays
+                visible on short viewports (laptop + soft keyboard open). */}
+            <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-500">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span>AI Assistant Online</span>
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                <span>Online</span>
               </div>
-              <span className="hidden sm:inline">Press Enter to send</span>
+              <span className="hidden sm:inline">Press Enter ⏎</span>
             </div>
           </div>
         </CardContent>
