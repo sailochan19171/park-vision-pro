@@ -1040,12 +1040,16 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
 
   return (
     <Card
-      className={`fixed bottom-6 right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-[400px] shadow-2xl border-2 border-blue-200 z-50 transition-all duration-300 ${
-        isMinimized ? 'h-16' : 'h-[600px] max-h-[calc(100vh-4rem)]'
+      className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-[400px] shadow-2xl border-2 border-blue-200 z-50 transition-all duration-300 flex flex-col overflow-hidden ${
+        isMinimized
+          ? 'h-16'
+          // 100dvh adapts to the visible viewport on mobile when the soft
+          // keyboard opens — without it the input slides under the keyboard.
+          : 'h-[min(600px,calc(100dvh-2rem))]'
       }`}
       style={{ overscrollBehavior: 'contain' }}
     >
-      <CardHeader className={`bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 ${
+      <CardHeader className={`bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex-shrink-0 ${
         isMinimized ? 'rounded-lg' : 'rounded-t-lg'
       } relative`}>
         <div className="flex items-center justify-between">
@@ -1092,8 +1096,11 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
       </CardHeader>
 
       {!isMinimized && (
-        <CardContent className="p-0 flex flex-col h-[532px]">
-          <ScrollArea className="flex-1 p-4">
+        // flex-1 + min-h-0 lets the content area take all remaining vertical
+        // space and lets ScrollArea + input area each get the room they need
+        // without a hardcoded pixel height that breaks on small viewports.
+        <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+          <ScrollArea className="flex-1 min-h-0 p-4">
             <div className="space-y-4">
               {messages.map((message) => (
                 <div key={message.id}>
@@ -1204,36 +1211,36 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
             </div>
           )}
 
-          {/* Input Area */}
-          <div className="p-3 sm:p-4 border-t bg-white">
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
-              <div className="flex-1 relative">
-                <Input
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Ask about products, prices, locations..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  disabled={isLoading}
-                  className="flex-1 min-h-[44px] sm:min-h-[40px] text-base sm:text-sm pr-4 resize-none"
-                  style={{ 
-                    fontSize: '16px',
-                    lineHeight: '1.4',
-                    minHeight: '44px'
-                  }}
-                />
-              </div>
+          {/* Input Area — flex-shrink-0 keeps it pinned at the bottom even
+              when the message list grows. autoFocus makes the input ready to
+              type the moment the chatbot expands. */}
+          <div className="p-3 sm:p-4 border-t bg-white flex-shrink-0">
+            <div className="flex flex-row items-center gap-2">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder="Ask about parking, products, locations…"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                disabled={isLoading}
+                autoFocus
+                // 16px font-size avoids iOS Safari zoom-on-focus, which
+                // otherwise zooms the page and hides the chatbot UI.
+                className="flex-1 h-11 text-base px-3 border-gray-300 focus-visible:ring-blue-500 focus-visible:ring-2"
+                style={{ fontSize: '16px' }}
+              />
               <Button
                 onClick={() => handleSendMessage()}
                 disabled={isLoading || !inputMessage.trim()}
-                className="bg-blue-600 hover:bg-blue-700 min-h-[44px] sm:min-h-[40px] px-4 sm:px-3 flex-shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 h-11 px-4 flex-shrink-0"
+                title="Send message"
               >
-                <Send className="h-4 w-4 sm:h-4 sm:w-4" />
-                <span className="ml-2 sm:hidden">Send</span>
+                <Send className="h-4 w-4" />
+                <span className="ml-2 hidden sm:inline">Send</span>
               </Button>
             </div>
             
