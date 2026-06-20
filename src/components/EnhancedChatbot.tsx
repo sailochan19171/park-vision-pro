@@ -1049,7 +1049,7 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
       // the viewport. Inline CSS is parser-agnostic and always wins.
       style={{
         overscrollBehavior: 'contain',
-        height: isMinimized ? undefined : 'min(580px, calc(100dvh - 2rem))',
+        height: isMinimized ? undefined : 'min(520px, calc(100dvh - 2rem))',
         maxHeight: isMinimized ? undefined : 'calc(100dvh - 2rem)',
       }}
     >
@@ -1071,7 +1071,7 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
                   {isMinimized && <span className="ml-2 text-xs opacity-75">(Click to expand)</span>}
                 </h3>
               </div>
-              {!isMinimized && <p className="text-xs opacity-90">Smart Parking Solutions</p>}
+              {!isMinimized && <p className="text-xs opacity-90">Smart Parking Solutions <span className="opacity-60 ml-1">v3</span></p>}
             </div>
           </div>
           <div className="flex space-x-2 items-center">
@@ -1100,11 +1100,14 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
       </CardHeader>
 
       {!isMinimized && (
-        // flex-1 + min-h-0 lets the content area take all remaining vertical
-        // space and lets ScrollArea + input area each get the room they need
-        // without a hardcoded pixel height that breaks on small viewports.
-        <CardContent className="p-0 flex flex-col flex-1 min-h-0">
-          <ScrollArea className="flex-1 min-h-0 p-4">
+        // position: relative so the input area below can absolute-position
+        // itself to the bottom and never get pushed off-screen by overflow
+        // from messages, action chips, or suggested questions.
+        <CardContent className="p-0 flex flex-col flex-1 min-h-0 relative">
+          {/* pb-32 reserves vertical room for the absolutely-positioned input
+              footer (~128 px) so the last message + suggested chips don't
+              sit underneath it. */}
+          <ScrollArea className="flex-1 min-h-0 p-4 pb-32">
             <div className="space-y-4">
               {messages.map((message) => (
                 <div key={message.id}>
@@ -1192,35 +1195,37 @@ Style: warm, professional, concise (2–5 sentences). Use bullet points only for
                 </div>
               )}
               
+              {/* Suggested questions row — moved inside ScrollArea so it
+                  scrolls with the conversation instead of taking fixed space
+                  outside the scroll. Disappears the moment the user sends
+                  their first message. */}
+              {!hasUserInteracted && (
+                <div className="pt-2">
+                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1.5">Suggested</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {quickQuestions.map((question, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleQuickQuestion(question)}
+                        className="text-xs px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors duration-200"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
-          {/* Quick Questions — one row, horizontal scroll on overflow so it
-              never pushes the input row below the viewport. flex-shrink-0
-              ensures it keeps its natural height (single row, ~52 px). */}
-          {!hasUserInteracted && (
-            <div className="px-3 pt-2 pb-2 border-t bg-gray-50/80 flex-shrink-0">
-              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1.5">Suggested</p>
-              <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'thin' }}>
-                {quickQuestions.map((question, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handleQuickQuestion(question)}
-                    className="flex-shrink-0 text-xs px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors duration-200 whitespace-nowrap"
-                  >
-                    {question}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Input Area — flex-shrink-0 keeps it pinned at the bottom even
-              when the message list grows. autoFocus makes the input ready to
-              type the moment the chatbot expands. */}
-          <div className="p-3 sm:p-4 border-t bg-white flex-shrink-0">
+          {/* Input Area — absolute bottom of CardContent. Guaranteed visible
+              regardless of how much content sits above; the ScrollArea has
+              pb-32 to reserve room so the last message doesn't slide under
+              this footer. */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 border-t bg-white">
             <div className="flex flex-row items-center gap-2">
               <Input
                 value={inputMessage}
