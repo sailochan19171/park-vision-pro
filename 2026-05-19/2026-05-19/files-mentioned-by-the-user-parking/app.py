@@ -1608,10 +1608,88 @@ def capture_on_uhf_event(tag):
 
             print(f"[UHF-ANPR] tag={tag_c} plate={plate_text} owner={owner_name} "
                   f"status={status} full={full_name} plate_img={plate_crop_name}")
-            return event.to_dict()
+            result = event.to_dict()
+
+        # Best-effort cloud push (outside the DB context manager so the local
+        # commit lands first). Runs in a thread so a slow / offline cloud
+        # never blocks the gate flow.
+        _push_uhf_event_to_cloud(
+            ts=ts, tag=tag_c, plate=plate_text, vehicle_type=vehicle_label,
+            confidence=plate_confidence, owner_name=owner_name,
+            department=department, status=status,
+            full_path=full_path,
+            plate_path=(os.path.join(DETECTIONS_DIR, plate_crop_name)
+                        if plate_crop_name else None),
+        )
+        return result
     except Exception as e:
         print(f"[UHF-ANPR] DB write failed: {e}")
         return None
+
+
+def _push_uhf_event_to_cloud(ts, tag, plate, vehicle_type, confidence,
+                              owner_name, department, status,
+                              full_path, plate_path):
+    """Spawn a background thread that uploads this capture to the cloud admin
+    portal. No-op when CLOUD_PUSH_URL or CLOUD_PUSH_TOKEN env vars aren't set
+    (e.g. cloud-only deployments, or local-only test runs)."""
+    push_url   = (os.environ.get('CLOUD_PUSH_URL')   or '').rstrip('/')
+    push_token = (os.environ.get('CLOUD_PUSH_TOKEN') or '').strip()
+    if not push_url or not push_token:
+        return    # silently skip — cloud sync not configured
+
+    def _do_push():
+        import base64
+        import urllib.request
+        import urllib.error
+        def _read_b64(path):
+            if not path or not os.path.exists(path):
+                return None
+            try:
+                with open(path, 'rb') as f:
+                    return base64.b64encode(f.read()).decode('ascii')
+            except Exception:
+                return None
+        payload = {
+            "timestamp":       ts.strftime("%Y-%m-%d %H:%M:%S") if ts else None,
+            "rfid_tag":        tag,
+            "plate":           plate or '',
+            "vehicle_type":    vehicle_type or '',
+            "confidence":      float(confidence or 0.0),
+            "owner_name":      owner_name or '',
+            "department":      department or '',
+            "status":          status or 'UNKNOWN',
+            "full_image_b64":  _read_b64(full_path),
+            "plate_image_b64": _read_b64(plate_path),
+        }
+        data_bytes = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(
+            push_url + '/api/cloud_push/uhf',
+            data=data_bytes,
+            method='POST',
+            headers={
+                'Content-Type':  'application/json',
+                'Authorization': f'Bearer {push_token}',
+            },
+        )
+        for attempt in (1, 2, 3):
+            try:
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    body = resp.read().decode('utf-8', errors='replace')
+                    print(f"[UHF-CLOUD] pushed tag={tag} attempt={attempt} -> {resp.status} {body[:120]}")
+                    return
+            except (urllib.error.URLError, urllib.error.HTTPError) as e:
+                code = getattr(e, 'code', '?')
+                print(f"[UHF-CLOUD] push attempt {attempt} failed (HTTP {code}): {e}")
+                if attempt < 3:
+                    time.sleep(2 * attempt)
+            except Exception as e:
+                print(f"[UHF-CLOUD] push attempt {attempt} unexpected error: {e}")
+                if attempt < 3:
+                    time.sleep(2 * attempt)
+        print(f"[UHF-CLOUD] giving up after 3 attempts; tag={tag}")
+
+    threading.Thread(target=_do_push, daemon=True).start()
 
 
 def rfid_monitor():
@@ -2053,6 +2131,114 @@ def serve_detection_image(filename):
     if not safe.lower().endswith('.jpg'):
         abort(404)
     return send_from_directory(DETECTIONS_DIR, safe)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cloud push ingest — on-site PC POSTs each UHF + ANPR capture here so the
+# admin webportal (running on Render) can show scans without needing inbound
+# access to the on-site network.
+#
+# Auth: shared bearer token (CLOUD_PUSH_TOKEN env var) — must match between
+# the on-site PC and Render. Set on Render via the dashboard; set on the
+# on-site PC in the .env file. NEVER commit the token.
+#
+# Payload (JSON):
+#   {
+#     "timestamp":       "2026-06-25 14:30:11",   # optional, server-stamps if absent
+#     "rfid_tag":        "E2801160600002...",
+#     "plate":           "AP12AB1234",            # optional
+#     "vehicle_type":    "Car",                   # optional
+#     "confidence":      0.87,                    # optional
+#     "owner_name":      "Jane",                  # optional
+#     "department":      "Engineering",           # optional
+#     "status":          "ACCESS GRANTED",
+#     "full_image_b64":  "<base64 JPEG>",         # optional, full vehicle frame
+#     "plate_image_b64": "<base64 JPEG>"          # optional, cropped plate
+#   }
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route('/api/cloud_push/uhf', methods=['POST'])
+def api_cloud_push_uhf():
+    import base64
+    expected = (os.environ.get('CLOUD_PUSH_TOKEN') or '').strip()
+    if not expected:
+        return jsonify({"error": "Cloud push not configured. Set CLOUD_PUSH_TOKEN."}), 503
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer ') or auth[7:].strip() != expected:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    tag = (data.get('rfid_tag') or '').strip().upper()
+    if not tag:
+        return jsonify({"error": "rfid_tag is required."}), 400
+
+    # Parse timestamp; fall back to now() if missing/malformed.
+    ts_raw = (data.get('timestamp') or '').strip()
+    try:
+        ts = datetime.strptime(ts_raw, "%Y-%m-%d %H:%M:%S") if ts_raw else datetime.now()
+    except ValueError:
+        ts = datetime.now()
+
+    # Save images (if provided) under detections/ so /image/<filename> serves them.
+    def _save_b64_image(b64, suffix):
+        if not b64:
+            return None
+        try:
+            raw = base64.b64decode(b64)
+        except Exception:
+            return None
+        if len(raw) > 8 * 1024 * 1024:   # 8 MB hard cap per image
+            return None
+        safe_tag = ''.join(c for c in tag if c.isalnum())[:24] or 'TAG'
+        ts_str = ts.strftime("%Y%m%d_%H%M%S_%f")[:-3]
+        name = f"cloud_{ts_str}_{safe_tag}_{suffix}.jpg"
+        path = os.path.join(DETECTIONS_DIR, name)
+        try:
+            with open(path, 'wb') as f:
+                f.write(raw)
+            return name
+        except Exception as e:
+            print(f"[CLOUD-INGEST] write failed for {name}: {e}")
+            return None
+
+    full_name  = _save_b64_image(data.get('full_image_b64'),  'full')
+    plate_name = _save_b64_image(data.get('plate_image_b64'), 'plate')
+
+    try:
+        event = UHFEntryEvent(
+            timestamp=ts,
+            rfid_tag=tag,
+            plate=(data.get('plate') or '').strip().upper() or None,
+            vehicle_type=(data.get('vehicle_type') or '').strip() or None,
+            confidence=float(data.get('confidence') or 0.0),
+            full_image=full_name,
+            plate_image=plate_name,
+            owner_name=(data.get('owner_name') or '').strip() or None,
+            department=(data.get('department') or '').strip() or None,
+            status=(data.get('status') or 'UNKNOWN').strip(),
+        )
+        db.session.add(event)
+
+        # Also mirror as an AccessLog row so Reports → Gate Access Events sees it.
+        log = AccessLog(
+            timestamp=ts,
+            number_plate=event.plate or 'N/A',
+            rfid_tag=tag,
+            owner_name=event.owner_name or 'N/A',
+            department=event.department or '',
+            contact_number='',
+            vehicle_type=event.vehicle_type or 'N/A',
+            vehicle_category='',
+            status=event.status,
+        )
+        db.session.add(log)
+        db.session.commit()
+        print(f"[CLOUD-INGEST] tag={tag} plate={event.plate} status={event.status} "
+              f"full={full_name} plate_img={plate_name}")
+        return jsonify({"ok": True, "id": event.id}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[CLOUD-INGEST] DB write failed: {e}")
+        return jsonify({"error": "DB write failed"}), 500
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Employee Activation (desktop SRK-F206 + /activate page)
