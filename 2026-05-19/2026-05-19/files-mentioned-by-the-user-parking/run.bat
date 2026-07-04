@@ -40,9 +40,15 @@ echo Starting VayAccess On-Site Agent — logging to %LOG_FILE%
 echo Press Ctrl+C to stop.
 echo.
 
-REM Run Flask. Redirect stdout + stderr to the log file so the scheduled task
-REM runs headless without a lost console. 2^>^&1 = merge stderr into stdout.
-"%VENV_PYTHON%" app.py >> "%LOG_FILE%" 2>&1
+REM PYTHONUNBUFFERED=1 forces line-buffered stdout even when redirected.
+REM Without this the log stays empty until Flask exits, which makes headless
+REM debugging impossible.
+SET PYTHONUNBUFFERED=1
+
+REM Run Flask with -u (also-unbuffered, belt-and-braces). Redirect stdout +
+REM stderr to the log file so the scheduled task runs headless without a lost
+REM console. 2^>^&1 = merge stderr into stdout.
+"%VENV_PYTHON%" -u app.py >> "%LOG_FILE%" 2>&1
 
 REM If we reach here, python.exe exited. Note this and let the scheduled task
 REM restart us via its "restart on failure" policy (see install script).
