@@ -174,6 +174,14 @@ latest_highres   = None          # Raw frame for high-quality OCR crop
 frame_lock       = threading.Lock()
 frame_id         = 0
 
+# Cloud-mode live video state — populated by /api/cloud_push/frame, served by
+# /video_feed when CLOUD_MODE=1. The on-site PC runs a frame pusher that POSTs
+# a JPEG every ~500 ms; the cloud holds only the latest frame in RAM so memory
+# stays bounded regardless of how long the agent has been running.
+cloud_frame_lock      = threading.Lock()
+latest_cloud_frame    = None     # bytes of the most recent JPEG pushed
+latest_cloud_frame_at = None     # datetime — when the frame was received
+
 # Detections written by worker_thread, read by camera_loop
 detections_lock  = threading.Lock()
 active_detections = []           # list of {box, label, conf, primary}
@@ -1692,6 +1700,75 @@ def _push_uhf_event_to_cloud(ts, tag, plate, vehicle_type, confidence,
     threading.Thread(target=_do_push, daemon=True).start()
 
 
+def cloud_frame_pusher():
+    """Push camera_loop's already-annotated JPEG (vehicle boxes + plate text +
+    status dot) to the cloud admin portal so /video_feed at
+    https://vayaccess-cloud.onrender.com/ shows the same live view the on-site
+    operator sees. Outbound-only (no VPN / no inbound firewall holes).
+
+    Reads `latest_jpeg` — camera_loop() already produced it at ~15 fps with
+    all ANPR overlays and JPEG-encoded at quality 60. We just forward those
+    bytes. No re-encode, no annotation loss.
+
+    Throttled by:
+       CLOUD_STREAM_FPS      — frames/sec sent to cloud (default 5)
+    Skips silently when CLOUD_PUSH_URL / CLOUD_PUSH_TOKEN aren't set."""
+    push_url   = (os.environ.get('CLOUD_PUSH_URL')   or '').rstrip('/')
+    push_token = (os.environ.get('CLOUD_PUSH_TOKEN') or '').strip()
+    if not push_url or not push_token:
+        print("[CLOUD-STREAM] disabled (set CLOUD_PUSH_URL + CLOUD_PUSH_TOKEN in .env)")
+        return
+
+    try:
+        fps = float(os.environ.get('CLOUD_STREAM_FPS', '5'))
+    except ValueError:
+        fps = 5.0
+    period = max(0.05, 1.0 / max(0.5, fps))
+
+    import urllib.request, urllib.error
+    headers = {'Authorization': f'Bearer {push_token}',
+               'Content-Type':  'image/jpeg'}
+    endpoint = push_url + '/api/cloud_push/frame'
+
+    pushed   = 0
+    failures = 0
+    last_id  = -1
+    print(f"[CLOUD-STREAM] starting pusher -> {endpoint} fps={fps}")
+
+    while True:
+        time.sleep(period)
+        # Grab pre-encoded, pre-annotated JPEG produced by camera_loop.
+        with frame_lock:
+            fid  = frame_id
+            body = latest_jpeg
+        # Skip if camera_loop hasn't produced a new frame since last push —
+        # avoids spamming Render bandwidth with duplicate frames when nothing
+        # has changed at the gate.
+        if body is None or fid == last_id:
+            continue
+        last_id = fid
+
+        req = urllib.request.Request(endpoint, data=body, headers=headers, method='POST')
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                _ = resp.status   # 204 expected
+            pushed += 1
+            # Heartbeat every 60 successful frames so the operator can confirm
+            # the stream is live without flooding stdout.
+            if pushed % 60 == 1:
+                kb = (len(body) // 1024) if body else 0
+                print(f"[CLOUD-STREAM] pushed {pushed} frames "
+                      f"(failures={failures}, last={kb} KB)")
+        except urllib.error.HTTPError as e:
+            failures += 1
+            if failures % 30 == 1:
+                print(f"[CLOUD-STREAM] push HTTP error {e.code}: {e.reason}")
+        except Exception as e:
+            failures += 1
+            if failures % 30 == 1:
+                print(f"[CLOUD-STREAM] push network error: {e}")
+
+
 def rfid_monitor():
     last_tag      = None
     last_tag_at   = 0.0
@@ -1915,16 +1992,46 @@ _CLOUD_PIXEL_PNG = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00'
                     b'\x00\rIDATx\x9cc\xfc\xcf\xc0P\x0f\x00\x05\x01\x01\x00'
                     b'\xa5\xf6E\x84\x00\x00\x00\x00IEND\xaeB`\x82')
 
+def _cloud_mjpeg_gen():
+    """MJPEG generator for CLOUD_MODE — serves the most recent frame pushed
+    by the on-site PC via /api/cloud_push/frame. Re-emits the latest frame
+    every ~500 ms (matching the push cadence) instead of looping at full
+    framerate, which would burn bandwidth on Render's free tier."""
+    boundary = b'--frame'
+    last_id = None
+    while True:
+        with cloud_frame_lock:
+            buf = latest_cloud_frame
+            recv = latest_cloud_frame_at
+        # If the on-site agent has gone silent for >15 s, the viewer should
+        # know — serve a one-shot 1x1 placeholder rather than a stale image.
+        stale = (recv is None) or ((datetime.now() - recv).total_seconds() > 15)
+        if not buf or stale:
+            buf = b''
+        if buf:
+            yield (boundary + b'\r\n' +
+                   b'Content-Type: image/jpeg\r\n'
+                   b'Content-Length: ' + str(len(buf)).encode() + b'\r\n\r\n' +
+                   buf + b'\r\n')
+        time.sleep(0.4)
+
+
 @app.route('/video_feed')
 def video_feed():
     if CLOUD_MODE:
-        return Response(_CLOUD_PIXEL_PNG, mimetype='image/png')
+        return Response(_cloud_mjpeg_gen(),
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
     return Response(gen_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/api/latest_frame.jpg')
 def get_latest_frame():
     if CLOUD_MODE:
+        with cloud_frame_lock:
+            buf = latest_cloud_frame
+            recv = latest_cloud_frame_at
+        if buf and recv and (datetime.now() - recv).total_seconds() <= 30:
+            return Response(buf, mimetype='image/jpeg')
         return Response(_CLOUD_PIXEL_PNG, mimetype='image/png')
     with frame_lock:
         jpeg_b = latest_jpeg
@@ -2239,6 +2346,39 @@ def api_cloud_push_uhf():
         db.session.rollback()
         print(f"[CLOUD-INGEST] DB write failed: {e}")
         return jsonify({"error": "DB write failed"}), 500
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cloud frame ingest — the on-site PC's cloud_frame_pusher() thread posts a
+# JPEG frame every ~500 ms. Cloud holds only the latest one in RAM (capped at
+# ~1 MB) and serves it from /video_feed below. No DB writes, no disk writes
+# — keeps Render bandwidth + storage usage minimal.
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route('/api/cloud_push/frame', methods=['POST'])
+def api_cloud_push_frame():
+    global latest_cloud_frame, latest_cloud_frame_at
+    expected = (os.environ.get('CLOUD_PUSH_TOKEN') or '').strip()
+    if not expected:
+        return jsonify({"error": "Cloud push not configured."}), 503
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer ') or auth[7:].strip() != expected:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Accept raw JPEG bytes (image/jpeg) — simpler + smaller than base64 JSON.
+    data = request.get_data() or b''
+    if not data or len(data) < 100:
+        return jsonify({"error": "empty frame"}), 400
+    if len(data) > 1_000_000:                # 1 MB hard cap per frame
+        return jsonify({"error": "frame too large"}), 413
+    # Cheap sanity check — JPEG always starts with FF D8 FF.
+    if data[:3] != b'\xff\xd8\xff':
+        return jsonify({"error": "not a JPEG"}), 400
+
+    with cloud_frame_lock:
+        latest_cloud_frame    = data
+        latest_cloud_frame_at = datetime.now()
+    return ('', 204)   # 204 No Content — minimum bandwidth for the ack
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Employee Activation (desktop SRK-F206 + /activate page)
@@ -4945,9 +5085,12 @@ def _boot():
 
     rfid.start()
     desktop_rfid.start()
-    threading.Thread(target=rfid_monitor,  daemon=True).start()
-    threading.Thread(target=camera_loop,   daemon=True).start()
-    threading.Thread(target=worker_thread, daemon=True).start()
+    threading.Thread(target=rfid_monitor,       daemon=True).start()
+    threading.Thread(target=camera_loop,        daemon=True).start()
+    threading.Thread(target=worker_thread,      daemon=True).start()
+    # Cloud stream pusher — no-op if CLOUD_PUSH_URL/TOKEN aren't set in .env,
+    # so this line is safe on setups that don't want a cloud mirror.
+    threading.Thread(target=cloud_frame_pusher, daemon=True).start()
 
 _boot()
 
