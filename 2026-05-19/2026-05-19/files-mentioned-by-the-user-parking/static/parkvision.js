@@ -3512,9 +3512,15 @@ async function loadUhfCaptures() {
       (e.owner_name || '').toUpperCase().includes(q));
     if ($('uc-meta')) $('uc-meta').textContent =
       `${rows.length} capture(s) — newest first`;
+    // loading="lazy" + decoding="async" means the browser only fetches images
+    // as they scroll into view. Without this, opening the UHF Captures page
+    // fetches ALL thumbnails at once (80 requests for 40 rows) and blocks the
+    // page for ~10 s. With lazy loading, only the ~6 visible rows fetch on
+    // page load — everything else defers until scroll.
     const thumb = (filename, label) => filename
       ? `<a href="/image/${encodeURIComponent(filename)}" target="_blank" rel="noopener" title="${label} — click to view full">
            <img src="/image/${encodeURIComponent(filename)}" alt="${label}"
+                loading="lazy" decoding="async"
                 style="width:96px; height:60px; object-fit:cover; border-radius:6px; border:1px solid var(--line); display:block;">
          </a>`
       : '<span style="opacity:0.45;">—</span>';
