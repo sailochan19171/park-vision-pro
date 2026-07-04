@@ -188,6 +188,11 @@ except ValueError:
     _STREAM_JPEG_Q = 80
 _STREAM_JPEG_Q = max(20, min(95, _STREAM_JPEG_Q))
 
+# Debug snapshots off by default — dumps 2 JPEGs to debug_snapshots/ every
+# 10s while the pipeline runs. Only useful when debugging camera aim / OCR.
+# Set DEBUG_SNAPSHOTS=1 in .env to re-enable temporarily.
+_DEBUG_SNAPSHOTS = (os.environ.get('DEBUG_SNAPSHOTS', '0').strip() == '1')
+
 # Cloud-mode live video state — populated by /api/cloud_push/frame, served by
 # /video_feed when CLOUD_MODE=1. The on-site PC runs a frame pusher that POSTs
 # a JPEG every ~500 ms; the cloud holds only the latest frame in RAM so memory
@@ -906,8 +911,12 @@ def worker_thread():
         # Debug snapshot: every 10s, dump exactly what's being fed to YOLO + a
         # raw-frame copy. Lets us SEE whether the camera frame actually contains a
         # vehicle, independent of whether YOLO scores it.
+        #
+        # Off by default — set DEBUG_SNAPSHOTS=1 in .env to enable. Was
+        # generating ~360 files/hour, wasting disk + a small amount of CPU on
+        # the imwrite. Only worth turning on when actively debugging aim/OCR.
         now = time.time()
-        if now - last_debug_snapshot_t > 10.0:
+        if _DEBUG_SNAPSHOTS and now - last_debug_snapshot_t > 10.0:
             last_debug_snapshot_t = now
             try:
                 dbg_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
