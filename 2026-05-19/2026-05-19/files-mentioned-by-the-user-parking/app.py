@@ -174,6 +174,20 @@ latest_highres   = None          # Raw frame for high-quality OCR crop
 frame_lock       = threading.Lock()
 frame_id         = 0
 
+# JPEG quality used when camera_loop encodes each annotated frame. Tunable
+# via CLOUD_STREAM_JPEG_Q env var. Applies to both /video_feed and the cloud
+# push (they share latest_jpeg — no double-encode).
+#   80 (default) — ~2.4 Mbps at 10 fps, sharp
+#   65           — ~1.6 Mbps at 10 fps, still crisp
+#   50           — ~1.2 Mbps at 10 fps, plates readable
+#   40           — ~0.8 Mbps at 10 fps, plates soft but legible
+#   30           — ~0.56 Mbps at 10 fps, blocky (not recommended)
+try:
+    _STREAM_JPEG_Q = int(os.environ.get('CLOUD_STREAM_JPEG_Q', '80'))
+except ValueError:
+    _STREAM_JPEG_Q = 80
+_STREAM_JPEG_Q = max(20, min(95, _STREAM_JPEG_Q))
+
 # Cloud-mode live video state — populated by /api/cloud_push/frame, served by
 # /video_feed when CLOUD_MODE=1. The on-site PC runs a frame pusher that POSTs
 # a JPEG every ~500 ms; the cloud holds only the latest frame in RAM so memory
@@ -1144,11 +1158,13 @@ def camera_loop():
 
         # Encode JPEG once here so the streaming endpoint just copies bytes.
         # Previously every browser request re-encoded the frame, contending with YOLO for CPU.
-        # Quality 80 is the sweet spot: ~40% more bytes than 60 but visibly sharper
-        # plate + face detail on the cloud viewer. Local MJPEG dashboard also
-        # benefits, and camera_loop only encodes once per frame regardless of
-        # quality setting so CPU cost is negligible.
-        ok_enc, buf = cv2.imencode('.jpg', out_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        # Quality tunable via .env — 80 default, 50 for ~1.2 Mbps at 10 fps,
+        # 40 for ~800 kbps. Below 40 plate numerals start to get blocky.
+        # Read once here (module-level) so the loop doesn't hit os.environ on
+        # every frame; changes require a Flask restart, which is the same as
+        # every other .env-driven knob in the codebase.
+        ok_enc, buf = cv2.imencode('.jpg', out_frame,
+                                   [cv2.IMWRITE_JPEG_QUALITY, _STREAM_JPEG_Q])
         jpeg_bytes = buf.tobytes() if ok_enc else None
 
         with frame_lock:
@@ -1737,7 +1753,7 @@ def cloud_frame_pusher():
     pushed   = 0
     failures = 0
     last_id  = -1
-    print(f"[CLOUD-STREAM] starting pusher -> {endpoint} fps={fps}")
+    print(f"[CLOUD-STREAM] starting pusher -> {endpoint} fps={fps} jpeg_q={_STREAM_JPEG_Q}")
 
     while True:
         time.sleep(period)
