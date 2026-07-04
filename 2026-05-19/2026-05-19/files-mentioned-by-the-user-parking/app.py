@@ -1144,7 +1144,11 @@ def camera_loop():
 
         # Encode JPEG once here so the streaming endpoint just copies bytes.
         # Previously every browser request re-encoded the frame, contending with YOLO for CPU.
-        ok_enc, buf = cv2.imencode('.jpg', out_frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+        # Quality 80 is the sweet spot: ~40% more bytes than 60 but visibly sharper
+        # plate + face detail on the cloud viewer. Local MJPEG dashboard also
+        # benefits, and camera_loop only encodes once per frame regardless of
+        # quality setting so CPU cost is negligible.
+        ok_enc, buf = cv2.imencode('.jpg', out_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         jpeg_bytes = buf.tobytes() if ok_enc else None
 
         with frame_lock:
@@ -1711,7 +1715,7 @@ def cloud_frame_pusher():
     bytes. No re-encode, no annotation loss.
 
     Throttled by:
-       CLOUD_STREAM_FPS      — frames/sec sent to cloud (default 5)
+       CLOUD_STREAM_FPS      — frames/sec sent to cloud (default 10)
     Skips silently when CLOUD_PUSH_URL / CLOUD_PUSH_TOKEN aren't set."""
     push_url   = (os.environ.get('CLOUD_PUSH_URL')   or '').rstrip('/')
     push_token = (os.environ.get('CLOUD_PUSH_TOKEN') or '').strip()
@@ -1720,9 +1724,9 @@ def cloud_frame_pusher():
         return
 
     try:
-        fps = float(os.environ.get('CLOUD_STREAM_FPS', '5'))
+        fps = float(os.environ.get('CLOUD_STREAM_FPS', '10'))
     except ValueError:
-        fps = 5.0
+        fps = 10.0
     period = max(0.05, 1.0 / max(0.5, fps))
 
     import urllib.request, urllib.error
@@ -1994,26 +1998,28 @@ _CLOUD_PIXEL_PNG = (b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00'
 
 def _cloud_mjpeg_gen():
     """MJPEG generator for CLOUD_MODE — serves the most recent frame pushed
-    by the on-site PC via /api/cloud_push/frame. Re-emits the latest frame
-    every ~500 ms (matching the push cadence) instead of looping at full
-    framerate, which would burn bandwidth on Render's free tier."""
-    boundary = b'--frame'
-    last_id = None
+    by the on-site PC via /api/cloud_push/frame. Yields a new boundary each
+    time the buffered frame changes (tracked by id(buf)); this way the
+    browser refresh rate matches the push rate exactly instead of being
+    capped by a fixed sleep. Falls back to a 20 ms poll interval when there
+    are no new frames so a stalled agent doesn't spin a Python loop hot."""
+    boundary  = b'--frame\r\n'
+    last_buf  = None
     while True:
         with cloud_frame_lock:
-            buf = latest_cloud_frame
+            buf  = latest_cloud_frame
             recv = latest_cloud_frame_at
-        # If the on-site agent has gone silent for >15 s, the viewer should
-        # know — serve a one-shot 1x1 placeholder rather than a stale image.
         stale = (recv is None) or ((datetime.now() - recv).total_seconds() > 15)
-        if not buf or stale:
-            buf = b''
-        if buf:
-            yield (boundary + b'\r\n' +
+        if buf and not stale and buf is not last_buf:
+            last_buf = buf
+            yield (boundary +
                    b'Content-Type: image/jpeg\r\n'
                    b'Content-Length: ' + str(len(buf)).encode() + b'\r\n\r\n' +
                    buf + b'\r\n')
-        time.sleep(0.4)
+        # Short sleep so we don't burn CPU polling; the push side ticks at
+        # ~10 fps (100 ms) so a 20 ms check is 5x oversampled but keeps
+        # perceived latency minimal.
+        time.sleep(0.02)
 
 
 @app.route('/video_feed')
