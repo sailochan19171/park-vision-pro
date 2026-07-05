@@ -180,3 +180,13 @@ if (Test-Path "$logDir\onsite-*.log") {
     Write-Banner "Last 20 log lines (verify agent is talking)" 'Cyan'
     Get-Content "$logDir\onsite-*.log" -Tail 20
 }
+
+# Keep the window open so the operator can read everything.
+# Without this, the PowerShell auto-closes the instant the script
+# exits and it looks like a crash / silent failure.
+Write-Host ""
+Write-Host "=============================================================="  -ForegroundColor Green
+Write-Host "  Setup complete. Press Enter to close this window."             -ForegroundColor Green
+Write-Host "  (The agent keeps running in the background.)"                  -ForegroundColor Green
+Write-Host "=============================================================="  -ForegroundColor Green
+Read-Host "Press Enter to exit"

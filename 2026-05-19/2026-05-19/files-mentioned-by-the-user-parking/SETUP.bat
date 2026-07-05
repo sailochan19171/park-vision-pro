@@ -1,24 +1,38 @@
 @echo off
+title VayAccess Setup Launcher
 REM =============================================================
 REM VayAccess On-Site Agent -- ONE-CLICK SETUP
 REM
 REM Double-click this file on any Windows laptop.
 REM
-REM It will (in order):
-REM   1. Install Python 3.12 if not already present
-REM   2. Create a Python virtual environment
-REM   3. Install every dependency (YOLO, OpenCV, EasyOCR, ...)
-REM   4. Prompt you for 5 config values (DATABASE_URL,
-REM      CLOUD_PUSH_TOKEN, camera IP, etc.)
-REM   5. Register a Windows Scheduled Task so the agent
-REM      auto-starts on every boot
-REM   6. Start the agent right now
+REM What happens next:
+REM   1. This window opens (it's just the launcher).
+REM   2. Windows asks for Administrator permission -- click YES.
+REM   3. A NEW blue "Administrator: Windows PowerShell" window
+REM      opens. THAT is where the actual setup runs.
+REM   4. This launcher window can be closed once step 3 opens.
+REM   5. Watch the blue window through Steps 1..5. It will
+REM      prompt you for 5 config values in Step 3.
 REM
 REM First run takes ~15-25 minutes (mostly PyTorch download).
-REM Second run (updates) takes ~30 seconds.
 REM =============================================================
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1"
 echo.
-echo Setup script finished. Press any key to close this window.
-pause > nul
+echo VayAccess Setup Launcher
+echo.
+echo Step 1: A blue "Administrator" PowerShell window will open shortly.
+echo Step 2: DO NOT CLOSE THAT BLUE WINDOW -- the real work happens there.
+echo Step 3: You can close THIS window whenever you want.
+echo.
+echo Requesting Administrator privileges...
+echo.
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup.ps1"
+
+echo.
+echo The elevated PowerShell window has been launched.
+echo Watch the BLUE window (titled "Administrator: Windows PowerShell 5.1")
+echo for the actual setup progress.
+echo.
+echo You can close this launcher window now.
+pause
