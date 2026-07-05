@@ -171,6 +171,50 @@ Fix: uninstall any existing Python (Settings -> Apps), reboot, re-run.
     Write-Host "[OK] Installed $ver at $pythonExe" -ForegroundColor Green
 }
 
+# ----- Step 1b. Sync latest code from GitHub (self-healing) -----
+# This makes SETUP.bat a self-updater: every run pulls the latest
+# app.py + database.py + requirements.txt directly from GitHub raw.
+# No git required, no manual copy, no "did the pull actually work?"
+# guesswork. If the target laptop is offline we silently skip and use
+# whatever the local files are (still functional, just not latest).
+Write-Banner "Step 1b of 5 -- Sync latest code from GitHub" 'Cyan'
+$rawBase = 'https://raw.githubusercontent.com/sailochan19171/park-vision-pro/my-branch/2026-05-19/2026-05-19/files-mentioned-by-the-user-parking'
+$syncFiles = @(
+    'app.py',
+    'database.py',
+    'api_integration.py',
+    'desktop_reader.py',
+    'reader_integration.py',
+    'requirements.txt'
+)
+$syncedCount = 0
+foreach ($f in $syncFiles) {
+    $localPath = Join-Path $PSScriptRoot $f
+    try {
+        # Download to a .new tempfile so a mid-download failure doesn't leave
+        # the local file half-written. Rename atomically on success.
+        $tmp = "$localPath.new"
+        Invoke-WebRequest -Uri "$rawBase/$f" -OutFile $tmp `
+            -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+        if ((Get-Item $tmp -ErrorAction SilentlyContinue).Length -gt 0) {
+            Move-Item -Path $tmp -Destination $localPath -Force
+            Write-Host "  [OK] $f" -ForegroundColor Green
+            $syncedCount++
+        } else {
+            Remove-Item $tmp -ErrorAction SilentlyContinue
+            Write-Host "  [SKIP] $f (empty download)" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "  [SKIP] $f ($($_.Exception.Message.Split([Environment]::NewLine)[0]))" -ForegroundColor Yellow
+        Remove-Item "$localPath.new" -ErrorAction SilentlyContinue
+    }
+}
+if ($syncedCount -gt 0) {
+    Write-Host "[OK] $syncedCount of $($syncFiles.Count) code files pulled fresh from GitHub" -ForegroundColor Green
+} else {
+    Write-Host "[WARN] Could not sync from GitHub (offline?). Using existing local files." -ForegroundColor Yellow
+}
+
 # ----- Step 2. Create virtualenv + install dependencies -----
 Write-Banner "Step 2 of 5 -- Python virtualenv + dependencies" 'Cyan'
 $venvPython = Join-Path $PSScriptRoot 'venv\Scripts\python.exe'
@@ -581,6 +625,21 @@ try {
 
 # ----- Step 4. Register the scheduled task (auto-boot) -----
 Write-Banner "Step 4 of 5 -- Register auto-start scheduled task" 'Cyan'
+
+# Kill any running instance first so Python actually re-imports the new
+# app.py we just pulled. Without this, the still-running python.exe keeps
+# using the old code already loaded in memory -- fresh app.py sits on disk
+# but no watermark, no bug fixes, nothing new takes effect.
+Write-Host "[..] Stopping any running agent so the fresh app.py takes effect..." -ForegroundColor Gray
+Stop-ScheduledTask -TaskName VayAccessOnSiteAgent -ErrorAction SilentlyContinue
+Get-Process python -ErrorAction SilentlyContinue |
+    Where-Object { $_.Path -and $_.Path -like "*$PSScriptRoot*" } |
+    Stop-Process -Force -ErrorAction SilentlyContinue
+# Second pass in case the first missed a lingering child (venv Python
+# processes sometimes hide from -Path filter under SYSTEM ownership).
+Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep 3
+
 $installer = Join-Path $PSScriptRoot 'install-onsite-agent.ps1'
 if (-not (Test-Path $installer)) {
     Write-Host "[ERR] install-onsite-agent.ps1 missing -- copy it from the source folder." -ForegroundColor Red
