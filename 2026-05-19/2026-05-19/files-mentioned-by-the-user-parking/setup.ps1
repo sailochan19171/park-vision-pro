@@ -15,6 +15,15 @@ function Write-Banner($text, $color = 'Cyan') {
     Write-Host "==============================================================" -ForegroundColor $color
 }
 
+function Pause-Exit($msg = "Press Enter to close this window") {
+    Write-Host ""
+    Write-Host "==============================================================" -ForegroundColor Yellow
+    Write-Host "  $msg" -ForegroundColor Yellow
+    Write-Host "==============================================================" -ForegroundColor Yellow
+    Read-Host " "
+    exit
+}
+
 # ----- Step 0. Self-elevate to Administrator -----
 $principal = [Security.Principal.WindowsPrincipal]::new(
     [Security.Principal.WindowsIdentity]::GetCurrent())
@@ -22,10 +31,17 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     Write-Banner "Requesting Administrator privileges..." 'Yellow'
     Write-Host "Windows will ask you to approve. Click Yes."
     Start-Sleep 2
-    $argList = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    # -NoExit keeps the elevated window open even if the script errors
+    # before it reaches its own trailing Read-Host. Without this, any
+    # unhandled exception during Step 1 / Step 2 closes the window and
+    # the operator sees an unexplained silent failure.
+    $argList = "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
     Start-Process powershell -ArgumentList $argList -Verb RunAs
     exit
 }
+
+# ----- MAIN body wrapped in try/catch so any error PAUSES instead of closing -----
+try {
 
 Write-Banner "VayAccess On-Site Agent -- Setup Started" 'Green'
 Write-Host "Working folder: $PSScriptRoot"
@@ -190,3 +206,27 @@ Write-Host "  Setup complete. Press Enter to close this window."             -Fo
 Write-Host "  (The agent keeps running in the background.)"                  -ForegroundColor Green
 Write-Host "=============================================================="  -ForegroundColor Green
 Read-Host "Press Enter to exit"
+
+} catch {
+    # Any unhandled error lands here. Print it PROMINENTLY and pause
+    # so the operator can screenshot it instead of the window closing.
+    Write-Host ""
+    Write-Host "==============================================================" -ForegroundColor Red
+    Write-Host "  SETUP FAILED"                                                 -ForegroundColor Red
+    Write-Host "==============================================================" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Error message:" -ForegroundColor Yellow
+    Write-Host "  $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Where it failed:" -ForegroundColor Yellow
+    Write-Host "  $($_.InvocationInfo.PositionMessage)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Full stack trace:" -ForegroundColor Yellow
+    Write-Host "  $($_.ScriptStackTrace)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "==============================================================" -ForegroundColor Red
+    Write-Host "  Copy the error above and share it, then press Enter to close" -ForegroundColor Yellow
+    Write-Host "==============================================================" -ForegroundColor Red
+    Read-Host " "
+    exit 1
+}
