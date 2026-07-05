@@ -48,38 +48,127 @@ Write-Host "Working folder: $PSScriptRoot"
 
 # ----- Step 1. Check / install Python 3.12 -----
 Write-Banner "Step 1 of 5 -- Python 3.12 check" 'Cyan'
-$pythonExe = $null
-try {
-    $ver = & python --version 2>&1
-    if ($ver -match "Python 3\.1[12]") {
-        $pythonExe = (Get-Command python).Source
-        Write-Host "[OK] Found $ver at $pythonExe" -ForegroundColor Green
-    }
-} catch { }
 
-if (-not $pythonExe) {
+# Helper: find Python 3.11+ in the well-known install locations.
+# PATH refresh from Environment.GetEnvironmentVariable doesn't propagate
+# to a running process on Windows, so relying on `Get-Command python`
+# right after install is unreliable. Direct file check is definitive.
+function Find-InstalledPython {
+    $candidates = @(
+        "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python311\python.exe",
+        "C:\Program Files\Python312\python.exe",
+        "C:\Program Files\Python311\python.exe",
+        "C:\Program Files (x86)\Python312\python.exe",
+        "C:\Python312\python.exe",
+        "C:\Python311\python.exe"
+    )
+    foreach ($c in $candidates) {
+        if (Test-Path $c) {
+            return $c
+        }
+    }
+    # Fall back to whatever "python" resolves to on PATH
+    try {
+        $onPath = (Get-Command python -ErrorAction SilentlyContinue).Source
+        if ($onPath -and (Test-Path $onPath)) {
+            $ver = & $onPath --version 2>&1
+            if ($ver -match "Python 3\.1[12]") { return $onPath }
+        }
+    } catch { }
+    return $null
+}
+
+$pythonExe = Find-InstalledPython
+if ($pythonExe) {
+    $ver = & $pythonExe --version 2>&1
+    Write-Host "[OK] Found $ver at $pythonExe" -ForegroundColor Green
+} else {
     Write-Host "Python 3.12 not found. Downloading and installing..." -ForegroundColor Yellow
     $installer = Join-Path $env:TEMP "python-3.12.9-amd64.exe"
     $url       = "https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe"
+
     Write-Host "  Downloading from $url ..." -ForegroundColor Gray
     Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-    Write-Host "  Running silent installer (2 to 3 minutes) ..." -ForegroundColor Gray
-    Start-Process $installer -ArgumentList `
-        "/quiet", "InstallAllUsers=1", "PrependPath=1", "Include_test=0" -Wait
+    if (-not (Test-Path $installer)) {
+        throw "Python installer download failed. Check internet and retry."
+    }
+    $sizeMB = [math]::Round((Get-Item $installer).Length / 1MB, 1)
+    Write-Host "  Downloaded $sizeMB MB" -ForegroundColor Gray
+
+    # Three fallback attempts, each fully silent. If any of them
+    # produces python.exe in a known location we stop.
+    $logFile = Join-Path $env:TEMP "python-install.log"
+    $attempts = @(
+        @{ name = "all-users into Program Files";
+           args = @("/quiet", "/log", $logFile,
+                    "InstallAllUsers=1", "PrependPath=1",
+                    "Include_test=0", "Include_launcher=1",
+                    "SimpleInstall=1") },
+        @{ name = "per-user into AppData (no admin rights needed)";
+           args = @("/quiet", "/log", $logFile,
+                    "InstallAllUsers=0", "PrependPath=1",
+                    "Include_test=0", "Include_launcher=0",
+                    "SimpleInstall=1") },
+        @{ name = "all-users into C:\Python312 (fallback path)";
+           args = @("/quiet", "/log", $logFile,
+                    "InstallAllUsers=1", "PrependPath=1",
+                    "Include_test=0", "Include_launcher=0",
+                    "TargetDir=C:\Python312", "SimpleInstall=1") }
+    )
+
+    $lastExit = -1
+    foreach ($attempt in $attempts) {
+        Write-Host "  Attempt: $($attempt.name) ..." -ForegroundColor Gray
+        try {
+            $proc = Start-Process $installer -ArgumentList $attempt.args -Wait -PassThru
+            $lastExit = $proc.ExitCode
+            Write-Host "    Exit code: $lastExit" -ForegroundColor Gray
+        } catch {
+            Write-Host "    Launch failed: $_" -ForegroundColor Yellow
+            $lastExit = -2
+        }
+        Start-Sleep 3
+        $pythonExe = Find-InstalledPython
+        if ($pythonExe) {
+            Write-Host "  Found python.exe at $pythonExe" -ForegroundColor Green
+            break
+        }
+        Write-Host "  Attempt didn't produce python.exe -- trying next fallback..." -ForegroundColor Yellow
+    }
+
     Remove-Item $installer -Force -ErrorAction SilentlyContinue
 
-    # Refresh PATH so python is visible in this session
-    $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
-                [Environment]::GetEnvironmentVariable("Path", "User")
+    if (-not $pythonExe) {
+        # Grab last 40 lines of the installer log so the error message
+        # tells us what actually went wrong.
+        $logExcerpt = "(no log file)"
+        if (Test-Path $logFile) {
+            $logExcerpt = (Get-Content $logFile -Tail 40 -ErrorAction SilentlyContinue) -join "`n"
+        }
+        throw @"
+All 3 automatic install attempts failed. Last installer exit code: $lastExit.
 
-    try {
-        $pythonExe = (Get-Command python).Source
-        $ver = & python --version 2>&1
-        Write-Host "[OK] Installed $ver at $pythonExe" -ForegroundColor Green
-    } catch {
-        Write-Host "[ERR] Python install failed. Install manually from python.org and re-run this script." -ForegroundColor Red
-        exit 1
+Locations checked (none had python.exe):
+  * $env:LOCALAPPDATA\Programs\Python\Python312\python.exe
+  * C:\Program Files\Python312\python.exe
+  * C:\Python312\python.exe
+
+Last 40 lines of installer log ($logFile):
+$logExcerpt
+
+Common exit codes:
+  1603 = Fatal error (usually old Python still installed or corrupt state)
+  1618 = Another Windows Installer is running -- close other installs
+  1638 = Newer version already installed -- uninstall it first
+  1633 = This platform is not supported (32-bit installer on 64-bit OS?)
+
+Fix: uninstall any existing Python (Settings -> Apps), reboot, re-run.
+"@
     }
+
+    $ver = & $pythonExe --version 2>&1
+    Write-Host "[OK] Installed $ver at $pythonExe" -ForegroundColor Green
 }
 
 # ----- Step 2. Create virtualenv + install dependencies -----
