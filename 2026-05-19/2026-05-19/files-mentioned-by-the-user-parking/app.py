@@ -120,7 +120,18 @@ if CLOUD_MODE:
     USE_FAST_ALPR = False
     print("[CLOUD] CLOUD_MODE active — skipping hardware + ML init")
 else:
-    rfid   = RFIDReader(ip='192.168.0.200', port=200)
+    # RFID reader IP is per-site. Read from .env so each on-site laptop can
+    # point at whatever address the reader ended up on for that gate. Defaults
+    # to the historical hardcoded value when the env var is missing so
+    # existing installs keep working without an .env update.
+    _rfid_host = (os.environ.get('RFID_READER_IP') or '192.168.0.200').strip()
+    try:
+        _rfid_port = int(os.environ.get('RFID_READER_PORT', '200'))
+    except ValueError:
+        _rfid_port = 200
+    print(f"[RFID] Configured target: {_rfid_host}:{_rfid_port} "
+          f"(from .env RFID_READER_IP)")
+    rfid   = RFIDReader(ip=_rfid_host, port=_rfid_port)
     # Desktop SRK-F206 reader for the /activate enrollment workflow. Auto-detects
     # a USB-serial COM port; UI also exposes /api/desktop_reader/* to configure it.
     desktop_rfid = DesktopReader(port=None, baudrate=115200)
@@ -388,15 +399,40 @@ CLASS_NAMES = {2: "Car", 3: "Motorcycle", 5: "Bus", 7: "Truck"}
 # ── Camera Config system and Connection Helper ──────────────────────────────
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "camera_config.json")
 
+def _default_camera_source():
+    """Build the default RTSP URL from .env values. Every field has a fallback
+    to the historical XM-3MP defaults so existing installs keep working.
+      CAMERA_IP    -- IP address on this site's LAN (per-site)
+      CAMERA_PORT  -- 8557 for XM sub-stream, 554 for most Reolink main stream
+      CAMERA_USER  -- 'admin' by default
+      CAMERA_PASS  -- empty by default (XM ships open by default)
+      CAMERA_PATH  -- '/stream2' for XM sub, '/h264Preview_01_sub' for Reolink
+    """
+    ip   = (os.environ.get('CAMERA_IP')   or '192.168.1.12').strip()
+    port = (os.environ.get('CAMERA_PORT') or '8557').strip()
+    user = (os.environ.get('CAMERA_USER') or 'admin').strip()
+    pwd  = (os.environ.get('CAMERA_PASS') or '').strip()
+    path = (os.environ.get('CAMERA_PATH') or '/stream2').strip()
+    if not path.startswith('/'):
+        path = '/' + path
+    creds = user + (':' + pwd if pwd else '') + '@'
+    return f"rtsp://{creds}{ip}:{port}{path}"
+
+
 def load_camera_config():
+    """Camera URL priority:
+       1. camera_config.json  (runtime override from the UI)
+       2. .env-driven default (CAMERA_IP + CAMERA_PORT + CAMERA_USER + ...)
+       3. XM-3MP historical default (192.168.1.12:8557/stream2)"""
+    env_default = _default_camera_source()
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r") as f:
                 config = json.load(f)
-                return config.get("camera_source", "rtsp://admin:@192.168.1.12:8557/stream2")
+                return config.get("camera_source", env_default)
         except Exception as e:
             print(f"[CONFIG] Error reading config: {e}")
-    return "rtsp://admin:@192.168.1.12:8557/stream2"
+    return env_default
 
 def save_camera_config(source):
     try:
