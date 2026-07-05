@@ -204,6 +204,122 @@ _STREAM_JPEG_Q = max(20, min(95, _STREAM_JPEG_Q))
 # Set DEBUG_SNAPSHOTS=1 in .env to re-enable temporarily.
 _DEBUG_SNAPSHOTS = (os.environ.get('DEBUG_SNAPSHOTS', '0').strip() == '1')
 
+# ─── Watermark config ────────────────────────────────────────────────────────
+# Every UHF capture image + live cloud stream gets a semi-transparent overlay
+# in the bottom-left showing timestamp, gate name, and GPS coordinates. All
+# values are per-site — set in .env:
+#   GATE_LOCATION_NAME  — e.g. "Main Gate", "Basement A", "Warehouse Entry"
+#   GATE_LATITUDE       — decimal degrees, e.g. 17.446110
+#   GATE_LONGITUDE      — decimal degrees, e.g. 78.348570
+# If GPS is missing we try one IP-based geolocation lookup at startup so
+# something reasonable still shows even for admins who never opened .env.
+_WATERMARK_ENABLED = (os.environ.get('WATERMARK', '1').strip() != '0')
+_GATE_LOCATION_NAME = (os.environ.get('GATE_LOCATION_NAME') or 'VayAccess Gate').strip()
+
+def _parse_float(val):
+    try:
+        return float(val) if val is not None and str(val).strip() else None
+    except (ValueError, TypeError):
+        return None
+
+_GATE_LAT = _parse_float(os.environ.get('GATE_LATITUDE'))
+_GATE_LNG = _parse_float(os.environ.get('GATE_LONGITUDE'))
+
+if _GATE_LAT is None or _GATE_LNG is None:
+    # One-shot IP-geolocation lookup so images still get *some* GPS info.
+    # ipapi.co has a free tier (~1000/day, no auth); good enough for a
+    # single startup call.
+    try:
+        import urllib.request as _u
+        with _u.urlopen("https://ipapi.co/json/", timeout=4) as _resp:
+            _geo = json.loads(_resp.read().decode('utf-8'))
+        if _GATE_LAT is None:
+            _GATE_LAT = _parse_float(_geo.get('latitude'))
+        if _GATE_LNG is None:
+            _GATE_LNG = _parse_float(_geo.get('longitude'))
+        if _GATE_LOCATION_NAME == 'VayAccess Gate':
+            _city = (_geo.get('city') or '').strip()
+            _region = (_geo.get('region') or '').strip()
+            if _city:
+                _GATE_LOCATION_NAME = f"{_city}, {_region}".rstrip(", ")
+        print(f"[WATERMARK] IP-geolocated to lat={_GATE_LAT}, "
+              f"lng={_GATE_LNG}, name='{_GATE_LOCATION_NAME}'")
+    except Exception as _e:
+        print(f"[WATERMARK] IP-geolocation failed ({_e}); GPS will be omitted "
+              f"from watermarks until GATE_LATITUDE/GATE_LONGITUDE are set in .env.")
+
+
+def _draw_watermark(frame):
+    """Overlay a semi-transparent info panel with timestamp + location + GPS
+    onto `frame` (BGR ndarray) IN PLACE. Safe on any frame size — panel
+    sits in the bottom-left with proportional padding.
+
+    Returns the same frame reference for chaining. No-op if the watermark
+    is disabled via WATERMARK=0 in .env or the frame is invalid."""
+    if not _WATERMARK_ENABLED:
+        return frame
+    if frame is None or getattr(frame, 'size', 0) == 0:
+        return frame
+
+    h, w = frame.shape[:2]
+
+    now = datetime.now()
+    lines = [
+        now.strftime("%Y-%m-%d  %H:%M:%S"),
+        _GATE_LOCATION_NAME,
+    ]
+    if _GATE_LAT is not None and _GATE_LNG is not None:
+        lines.append(f"Lat {_GATE_LAT:.6f}   Lng {_GATE_LNG:.6f}")
+
+    # Scale text size with frame width so 640x360 and 1920x1080 both look right.
+    font        = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale  = max(0.4, min(0.8, w / 1400.0))
+    thickness   = 1 if w < 1000 else 2
+    line_height = int(24 * font_scale) + 6
+    pad         = int(10 * font_scale) + 4
+
+    # Measure widest line to size the background rect.
+    max_tw = 0
+    for line in lines:
+        (tw, _th), _ = cv2.getTextSize(line, font, font_scale, thickness)
+        if tw > max_tw:
+            max_tw = tw
+    box_w = max_tw + pad * 2
+    box_h = line_height * len(lines) + pad * 2 - 4
+
+    # Bottom-left corner with a small margin.
+    margin = int(8 * font_scale) + 4
+    x1 = margin
+    y1 = h - box_h - margin
+    x2 = x1 + box_w
+    y2 = h - margin
+    x1 = max(0, x1); y1 = max(0, y1)
+    x2 = min(w, x2); y2 = min(h, y2)
+
+    # Semi-transparent black background.
+    try:
+        sub = frame[y1:y2, x1:x2]
+        overlay = sub.copy()
+        overlay[:] = (0, 0, 0)
+        cv2.addWeighted(overlay, 0.55, sub, 0.45, 0, sub)
+
+        # Text (white with a thin darker outline for readability on
+        # bright backgrounds).
+        for i, line in enumerate(lines):
+            y = y1 + pad + line_height * (i + 1) - 6
+            # Outline pass
+            cv2.putText(frame, line, (x1 + pad, y),
+                        font, font_scale, (0, 0, 0),
+                        thickness + 2, cv2.LINE_AA)
+            # Foreground pass
+            cv2.putText(frame, line, (x1 + pad, y),
+                        font, font_scale, (255, 255, 255),
+                        thickness, cv2.LINE_AA)
+    except Exception:
+        # Never let a watermarking bug kill a capture / stream.
+        pass
+    return frame
+
 # Cloud-mode live video state — populated by /api/cloud_push/frame, served by
 # /video_feed when CLOUD_MODE=1. The on-site PC runs a frame pusher that POSTs
 # a JPEG every ~500 ms; the cloud holds only the latest frame in RAM so memory
@@ -274,12 +390,17 @@ def save_plate_artifacts(plate_text, crop_img, bbox_in_crop, confidence):
     full_path = os.path.join(DETECTIONS_DIR, full_name)
     crop_path = os.path.join(DETECTIONS_DIR, crop_name)
     try:
-        cv2.imwrite(full_path, crop_img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        # Watermark BOTH the full crop + the plate close-up so evidence chain
+        # is intact whichever image gets forwarded / downloaded.
+        cv2.imwrite(full_path, _draw_watermark(crop_img.copy()),
+                    [cv2.IMWRITE_JPEG_QUALITY, 85])
         x1, y1, x2, y2 = bbox_in_crop
         x1 = max(0, x1); y1 = max(0, y1)
         x2 = min(crop_img.shape[1], x2); y2 = min(crop_img.shape[0], y2)
         if x2 > x1 and y2 > y1:
-            cv2.imwrite(crop_path, crop_img[y1:y2, x1:x2], [cv2.IMWRITE_JPEG_QUALITY, 90])
+            cv2.imwrite(crop_path,
+                        _draw_watermark(crop_img[y1:y2, x1:x2].copy()),
+                        [cv2.IMWRITE_JPEG_QUALITY, 90])
         rec = {
             "plate":      plate_text,
             "confidence": round(float(confidence), 3),
@@ -1201,6 +1322,13 @@ def camera_loop():
             # Add a bottom progress overlay bar
             cv2.rectangle(out_frame, (0, DISPLAY_H - 6), (DISPLAY_W, DISPLAY_H), (0, 165, 255), -1)
 
+        # Watermark the live-stream frame with timestamp + gate + GPS BEFORE
+        # JPEG encoding, so cloud viewers and the local MJPEG dashboard both
+        # see the evidence overlay identical to what UHF captures record.
+        # Operates in place on out_frame (not on latest_highres, which stays
+        # unmodified for OCR crops).
+        _draw_watermark(out_frame)
+
         # Encode JPEG once here so the streaming endpoint just copies bytes.
         # Previously every browser request re-encoded the frame, contending with YOLO for CPU.
         # Quality tunable via .env — 80 default, 50 for ~1.2 Mbps at 10 fps,
@@ -1587,7 +1715,11 @@ def _capture_worker(tag_c, frame):
     full_name = f"uhf_{ts_str}_{safe_tag}_full.jpg"
     full_path = os.path.join(DETECTIONS_DIR, full_name)
     try:
-        cv2.imwrite(full_path, frame, [cv2.IMWRITE_JPEG_QUALITY, 88])
+        # Watermark BEFORE writing so the saved file has evidence data baked
+        # into the pixels (timestamp + gate location + GPS). Operates on a
+        # copy so we don't disturb the buffer passed in from camera_loop.
+        _wm_frame = _draw_watermark(frame.copy())
+        cv2.imwrite(full_path, _wm_frame, [cv2.IMWRITE_JPEG_QUALITY, 88])
     except Exception as e:
         print(f"[UHF-ANPR] failed to save full frame: {e}")
         return None
@@ -1651,8 +1783,10 @@ def _capture_worker(tag_c, frame):
                             py2 = min(vehicle_crop.shape[0], py2)
                             if px2 > px1 and py2 > py1:
                                 plate_crop_name = f"uhf_{ts_str}_{safe_tag}_plate.jpg"
+                                _plate_wm = _draw_watermark(
+                                    vehicle_crop[py1:py2, px1:px2].copy())
                                 cv2.imwrite(os.path.join(DETECTIONS_DIR, plate_crop_name),
-                                            vehicle_crop[py1:py2, px1:px2],
+                                            _plate_wm,
                                             [cv2.IMWRITE_JPEG_QUALITY, 92])
                     except Exception as e:
                         print(f"[UHF-ANPR] FastALPR failed: {e}")
