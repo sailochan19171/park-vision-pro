@@ -1,8 +1,9 @@
-# ─────────────────────────────────────────────────────────────
-# VayAccess On-Site Agent — one-click setup script
-# Called by SETUP.bat. Do NOT run this directly — the .bat
-# wrapper handles execution policy + elevation for you.
-# ─────────────────────────────────────────────────────────────
+# VayAccess On-Site Agent -- one-click setup script
+# Called by SETUP.bat. Do NOT run this directly -- the .bat
+# wrapper handles execution policy for you.
+#
+# Pure ASCII only (no em-dashes / smart quotes) so Windows
+# PowerShell 5.1 parses it without needing a UTF-8 BOM.
 
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
@@ -14,23 +15,23 @@ function Write-Banner($text, $color = 'Cyan') {
     Write-Host "==============================================================" -ForegroundColor $color
 }
 
-# ─── Step 0. Self-elevate to Administrator ─────────────────
+# ----- Step 0. Self-elevate to Administrator -----
 $principal = [Security.Principal.WindowsPrincipal]::new(
     [Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Banner "Requesting Administrator privileges..." 'Yellow'
     Write-Host "Windows will ask you to approve. Click Yes."
     Start-Sleep 2
-    $args = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
-    Start-Process powershell -ArgumentList $args -Verb RunAs
+    $argList = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    Start-Process powershell -ArgumentList $argList -Verb RunAs
     exit
 }
 
-Write-Banner "VayAccess On-Site Agent — Setup Started" 'Green'
+Write-Banner "VayAccess On-Site Agent -- Setup Started" 'Green'
 Write-Host "Working folder: $PSScriptRoot"
 
-# ─── Step 1. Check / install Python 3.12 ──────────────────
-Write-Banner "Step 1/5 — Python 3.12 check" 'Cyan'
+# ----- Step 1. Check / install Python 3.12 -----
+Write-Banner "Step 1 of 5 -- Python 3.12 check" 'Cyan'
 $pythonExe = $null
 try {
     $ver = & python --version 2>&1
@@ -41,12 +42,12 @@ try {
 } catch { }
 
 if (-not $pythonExe) {
-    Write-Host "Python 3.12 not found. Downloading + installing..." -ForegroundColor Yellow
+    Write-Host "Python 3.12 not found. Downloading and installing..." -ForegroundColor Yellow
     $installer = Join-Path $env:TEMP "python-3.12.9-amd64.exe"
     $url       = "https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe"
     Write-Host "  Downloading from $url ..." -ForegroundColor Gray
     Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-    Write-Host "  Running silent installer (2-3 minutes) ..." -ForegroundColor Gray
+    Write-Host "  Running silent installer (2 to 3 minutes) ..." -ForegroundColor Gray
     Start-Process $installer -ArgumentList `
         "/quiet", "InstallAllUsers=1", "PrependPath=1", "Include_test=0" -Wait
     Remove-Item $installer -Force -ErrorAction SilentlyContinue
@@ -65,8 +66,8 @@ if (-not $pythonExe) {
     }
 }
 
-# ─── Step 2. Create virtualenv + install dependencies ─────
-Write-Banner "Step 2/5 — Python virtualenv + dependencies" 'Cyan'
+# ----- Step 2. Create virtualenv + install dependencies -----
+Write-Banner "Step 2 of 5 -- Python virtualenv + dependencies" 'Cyan'
 $venvPython = Join-Path $PSScriptRoot 'venv\Scripts\python.exe'
 
 if (-not (Test-Path $venvPython)) {
@@ -81,7 +82,7 @@ Write-Host "[OK] venv ready at $venvPython" -ForegroundColor Green
 
 $reqFile = Join-Path $PSScriptRoot 'requirements.txt'
 if (-not (Test-Path $reqFile)) {
-    Write-Host "requirements.txt not in this folder — downloading from GitHub..." -ForegroundColor Yellow
+    Write-Host "requirements.txt not in this folder -- downloading from GitHub..." -ForegroundColor Yellow
     $reqUrl = "https://raw.githubusercontent.com/sailochan19171/park-vision-pro/my-branch/2026-05-19/2026-05-19/files-mentioned-by-the-user-parking/requirements.txt"
     try {
         Invoke-WebRequest -Uri $reqUrl -OutFile $reqFile -UseBasicParsing
@@ -94,7 +95,7 @@ if (-not (Test-Path $reqFile)) {
 Write-Host "Upgrading pip ..." -ForegroundColor Gray
 & $venvPython -m pip install --upgrade pip --quiet --disable-pip-version-check
 
-Write-Host "Installing dependencies (10-15 min first time, mostly PyTorch)..." -ForegroundColor Gray
+Write-Host "Installing dependencies (10 to 15 min first time, mostly PyTorch)..." -ForegroundColor Gray
 & $venvPython -m pip install -r $reqFile --disable-pip-version-check
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERR] pip install failed. See errors above." -ForegroundColor Red
@@ -102,16 +103,16 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "[OK] All dependencies installed" -ForegroundColor Green
 
-# ─── Step 3. Configure .env (only if not already present) ─
-Write-Banner "Step 3/5 — Configuration (.env)" 'Cyan'
+# ----- Step 3. Configure .env (only if not already present) -----
+Write-Banner "Step 3 of 5 -- Configuration (.env)" 'Cyan'
 $envFile = Join-Path $PSScriptRoot '.env'
 
 if (Test-Path $envFile) {
-    Write-Host "[OK] .env already exists at $envFile — skipping prompts." -ForegroundColor Green
+    Write-Host "[OK] .env already exists at $envFile -- skipping prompts." -ForegroundColor Green
     Write-Host "     If you need to change values, edit .env in Notepad after this script finishes."
 } else {
     Write-Host "Enter these values. They will be saved into .env." -ForegroundColor White
-    Write-Host "(Values stay on this laptop only — never sent to chat.)"
+    Write-Host "Values stay on this laptop only -- never sent to chat."
     Write-Host ""
 
     $dbUrl   = Read-Host "  DATABASE_URL  (Neon postgres connection string)"
@@ -137,24 +138,24 @@ if (Test-Path $envFile) {
         "CLOUD_STREAM_JPEG_Q=60"
         "CAMERA_IP=$camIp"
         "RFID_READER_IP=$rfidIp"
-    ) | Set-Content -Encoding utf8 -Path $envFile
+    ) | Set-Content -Encoding ascii -Path $envFile
 
     $tokPlain = $null
     [GC]::Collect()
     Write-Host "[OK] .env written to $envFile" -ForegroundColor Green
 }
 
-# ─── Step 4. Register the scheduled task (auto-boot) ─────
-Write-Banner "Step 4/5 — Register auto-start scheduled task" 'Cyan'
+# ----- Step 4. Register the scheduled task (auto-boot) -----
+Write-Banner "Step 4 of 5 -- Register auto-start scheduled task" 'Cyan'
 $installer = Join-Path $PSScriptRoot 'install-onsite-agent.ps1'
 if (-not (Test-Path $installer)) {
-    Write-Host "[ERR] install-onsite-agent.ps1 missing — copy it from the source folder." -ForegroundColor Red
+    Write-Host "[ERR] install-onsite-agent.ps1 missing -- copy it from the source folder." -ForegroundColor Red
     exit 1
 }
 & $installer
 
-# ─── Step 5. Verification instructions ───────────────────
-Write-Banner "Step 5/5 — All done" 'Green'
+# ----- Step 5. Verification instructions -----
+Write-Banner "Step 5 of 5 -- All done" 'Green'
 $logDir = Join-Path $PSScriptRoot 'logs'
 Write-Host ""
 Write-Host "The agent is now running." -ForegroundColor Green
