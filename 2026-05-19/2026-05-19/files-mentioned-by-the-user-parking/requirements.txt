@@ -7,3 +7,7 @@ Flask
 Flask-SQLAlchemy
 python-dateutil
 pyserial
+psycopg2-binary
+qrcode[pil]
+reportlab
+werkzeug

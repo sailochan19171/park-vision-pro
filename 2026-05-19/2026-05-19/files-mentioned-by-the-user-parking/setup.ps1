@@ -201,12 +201,25 @@ Write-Host "Upgrading pip ..." -ForegroundColor Gray
 & $venvPython -m pip install --upgrade pip --quiet --disable-pip-version-check
 
 Write-Host "Installing dependencies (10 to 15 min first time, mostly PyTorch)..." -ForegroundColor Gray
+# Always run pip install so newly-added packages (e.g. psycopg2-binary) get
+# picked up even when the venv exists from a previous partial install.
 & $venvPython -m pip install -r $reqFile --disable-pip-version-check
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERR] pip install failed. See errors above." -ForegroundColor Red
     exit 1
 }
 Write-Host "[OK] All dependencies installed" -ForegroundColor Green
+
+# Belt-and-braces: explicitly ensure the critical Postgres + WSGI + QR + PDF
+# packages are installed. If someone edits requirements.txt to remove them
+# by mistake, or a previous install skipped them for any reason, this will
+# get them in. Uses --quiet so if they're already there we don't spam.
+Write-Host "Ensuring Postgres/QR/PDF driver packages..." -ForegroundColor Gray
+$critical = @('psycopg2-binary', 'qrcode[pil]', 'reportlab', 'werkzeug')
+foreach ($pkg in $critical) {
+    & $venvPython -m pip install --quiet --disable-pip-version-check $pkg 2>&1 | Out-Null
+}
+Write-Host "[OK] Critical driver packages verified" -ForegroundColor Green
 
 # ----- Step 3. Configure .env (auto-discover + prompt-with-defaults) -----
 Write-Banner "Step 3 of 5 -- Auto-detect camera + RFID reader on the LAN" 'Cyan'
