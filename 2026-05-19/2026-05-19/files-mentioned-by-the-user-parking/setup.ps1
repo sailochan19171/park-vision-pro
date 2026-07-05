@@ -291,9 +291,11 @@ $foundRfid   = $null
 
 if ($subnets) {
     Write-Host "[..] Scanning $($subnets.Count * 254 * 2) addresses for RTSP cameras (~15 sec)..." -ForegroundColor Gray
-    $cams = Find-DevicesOnLan -Subnets $subnets -Ports @(8557, 554)
-    if ($cams) {
-        $foundCamera = $cams[0]
+    # Force array with @() so a single-hit result doesn't get auto-unwrapped
+    # to a bare string (in which case $cams[0] would return the first char).
+    [array]$cams = @(Find-DevicesOnLan -Subnets $subnets -Ports @(8557, 554))
+    if ($cams.Count -gt 0) {
+        $foundCamera = [string]$cams[0]
         Write-Host "     Camera found at $foundCamera" -ForegroundColor Green
         if ($cams.Count -gt 1) {
             Write-Host "     (Also saw: $($cams[1..($cams.Count-1)] -join ', '))" -ForegroundColor Gray
@@ -303,9 +305,9 @@ if ($subnets) {
     }
 
     Write-Host "[..] Scanning $($subnets.Count * 254) addresses for RFID reader (TCP 200)..." -ForegroundColor Gray
-    $rfids = Find-DevicesOnLan -Subnets $subnets -Ports @(200)
-    if ($rfids) {
-        $foundRfid = $rfids[0]
+    [array]$rfids = @(Find-DevicesOnLan -Subnets $subnets -Ports @(200))
+    if ($rfids.Count -gt 0) {
+        $foundRfid = [string]$rfids[0]
         Write-Host "     RFID reader found at $foundRfid" -ForegroundColor Green
     } else {
         Write-Host "     No TCP responder on port 200 -- will prompt." -ForegroundColor Yellow
@@ -344,6 +346,11 @@ if (-not $current.ContainsKey('CLOUD_PUSH_TOKEN')) {
 # Hardware fields -- priority: env-current > auto-detected > historical default
 Write-Host ""
 Write-Host "Hardware IPs (Enter = accept, or type to override):" -ForegroundColor White
+# Compute all defaults ahead of time -- PowerShell 5.1 does NOT support `if`
+# as an inline expression inside function-argument parentheses. Each default
+# gets its own variable so the syntax is legal 5.1.
+
+# Camera IP + port from discovery, existing .env, or historical default.
 $camDefault = $null
 if ($foundCamera) {
     $camDefault = ($foundCamera -split ':')[0]
@@ -354,17 +361,27 @@ if ($foundCamera) {
 }
 $current['CAMERA_IP'] = Prompt-WithDefault -label "CAMERA_IP" -default $camDefault
 
-$camPortDefault = if ($foundCamera) { ($foundCamera -split ':')[1] }
-                  elseif ($current.ContainsKey('CAMERA_PORT')) { $current['CAMERA_PORT'] }
-                  else { '8557' }
+$camPortDefault = $null
+if ($foundCamera) {
+    $camPortDefault = ($foundCamera -split ':')[1]
+} elseif ($current.ContainsKey('CAMERA_PORT')) {
+    $camPortDefault = $current['CAMERA_PORT']
+} else {
+    $camPortDefault = '8557'
+}
 $current['CAMERA_PORT'] = Prompt-WithDefault -label "CAMERA_PORT" -default $camPortDefault
 
-$current['CAMERA_USER'] = Prompt-WithDefault -label "CAMERA_USER" -default (
-    if ($current.ContainsKey('CAMERA_USER')) { $current['CAMERA_USER'] } else { 'admin' })
-$current['CAMERA_PASS'] = Prompt-WithDefault -label "CAMERA_PASS (empty for none)" -default (
-    if ($current.ContainsKey('CAMERA_PASS')) { $current['CAMERA_PASS'] } else { '' })
-$current['CAMERA_PATH'] = Prompt-WithDefault -label "CAMERA_PATH" -default (
-    if ($current.ContainsKey('CAMERA_PATH')) { $current['CAMERA_PATH'] } else { '/stream2' })
+$camUserDefault = 'admin'
+if ($current.ContainsKey('CAMERA_USER')) { $camUserDefault = $current['CAMERA_USER'] }
+$current['CAMERA_USER'] = Prompt-WithDefault -label "CAMERA_USER" -default $camUserDefault
+
+$camPassDefault = ''
+if ($current.ContainsKey('CAMERA_PASS')) { $camPassDefault = $current['CAMERA_PASS'] }
+$current['CAMERA_PASS'] = Prompt-WithDefault -label "CAMERA_PASS (empty for none)" -default $camPassDefault
+
+$camPathDefault = '/stream2'
+if ($current.ContainsKey('CAMERA_PATH')) { $camPathDefault = $current['CAMERA_PATH'] }
+$current['CAMERA_PATH'] = Prompt-WithDefault -label "CAMERA_PATH" -default $camPathDefault
 
 $rfidDefault = $null
 if ($foundRfid) {
@@ -376,9 +393,14 @@ if ($foundRfid) {
 }
 $current['RFID_READER_IP'] = Prompt-WithDefault -label "RFID_READER_IP" -default $rfidDefault
 
-$rfidPortDefault = if ($foundRfid) { ($foundRfid -split ':')[1] }
-                    elseif ($current.ContainsKey('RFID_READER_PORT')) { $current['RFID_READER_PORT'] }
-                    else { '200' }
+$rfidPortDefault = $null
+if ($foundRfid) {
+    $rfidPortDefault = ($foundRfid -split ':')[1]
+} elseif ($current.ContainsKey('RFID_READER_PORT')) {
+    $rfidPortDefault = $current['RFID_READER_PORT']
+} else {
+    $rfidPortDefault = '200'
+}
 $current['RFID_READER_PORT'] = Prompt-WithDefault -label "RFID_READER_PORT" -default $rfidPortDefault
 
 # Sensible defaults for the streaming knobs
