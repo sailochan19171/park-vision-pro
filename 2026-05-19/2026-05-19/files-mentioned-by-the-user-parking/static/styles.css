@@ -1968,3 +1968,64 @@ td, th, .epc, code, .scan-row dd,
 .zone-recent-row:last-child { border-bottom: 0; }
 .zone-recent-row .plate { font-family: monospace; font-weight: 700; }
 .zone-recent-row .time  { opacity: 0.6; font-size: 11px; }
+
+/* ──────────────────────────────────────────────────────────────────────
+   UHF Captures thumbnail cells
+   Mobile-friendly styling with graceful "image syncing" placeholder for
+   the case where the DB row exists but the file hasn't been pushed to
+   the cloud detections/ folder yet.
+   ────────────────────────────────────────────────────────────────────── */
+.uhf-thumb-link {
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+}
+.uhf-thumb-img {
+  width: 96px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  display: block;
+  background: #f3f4f6;
+}
+.uhf-thumb-link.uhf-thumb-missing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 60px;
+  border-radius: 6px;
+  border: 1px dashed var(--line);
+  background: #f9fafb;
+  color: #9ca3af;
+  font-size: 24px;
+  line-height: 1.1;
+  text-align: center;
+  cursor: default;
+}
+.uhf-thumb-empty {
+  display: inline-block;
+  width: 96px;
+  height: 60px;
+  line-height: 60px;
+  text-align: center;
+  color: #d1d5db;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+/* Phone-sized displays: shrink thumbnails to save horizontal space + let
+   the row show more columns before wrapping to horizontal scroll. */
+@media (max-width: 640px) {
+  .uhf-thumb-img,
+  .uhf-thumb-link.uhf-thumb-missing,
+  .uhf-thumb-empty {
+    width: 64px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 18px;
+  }
+  .uhf-thumb-link.uhf-thumb-missing { font-size: 16px; line-height: 1.1; }
+}

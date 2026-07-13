@@ -3517,13 +3517,20 @@ async function loadUhfCaptures() {
     // fetches ALL thumbnails at once (80 requests for 40 rows) and blocks the
     // page for ~10 s. With lazy loading, only the ~6 visible rows fetch on
     // page load — everything else defers until scroll.
+    //
+    // onerror swaps the broken image for a "no image" placeholder card so
+    // mobile viewers don't see a broken-image icon (which looks awful and
+    // still eats a tap). Uses the row-level plate/tag as fallback context.
     const thumb = (filename, label) => filename
-      ? `<a href="/image/${encodeURIComponent(filename)}" target="_blank" rel="noopener" title="${label} — click to view full">
+      ? `<a href="/image/${encodeURIComponent(filename)}" target="_blank" rel="noopener"
+           title="${label} — tap to view full"
+           class="uhf-thumb-link">
            <img src="/image/${encodeURIComponent(filename)}" alt="${label}"
                 loading="lazy" decoding="async"
-                style="width:96px; height:60px; object-fit:cover; border-radius:6px; border:1px solid var(--line); display:block;">
+                class="uhf-thumb-img"
+                onerror="this.onerror=null; this.parentElement.classList.add('uhf-thumb-missing'); this.parentElement.setAttribute('href','#'); this.style.display='none'; this.parentElement.innerHTML='&#128247;<br><span style=&quot;font-size:0.72em;&quot;>image<br>syncing</span>';">
          </a>`
-      : '<span style="opacity:0.45;">—</span>';
+      : '<span class="uhf-thumb-empty">—</span>';
     const badge = (st) => /grant/i.test(st || '') ? `<span class="scan-status-badge granted">${_esc(st)}</span>`
       : /den/i.test(st || '') ? `<span class="scan-status-badge denied">${_esc(st)}</span>`
       : `<span class="scan-status-badge scanning">${_esc(st) || '—'}</span>`;

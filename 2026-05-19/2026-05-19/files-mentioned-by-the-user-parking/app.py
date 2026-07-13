@@ -1833,6 +1833,7 @@ def _capture_worker(tag_c, frame):
             )
             db.session.add(event)
             db.session.commit()
+            local_event_id = event.id
 
             print(f"[UHF-ANPR] tag={tag_c} plate={plate_text} owner={owner_name} "
                   f"status={status} full={full_name} plate_img={plate_crop_name}")
@@ -1840,7 +1841,9 @@ def _capture_worker(tag_c, frame):
 
         # Best-effort cloud push (outside the DB context manager so the local
         # commit lands first). Runs in a thread so a slow / offline cloud
-        # never blocks the gate flow.
+        # never blocks the gate flow. event_id lets the cloud UPDATE this
+        # exact row's image filenames instead of creating a duplicate whose
+        # uhf_* file only exists on the on-site disk (and 404s on cloud).
         _push_uhf_event_to_cloud(
             ts=ts, tag=tag_c, plate=plate_text, vehicle_type=vehicle_label,
             confidence=plate_confidence, owner_name=owner_name,
@@ -1848,6 +1851,7 @@ def _capture_worker(tag_c, frame):
             full_path=full_path,
             plate_path=(os.path.join(DETECTIONS_DIR, plate_crop_name)
                         if plate_crop_name else None),
+            event_id=local_event_id,
         )
         return result
     except Exception as e:
@@ -1857,7 +1861,7 @@ def _capture_worker(tag_c, frame):
 
 def _push_uhf_event_to_cloud(ts, tag, plate, vehicle_type, confidence,
                               owner_name, department, status,
-                              full_path, plate_path):
+                              full_path, plate_path, event_id=None):
     """Spawn a background thread that uploads this capture to the cloud admin
     portal. No-op when CLOUD_PUSH_URL or CLOUD_PUSH_TOKEN env vars aren't set
     (e.g. cloud-only deployments, or local-only test runs)."""
@@ -1906,6 +1910,9 @@ def _push_uhf_event_to_cloud(ts, tag, plate, vehicle_type, confidence,
             "owner_name":      owner_name or '',
             "department":      department or '',
             "status":          status or 'UNKNOWN',
+            # Cloud uses this to UPDATE the shared-DB row instead of creating a
+            # duplicate. Skipping it (event_id=None) triggers legacy insert path.
+            "event_id":        event_id,
             # Downscale + re-encode before pushing:
             #   full image  -> 800px wide  @ q60 (~25 KB)  — good enough for
             #                                                the cloud gallery
@@ -2560,6 +2567,49 @@ def api_cloud_push_uhf():
     plate_name = _save_b64_image(data.get('plate_image_b64'), 'plate')
 
     try:
+        # If the on-site agent sends the local DB row's id (event_id), we
+        # UPDATE that existing row's image filenames to the cloud-saved
+        # versions -- instead of creating a duplicate row whose uhf_* image
+        # only exists on the on-site laptop's disk (and 404s on the cloud
+        # viewer, especially on mobile where fallback UI is worst).
+        try:
+            event_id = int(data.get('event_id') or 0)
+        except (ValueError, TypeError):
+            event_id = 0
+
+        existing = None
+        if event_id > 0:
+            existing = UHFEntryEvent.query.get(event_id)
+
+        if existing:
+            # Point the shared DB row at the cloud-accessible filenames so
+            # cloud + mobile viewers can serve the JPEGs.
+            if full_name:  existing.full_image  = full_name
+            if plate_name: existing.plate_image = plate_name
+            # Fill in fields the on-site agent may have picked up but the
+            # earlier local insert missed (owner_name after whitelist lookup,
+            # status upgrade after tariff check, etc.).
+            for fld, key in (
+                ('plate','plate'),('vehicle_type','vehicle_type'),
+                ('confidence','confidence'),('owner_name','owner_name'),
+                ('department','department'),('status','status')):
+                val = data.get(key)
+                if val is not None and val != '':
+                    if fld == 'plate':
+                        setattr(existing, fld, str(val).strip().upper() or None)
+                    elif fld == 'confidence':
+                        try: setattr(existing, fld, float(val))
+                        except (TypeError, ValueError): pass
+                    else:
+                        setattr(existing, fld, str(val).strip() or None)
+            db.session.commit()
+            print(f"[CLOUD-INGEST] updated existing UHF row #{existing.id} "
+                  f"with cloud images (full={full_name}, plate={plate_name})")
+            return jsonify({"ok": True, "id": existing.id, "updated": True}), 200
+
+        # Legacy path -- on-site agent didn't send event_id (older client
+        # or the local DB insert failed). Insert a fresh row + AccessLog
+        # mirror so nothing is lost.
         event = UHFEntryEvent(
             timestamp=ts,
             rfid_tag=tag,
