@@ -1773,6 +1773,9 @@
                 <p class="hint" style="margin:2px 0 0;" id="uc-meta">Every time the UHF reader picks up a tag, the camera frame + plate crop are saved here.</p>
               </div>
               <input type="text" id="uc-search" placeholder="Search tag / plate / owner…" style="margin:0; min-width:220px;">
+              <button type="button" id="uc-cleanup-btn" class="ghost-button"
+                      title="Removes duplicate rows whose image files 404 on this server (legacy captures made before the on-site agent learned to send event_id)."
+                      style="margin:0;">Clean up broken images</button>
             </div>
             <div class="table-wrap">
               <table id="uc-table">

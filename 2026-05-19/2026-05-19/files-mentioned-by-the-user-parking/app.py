@@ -2480,6 +2480,73 @@ def api_uhf_captures():
     return jsonify([r.to_dict() for r in rows])
 
 
+@app.route('/api/uhf_captures/cleanup', methods=['POST'])
+@login_required
+def api_uhf_captures_cleanup():
+    """Delete UHFEntryEvent rows whose image files are missing from this
+    server's disk. Fixes the case where legacy captures inserted rows with
+    on-site laptop filenames (uhf_*) which the cloud viewer 404s on because
+    the JPEG lives only on the on-site laptop, not on Render.
+
+    Safe: for each row that has a duplicate (same rfid_tag within 5s) whose
+    image files DO exist, the missing-image row is deleted. For a row with
+    no duplicate, we just null out the missing filename fields so the row
+    itself survives (it's still valuable scan history) but no longer
+    generates a broken thumbnail."""
+    from datetime import timedelta as _td
+    scanned = 0
+    dropped = 0
+    nulled  = 0
+
+    rows = UHFEntryEvent.query.order_by(UHFEntryEvent.timestamp.desc()).all()
+    for row in rows:
+        scanned += 1
+        full_missing  = bool(row.full_image  and not os.path.exists(os.path.join(DETECTIONS_DIR, row.full_image)))
+        plate_missing = bool(row.plate_image and not os.path.exists(os.path.join(DETECTIONS_DIR, row.plate_image)))
+        if not full_missing and not plate_missing:
+            continue
+
+        # Look for a sibling row: same tag, within 5s, with WORKING images.
+        window_start = row.timestamp - _td(seconds=5)
+        window_end   = row.timestamp + _td(seconds=5)
+        sibling = (UHFEntryEvent.query
+                   .filter(UHFEntryEvent.id != row.id,
+                           UHFEntryEvent.rfid_tag == row.rfid_tag,
+                           UHFEntryEvent.timestamp >= window_start,
+                           UHFEntryEvent.timestamp <= window_end)
+                   .all())
+        sibling_with_working_images = None
+        for s in sibling:
+            s_full_ok  = bool(s.full_image  and os.path.exists(os.path.join(DETECTIONS_DIR, s.full_image)))
+            if s_full_ok:
+                sibling_with_working_images = s
+                break
+
+        if sibling_with_working_images is not None:
+            # A neighbor row already has the file. Delete this broken duplicate.
+            db.session.delete(row)
+            dropped += 1
+        else:
+            # No sibling with working images -- keep the scan record but
+            # blank out the missing filename fields so the frontend shows
+            # a clean empty cell instead of a placeholder.
+            if full_missing:  row.full_image  = None
+            if plate_missing: row.plate_image = None
+            nulled += 1
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({
+        "scanned": scanned,
+        "dropped_duplicates": dropped,
+        "nulled_orphans":     nulled,
+    })
+
+
 @app.route('/api/recent_detections')
 def api_recent_detections():
     """Return the most recent committed plates with image filenames."""

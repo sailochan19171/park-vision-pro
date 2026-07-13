@@ -3558,6 +3558,29 @@ document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
 });
 $('uc-search')?.addEventListener('input', loadUhfCaptures);
 
+// Cleanup button — deletes duplicate rows whose image files 404 on this server.
+// Keeps rows that still have a working sibling; blanks out filenames for
+// orphan rows so the placeholder text stops showing.
+$('uc-cleanup-btn')?.addEventListener('click', async () => {
+  const btn = $('uc-cleanup-btn'); if (!btn) return;
+  if (!confirm('Scan UHF Captures for rows whose image files are missing on this server, and clean them up? Non-destructive: rows with a working duplicate get merged; orphans keep the scan record but the broken thumbnail disappears.')) return;
+  const originalText = btn.textContent;
+  btn.textContent = 'Cleaning...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/uhf_captures/cleanup', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    alert(`Cleanup complete.\n\nScanned:  ${data.scanned}\nDropped duplicates: ${data.dropped_duplicates}\nOrphans blanked: ${data.nulled_orphans}`);
+    loadUhfCaptures();
+  } catch (e) {
+    alert('Cleanup failed: ' + e.message);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+
 // ── Zone-wise Gate Entry — live per-zone occupancy + recent entries ────────
 async function loadZoneLive() {
   const grid = $('zl-grid'); const meta = $('zl-meta');
