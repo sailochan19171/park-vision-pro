@@ -3451,6 +3451,111 @@ document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
 });
 $('mn-search')?.addEventListener('input', loadMenuPerms);
 $('rp-search')?.addEventListener('input', loadRolePerms);
+
+// ── Permission Matrix (roles x sections, click-to-toggle) ────────────────
+// Renders a grid: each role is a row, each sidebar section is a column.
+// Every cell has 3 checkboxes (R/W/D). Click any checkbox and the change
+// POSTs immediately to /api/role_permissions — no save button.
+const _PM_SECTIONS = [
+  ['dashboard','Home'], ['reports','Reports'], ['video','Video'],
+  ['parking-records','Parking'], ['scanning-record','Scans'],
+  ['devices','Devices'], ['exit','Exit'], ['manual-entry','Entry'],
+  ['orders','Orders'], ['membership','Members'], ['admin','Whitelist'],
+  ['registered','Vehicles'], ['blacklist','Blacklist'], ['yard','Yards'],
+  ['region','Regions'], ['type-mgmt','Types'], ['visitors','Visitors'],
+  ['account','Accounts'], ['lcd','LCD'], ['equipment','Equipment'],
+  ['menu-mgmt','Menu Perm'], ['role','Roles'], ['role-perm','Role Perm'],
+  ['dictionary','Dict'], ['audit-log','Audit'], ['uhf-captures','UHF'],
+  ['driver-users','Drivers'], ['zone-live','Zones'],
+  ['settings-basic','Settings'], ['settings-entry-exit','Entry Cfg'],
+];
+const _PM_ACTIONS = ['read','write','delete'];
+
+async function loadPermissionMatrix() {
+  const head = $('pm-matrix-head'); const body = $('pm-matrix-body');
+  if (!head || !body) return;
+  try {
+    // Grab roles + existing permissions in parallel
+    const [roles, perms] = await Promise.all([
+      fetch('/api/roles',            { cache: 'no-store' }).then(r => r.json()),
+      fetch('/api/role_permissions', { cache: 'no-store' }).then(r => r.json()),
+    ]);
+    if (!Array.isArray(roles) || !Array.isArray(perms)) {
+      body.innerHTML = '<tr><td>Failed to load roles/permissions.</td></tr>';
+      return;
+    }
+    // Index existing perms by role|section|action -> {id, allowed}
+    const idx = {};
+    perms.forEach(p => {
+      const k = `${(p.role_name||'').toLowerCase()}|${p.section_key||''}|${p.action||''}`;
+      idx[k] = p;
+    });
+
+    // Build header row
+    let h = '<tr><th class="pm-role-th">Role</th>';
+    _PM_SECTIONS.forEach(([k, label]) => {
+      h += `<th class="pm-section-th" title="${k}">${label}<div class="pm-rwd">R W D</div></th>`;
+    });
+    h += '</tr>';
+    head.innerHTML = h;
+
+    // Build body rows
+    body.innerHTML = roles.map(r => {
+      const cells = _PM_SECTIONS.map(([k]) => {
+        const cbs = _PM_ACTIONS.map(a => {
+          const existing = idx[`${r.name.toLowerCase()}|${k}|${a}`];
+          const checked = existing && existing.allowed ? 'checked' : '';
+          return `<input type="checkbox" class="pm-cb"
+                    data-role="${_esc(r.name)}" data-section="${k}" data-action="${a}"
+                    ${checked}>`;
+        }).join('');
+        return `<td class="pm-cell">${cbs}</td>`;
+      }).join('');
+      return `<tr><td class="pm-role-cell">${_esc(r.name)}</td>${cells}</tr>`;
+    }).join('') || '<tr><td colspan="99">No roles yet -- add one in Role Management first.</td></tr>';
+
+  } catch (e) {
+    body.innerHTML = `<tr><td>Error: ${_esc(e.message)}</td></tr>`;
+  }
+}
+
+// Delegated click-to-toggle. Fires POST /api/role_permissions on every change.
+document.addEventListener('change', async (ev) => {
+  const cb = ev.target;
+  if (!cb || !cb.classList || !cb.classList.contains('pm-cb')) return;
+  const payload = {
+    role_name:   cb.dataset.role,
+    section_key: cb.dataset.section,
+    action:      cb.dataset.action,
+    allowed:     cb.checked ? 1 : 0,
+  };
+  cb.disabled = true;
+  try {
+    const res = await fetch('/api/role_permissions', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } catch (e) {
+    alert(`Failed to save: ${e.message}`);
+    cb.checked = !cb.checked;   // revert on failure
+  } finally {
+    cb.disabled = false;
+  }
+});
+
+$('pm-refresh')?.addEventListener('click', loadPermissionMatrix);
+// Refresh matrix when role-perm view is opened, alongside the existing row list.
+Object.assign(_liveLoaders, {
+  'role-perm': () => { loadRolePerms(); loadPermissionMatrix(); }
+});
+document.querySelectorAll('.nav-item, [data-jump]').forEach(btn => {
+  const v = btn.dataset.view || btn.dataset.jump;
+  if (v === 'role-perm') btn.addEventListener('click',
+      () => setTimeout(loadPermissionMatrix, 30));
+});
+
 // Pick up the new tables in Refresh/Export/Batch button injections.
 _injectTableActions();
 _injectBatchButtons();

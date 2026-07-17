@@ -3168,6 +3168,85 @@ def seed_defaults():
         else:
             print(f"[OK] Initial admin {action}: {admin_user}")
 
+    # ── Parking-specific default roles + permission bundle ────────────────
+    # Seeded once (guarded by a Setting). Each role gets a starter permission
+    # matrix covering the sections that make sense for its job -- operator
+    # can edit any of it from the Permission Matrix UI after boot.
+    if Setting.get('parking_roles_seed_v1') != 'done':
+        _default_roles = [
+            ('Administrator',           'Full system access -- every module, every action'),
+            ('Parking Manager',         'Owns yards, tariffs, zones, whitelists + all reports'),
+            ('Gate Operator',           'Runs manual entry/exit + views live monitoring'),
+            ('Security Supervisor',     'Views scans, manages blacklist, no delete rights'),
+            ('Visitor Management',      'Creates + manages visitor passes'),
+            ('Cashier',                 'Handles exit payments + views transactions'),
+            ('Reports Viewer',          'Read-only across statistical + audit reports'),
+            ('IT / System Admin',       'System settings, accounts, roles, permissions'),
+        ]
+        for name, desc in _default_roles:
+            if not Role.query.filter(db.func.lower(Role.name) == name.lower()).first():
+                db.session.add(Role(name=name, description=desc))
+
+        # Sections mirror the sidebar's data-view keys.
+        SECTIONS = [
+            'dashboard','reports','video','parking-records','scanning-record',
+            'devices','exit','manual-entry','orders',
+            'membership','admin','registered','blacklist','yard',
+            'region','type-mgmt','visitors',
+            'account','lcd','equipment','menu-mgmt','role','role-perm',
+            'dictionary','audit-log','uhf-captures','driver-users',
+            'zone-live','settings-basic','settings-entry-exit',
+        ]
+        # Per-role default (read / write / delete) permissions per section.
+        # 'ALL_RW' == read+write everywhere; 'ALL_RWD' == +delete; each entry
+        # can also be a per-section dict for fine control.
+        _role_perms = {
+            'Administrator':       {s: ('read','write','delete') for s in SECTIONS},
+            'Parking Manager':     {s: ('read','write','delete') for s in
+                ['dashboard','reports','video','parking-records','scanning-record',
+                 'devices','manual-entry','exit','membership','admin','registered',
+                 'yard','region','type-mgmt','audit-log','uhf-captures','zone-live']},
+            'Gate Operator':       {s: ('read','write') for s in
+                ['dashboard','video','manual-entry','exit','parking-records',
+                 'scanning-record','uhf-captures','zone-live']},
+            'Security Supervisor': {s: ('read',) for s in
+                ['dashboard','video','parking-records','scanning-record','uhf-captures',
+                 'audit-log','zone-live','registered','visitors']}
+                | {'blacklist': ('read','write')},
+            'Visitor Management':  {s: ('read','write','delete') for s in
+                ['visitors','dashboard']}
+                | {'reports': ('read',)},
+            'Cashier':             {s: ('read','write') for s in
+                ['exit','parking-records','dashboard']},
+            'Reports Viewer':      {s: ('read',) for s in
+                ['dashboard','reports','audit-log','uhf-captures','zone-live','parking-records']},
+            'IT / System Admin':   {s: ('read','write','delete') for s in
+                ['dashboard','account','role','role-perm','menu-mgmt','equipment',
+                 'lcd','dictionary','settings-basic','settings-entry-exit','audit-log']},
+        }
+        seeded = 0
+        for role_name, matrix in _role_perms.items():
+            for section, actions in matrix.items():
+                for action in ('read','write','delete'):
+                    allowed = action in actions
+                    # Only insert if the (role, section, action) triple doesn't
+                    # already exist -- lets the operator override later without
+                    # this seeder clobbering their changes on subsequent boots.
+                    exists = (RolePermission.query
+                              .filter(db.func.lower(RolePermission.role_name)   == role_name.lower(),
+                                      db.func.lower(RolePermission.section_key) == section.lower(),
+                                      db.func.lower(RolePermission.action)      == action)
+                              .first())
+                    if not exists:
+                        db.session.add(RolePermission(
+                            role_name=role_name, section_key=section,
+                            action=action, allowed=allowed))
+                        seeded += 1
+        db.session.commit()
+        Setting.set('parking_roles_seed_v1', 'done')
+        print(f"[DB] parking-roles seed: {len(_default_roles)} roles, "
+              f"{seeded} permission rows inserted")
+
     # One-shot retag: collapse all legacy multi-zone values to the single
     # configured zone ('GMR Cargo Staff Parking'). Runs once, guarded by a
     # setting. Old zones like 'Auto Gate', 'Basement A', etc. become one

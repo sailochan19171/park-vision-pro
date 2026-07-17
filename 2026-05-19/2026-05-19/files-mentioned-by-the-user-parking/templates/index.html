@@ -1707,8 +1707,29 @@
         </section>
         <!-- Role Permission — live CRUD from /api/role_permissions -->
         <section id="role-perm" class="view">
+          <!-- Permission Matrix: roles as rows, sections as columns. Click
+               a checkbox and it POSTs the toggle immediately -- no save
+               button required. Best-in-class UX for permission editing. -->
           <section class="panel" style="margin-bottom:16px;">
-            <div class="panel-head"><h2>Add Role Permission</h2></div>
+            <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
+              <div>
+                <h2>Permission Matrix</h2>
+                <span class="hint">Click any cell to toggle Read / Write / Delete. Saves instantly. Seeded with parking-specific role bundle on first boot; edit freely.</span>
+              </div>
+              <button type="button" id="pm-refresh" class="ghost-button" style="margin:0;">Refresh</button>
+            </div>
+            <div class="table-wrap" style="max-height: 70vh; overflow: auto;">
+              <table id="pm-matrix" class="pm-matrix-table">
+                <thead id="pm-matrix-head"></thead>
+                <tbody id="pm-matrix-body">
+                  <tr><td style="text-align:center; opacity:0.6; padding:20px;">Loading matrix…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Add Role Permission (manual row)</h2></div>
             <form id="rp-form" autocomplete="off" style="display:grid; grid-template-columns: repeat(4,1fr); gap:12px; align-items:end;">
               <label>Role *<select id="rp-role"><option value="">— Select role —</option></select></label>
               <label>Section *<select id="rp-section" data-menu-options><option value="">— Select section —</option></select></label>

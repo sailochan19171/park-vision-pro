@@ -2029,3 +2029,83 @@ td, th, .epc, code, .scan-row dd,
   }
   .uhf-thumb-link.uhf-thumb-missing { font-size: 16px; line-height: 1.1; }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Permission Matrix (Role Permission page)
+   Grid: roles as rows, sections as columns, 3 checkboxes per cell (R/W/D).
+   Sticky first column + header for large matrices.
+   ────────────────────────────────────────────────────────────────────── */
+.pm-matrix-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+  min-width: 100%;
+}
+.pm-matrix-table th, .pm-matrix-table td {
+  border: 1px solid var(--line);
+  padding: 6px 5px;
+  text-align: center;
+  background: #fff;
+}
+.pm-matrix-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+  vertical-align: bottom;
+  padding: 8px 4px 6px;
+}
+.pm-matrix-table thead th.pm-role-th {
+  z-index: 5;                        /* corner cell above both axes */
+  left: 0;
+  min-width: 160px;
+}
+.pm-section-th {
+  min-width: 74px;
+  font-size: 11px;
+  writing-mode: horizontal-tb;
+}
+.pm-rwd {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 400;
+  letter-spacing: 2px;
+}
+.pm-role-cell {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #f8fafc;
+  text-align: left;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.pm-cell {
+  padding: 4px 2px;
+  white-space: nowrap;
+}
+.pm-cell .pm-cb {
+  width: 15px;
+  height: 15px;
+  margin: 0 1px;
+  cursor: pointer;
+  accent-color: var(--brand-primary, #2b5cff);
+}
+.pm-cell .pm-cb:disabled { opacity: 0.4; cursor: wait; }
+
+/* Alternating row shading for readability across ~30-column matrix. */
+.pm-matrix-table tbody tr:nth-child(even) td { background: #fafbfc; }
+.pm-matrix-table tbody tr:nth-child(even) .pm-role-cell { background: #f1f5f9; }
+.pm-matrix-table tbody tr:hover td { background: #fef9e7; }
+.pm-matrix-table tbody tr:hover .pm-role-cell { background: #fef3c7; }
+
+@media (max-width: 640px) {
+  .pm-matrix-table { font-size: 11px; }
+  .pm-section-th { min-width: 60px; }
+  .pm-role-cell { padding: 6px 8px; min-width: 130px; }
+  .pm-cell .pm-cb { width: 13px; height: 13px; }
+}
