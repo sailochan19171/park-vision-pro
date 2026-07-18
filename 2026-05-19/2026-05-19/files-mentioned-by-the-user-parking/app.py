@@ -340,12 +340,19 @@ def _watermark_geolocate_worker():
                     with _watermark_lock:
                         _GATE_ADDRESS = _addrline
 
-# Kick off the background geolocation. Non-daemon threads keep Python alive on
-# shutdown so we mark this daemon. `time` and `threading` are already imported.
-if _WATERMARK_ENABLED:
-    threading.Thread(target=_watermark_geolocate_worker, daemon=True,
-                     name='watermark-geolocate').start()
-    print("[WATERMARK] Background geolocation worker started (live, refreshes every 30 min).")
+# Auto-geolocation is INTENTIONALLY not started. IP-based geolocation is only
+# city-accurate and each gate installation has a different exact address, so
+# the address line is set per-site via GATE_ADDRESS_LINE in .env (prompted for
+# during SETUP.bat). If GATE_ADDRESS_LINE is empty, no address is drawn --
+# the watermark shows just the timestamp. The _watermark_geolocate_worker /
+# _try_geolocate_once / _try_reverse_geocode helpers are kept in the file so
+# future features (analytics, gate mapping) can call them explicitly, but
+# they are NOT auto-invoked at startup.
+if _WATERMARK_ENABLED and _GATE_ADDRESS:
+    print(f"[WATERMARK] Using manual address from .env: '{_GATE_ADDRESS}'")
+elif _WATERMARK_ENABLED:
+    print("[WATERMARK] No GATE_ADDRESS_LINE in .env -- watermark will show timestamp only. "
+          "Set GATE_ADDRESS_LINE in .env (or run SETUP.bat) to add the site address.")
 
 
 def _draw_watermark(frame):
@@ -363,12 +370,12 @@ def _draw_watermark(frame):
     h, w = frame.shape[:2]
 
     now = datetime.now()
-    lines = [
-        now.strftime("Date: %d/%m/%Y | Time: %H:%M"),
-        _GATE_ADDRESS or _GATE_LOCATION_NAME,
-    ]
-    if _GATE_LAT is not None and _GATE_LNG is not None:
-        lines.append(f"Lat: {_GATE_LAT:.4f}  Lng: {_GATE_LNG:.4f}")
+    lines = [now.strftime("Date: %d/%m/%Y | Time: %H:%M:%S")]
+    # Only show the address if the operator explicitly typed it in .env
+    # (GATE_ADDRESS_LINE). Auto-detection was inaccurate at street-level, so
+    # every installation is expected to set its own address at SETUP.bat time.
+    if _GATE_ADDRESS:
+        lines.append(_GATE_ADDRESS)
 
     # Scale text size with frame width so 640x360 and 1920x1080 both look right.
     font        = cv2.FONT_HERSHEY_SIMPLEX

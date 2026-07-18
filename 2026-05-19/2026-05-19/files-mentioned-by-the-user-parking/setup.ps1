@@ -565,47 +565,27 @@ if (-not $current.ContainsKey('CLOUD_STREAM_FPS'))   { $current['CLOUD_STREAM_FP
 if (-not $current.ContainsKey('CLOUD_STREAM_JPEG_Q')){ $current['CLOUD_STREAM_JPEG_Q']= '60' }
 if (-not $current.ContainsKey('WATERMARK'))          { $current['WATERMARK']          = '1' }
 
-# Prompt for gate name + GPS. Try IP-based geolocation to prefill defaults so
-# the operator can just hit Enter through them if they don't have exact coords.
+# Image watermark: only the site address is shown alongside the timestamp.
+# Lat/lng and IP-based auto-detection were removed after operator feedback:
+# every installation has a different exact address, so we ask ONCE at setup
+# time and use it verbatim on every capture thereafter. Leaving it blank
+# means the watermark shows just the date/time.
 Write-Host ""
-Write-Host "Image watermark (timestamp + gate name + GPS on every capture):" -ForegroundColor White
-
-$defaultGateName = 'VayAccess Gate'
-$defaultLat = ''
-$defaultLng = ''
-if ($current.ContainsKey('GATE_LOCATION_NAME')) { $defaultGateName = $current['GATE_LOCATION_NAME'] }
-if ($current.ContainsKey('GATE_LATITUDE'))      { $defaultLat      = $current['GATE_LATITUDE'] }
-if ($current.ContainsKey('GATE_LONGITUDE'))     { $defaultLng      = $current['GATE_LONGITUDE'] }
-
-if (-not $defaultLat -or -not $defaultLng) {
-    try {
-        Write-Host "  [..] Looking up approximate GPS via public IP..." -ForegroundColor Gray
-        $geo = Invoke-RestMethod -Uri "https://ipapi.co/json/" -TimeoutSec 4
-        if (-not $defaultLat -and $geo.latitude)  { $defaultLat = "$($geo.latitude)" }
-        if (-not $defaultLng -and $geo.longitude) { $defaultLng = "$($geo.longitude)" }
-        if ($defaultGateName -eq 'VayAccess Gate' -and $geo.city) {
-            $defaultGateName = "$($geo.city), $($geo.region)".Trim().TrimEnd(',')
-        }
-    } catch {
-        Write-Host "  [..] IP-geolocation lookup failed -- you can leave GPS blank." -ForegroundColor Yellow
-    }
-}
-
-$current['GATE_LOCATION_NAME'] = Prompt-WithDefault -label "GATE_LOCATION_NAME" -default $defaultGateName
-$current['GATE_LATITUDE']      = Prompt-WithDefault -label "GATE_LATITUDE (decimal, empty=none)"  -default $defaultLat
-$current['GATE_LONGITUDE']     = Prompt-WithDefault -label "GATE_LONGITUDE (decimal, empty=none)" -default $defaultLng
-
-# EXACT street address for the watermark. IP geolocation gives ISP-level
-# accuracy (city / neighbourhood), which is often wrong -- Nominatim on
-# top can only be as accurate as its input. This prompt lets the operator
-# paste the real gate address once, and it's used verbatim thereafter.
-Write-Host ""
-Write-Host "Type the actual gate address as it should appear on the watermark." -ForegroundColor White
+Write-Host "Image watermark address (shown next to timestamp on every capture):" -ForegroundColor White
+Write-Host "  Type the actual site address as it should appear on captured images." -ForegroundColor Gray
 Write-Host "  Example: 'Reliance Hardware Depot, Kondapur, Hyderabad'" -ForegroundColor Gray
-Write-Host "  Leave blank to auto-detect from GPS via OpenStreetMap Nominatim." -ForegroundColor Gray
+Write-Host "  Leave blank to skip the address line entirely." -ForegroundColor Gray
 $defaultAddr = ''
 if ($current.ContainsKey('GATE_ADDRESS_LINE')) { $defaultAddr = $current['GATE_ADDRESS_LINE'] }
-$current['GATE_ADDRESS_LINE']  = Prompt-WithDefault -label "GATE_ADDRESS_LINE" -default $defaultAddr
+$current['GATE_ADDRESS_LINE'] = Prompt-WithDefault -label "GATE_ADDRESS_LINE" -default $defaultAddr
+
+# Keep GATE_LOCATION_NAME / GATE_LATITUDE / GATE_LONGITUDE around for
+# backward compatibility with any old .env fields, but do not prompt --
+# they are no longer used on the watermark. Any existing values are
+# preserved verbatim in the .env file that gets written below.
+if (-not $current.ContainsKey('GATE_LOCATION_NAME')) { $current['GATE_LOCATION_NAME'] = 'VayAccess Gate' }
+if (-not $current.ContainsKey('GATE_LATITUDE'))      { $current['GATE_LATITUDE']      = '' }
+if (-not $current.ContainsKey('GATE_LONGITUDE'))     { $current['GATE_LONGITUDE']     = '' }
 
 # Write .env back with a stable key ordering
 $keyOrder = @(
