@@ -215,6 +215,7 @@ _DEBUG_SNAPSHOTS = (os.environ.get('DEBUG_SNAPSHOTS', '0').strip() == '1')
 # something reasonable still shows even for admins who never opened .env.
 _WATERMARK_ENABLED = (os.environ.get('WATERMARK', '1').strip() != '0')
 _GATE_LOCATION_NAME = (os.environ.get('GATE_LOCATION_NAME') or 'VayAccess Gate').strip()
+_GATE_ADDRESS = (os.environ.get('GATE_ADDRESS_LINE') or '').strip()
 
 def _parse_float(val):
     try:
@@ -248,6 +249,40 @@ if _GATE_LAT is None or _GATE_LNG is None:
         print(f"[WATERMARK] IP-geolocation failed ({_e}); GPS will be omitted "
               f"from watermarks until GATE_LATITUDE/GATE_LONGITUDE are set in .env.")
 
+# Reverse-geocode the coordinates into a human-readable street address so the
+# watermark shows a real location, not just "City, Region". OpenStreetMap
+# Nominatim is free, no API key required. Skipped if the user already set
+# GATE_ADDRESS_LINE in .env.
+if not _GATE_ADDRESS and _GATE_LAT is not None and _GATE_LNG is not None:
+    try:
+        import urllib.request as _u
+        _req = _u.Request(
+            f"https://nominatim.openstreetmap.org/reverse"
+            f"?lat={_GATE_LAT}&lon={_GATE_LNG}&format=json&zoom=17&addressdetails=1",
+            headers={'User-Agent': 'VayAccess-Parking-Agent/1.0'})
+        with _u.urlopen(_req, timeout=5) as _resp:
+            _nom = json.loads(_resp.read().decode('utf-8'))
+        _addr = _nom.get('address') or {}
+        _parts = [
+            _addr.get('road') or _addr.get('pedestrian') or _addr.get('neighbourhood'),
+            _addr.get('suburb') or _addr.get('village') or _addr.get('town'),
+            _addr.get('city') or _addr.get('city_district') or _addr.get('county'),
+            _addr.get('state'),
+        ]
+        _seen = set()
+        _uniq = []
+        for _p in _parts:
+            if _p and _p not in _seen:
+                _uniq.append(_p)
+                _seen.add(_p)
+        _GATE_ADDRESS = ', '.join(_uniq)[:80]
+        if not _GATE_ADDRESS:
+            _GATE_ADDRESS = (_nom.get('display_name') or '')[:80]
+        print(f"[WATERMARK] Reverse-geocoded address: '{_GATE_ADDRESS}'")
+    except Exception as _e:
+        print(f"[WATERMARK] Reverse-geocode failed ({_e}); watermark will "
+              f"show gate name instead of full address.")
+
 
 def _draw_watermark(frame):
     """Overlay a semi-transparent info panel with timestamp + location + GPS
@@ -265,11 +300,11 @@ def _draw_watermark(frame):
 
     now = datetime.now()
     lines = [
-        now.strftime("%Y-%m-%d  %H:%M:%S"),
-        _GATE_LOCATION_NAME,
+        now.strftime("Date: %d/%m/%Y | Time: %H:%M"),
+        _GATE_ADDRESS or _GATE_LOCATION_NAME,
     ]
     if _GATE_LAT is not None and _GATE_LNG is not None:
-        lines.append(f"Lat {_GATE_LAT:.6f}   Lng {_GATE_LNG:.6f}")
+        lines.append(f"Lat: {_GATE_LAT:.4f}  Lng: {_GATE_LNG:.4f}")
 
     # Scale text size with frame width so 640x360 and 1920x1080 both look right.
     font        = cv2.FONT_HERSHEY_SIMPLEX
