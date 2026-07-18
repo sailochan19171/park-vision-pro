@@ -26,6 +26,14 @@ class Whitelist(db.Model):
     transaction_id = db.Column(db.String(40),  nullable=True)  # 8-30 alphanumeric
     payment_amount = db.Column(db.Integer,     nullable=True)  # INR
     paid_at        = db.Column(db.DateTime,    nullable=True)
+    # ── External-system integration fields (added 2026-07-18) ────────────────
+    # Populated when a third-party barcode/pass issuance system pushes rows
+    # in via /api/soap/whitelist. ut_id is the upstream system's stable
+    # primary key -- used to UPSERT so re-sends update the existing row
+    # instead of duplicating. properties is a free-form JSON string for any
+    # extra key/value data the upstream system wants to store.
+    ut_id      = db.Column(db.String(80),  nullable=True, index=True, unique=True)
+    properties = db.Column(db.Text,        nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
     valid_until = db.Column(db.DateTime, nullable=False)
 
@@ -83,6 +91,12 @@ def migrate_schema(engine):
         ("transaction_id",   "VARCHAR(40)"),
         ("payment_amount",   "INTEGER"),
         ("paid_at",          "TIMESTAMP"),
+        ("ut_id",            "VARCHAR(80)"),    # upstream barcode-issuer's PK
+        ("properties",       "TEXT"),           # free-form JSON payload
+    ]
+    blacklist_new = [
+        ("ut_id",      "VARCHAR(80)"),
+        ("properties", "TEXT"),
     ]
     access_logs_new = [
         ("department",     "VARCHAR(100)"),
@@ -107,6 +121,7 @@ def migrate_schema(engine):
 
     with engine.connect() as conn:
         for table, cols in (('whitelist',   whitelist_new),
+                            ('blacklist',   blacklist_new),
                             ('access_logs', access_logs_new),
                             ('accounts',    accounts_new)):
             existing = _existing_cols(conn, table)
@@ -217,6 +232,10 @@ class Blacklist(db.Model):
     rfid_tag      = db.Column(db.String(100), nullable=True, index=True)
     reason        = db.Column(db.String(255), nullable=False, default='')
     added_by      = db.Column(db.String(50),  nullable=True)
+    # ── External-system integration fields (added 2026-07-18) ────────────────
+    # Same semantics as Whitelist.ut_id / .properties. See /api/soap/blacklist.
+    ut_id         = db.Column(db.String(80),  nullable=True, index=True, unique=True)
+    properties    = db.Column(db.Text,        nullable=True)
     created_at    = db.Column(db.DateTime,    default=datetime.now)
 
     def to_dict(self):
@@ -226,6 +245,8 @@ class Blacklist(db.Model):
             "rfid_tag":     self.rfid_tag     or "",
             "reason":       self.reason       or "",
             "added_by":     self.added_by     or "",
+            "ut_id":        self.ut_id        or "",
+            "properties":   self.properties   or "",
             "created_at":   self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else "",
         }
 

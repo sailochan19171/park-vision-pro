@@ -3328,6 +3328,194 @@ def api_rescue_image():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# SOAP ingest for barcode / RFID whitelist + blacklist rows
+#
+# External barcode-issuance systems (visitor kiosks, pass printers, third-party
+# HR platforms) can POST an XML SOAP envelope to /api/soap/whitelist or
+# /api/soap/blacklist. Each request UPSERTS by <UtId> -- re-sends of the same
+# UtId update the existing row instead of creating a duplicate. Auth uses the
+# same Bearer CLOUD_PUSH_TOKEN as the other cloud-push endpoints.
+#
+# Full XML schema and example requests are in the "SOAP integration" section
+# of the README (also mirrored inline below in the docstring for /api/soap).
+# ─────────────────────────────────────────────────────────────────────────────
+def _soap_response(body_xml, status=200):
+    """Wrap a SOAP body fragment in a proper SOAP 1.1 envelope."""
+    envelope = ('<?xml version="1.0" encoding="utf-8"?>\n'
+                '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">'
+                f'<soap:Body>{body_xml}</soap:Body>'
+                '</soap:Envelope>')
+    return Response(envelope, status=status, mimetype='text/xml; charset=utf-8')
+
+def _soap_fault(code, message, status=400):
+    """Standard SOAP Fault element -- the way SOAP surfaces errors."""
+    body = ('<soap:Fault>'
+            f'<faultcode>soap:{code}</faultcode>'
+            f'<faultstring>{message}</faultstring>'
+            '</soap:Fault>')
+    return _soap_response(body, status=status)
+
+def _xml_child_text(elem, tag_localname):
+    """Get text of the first direct child whose local name (namespace stripped)
+    matches. XML from real-world clients sometimes has custom namespaces so
+    matching on the local name only is more forgiving."""
+    for child in elem:
+        if child.tag.split('}')[-1] == tag_localname:
+            return (child.text or '').strip() if child.text else ''
+    return ''
+
+def _soap_parse_barcode(request):
+    """Parse a POST body that looks like:
+        <soap:Envelope>
+          <soap:Body>
+            <UpsertBarcode>
+              <UtId>UT-12345</UtId>
+              <Barcode>E280...</Barcode>          <!-- alias: RfidTag -->
+              <NumberPlate>TS09AB1234</NumberPlate>
+              <OwnerName>John Doe</OwnerName>
+              <Department>Engineering</Department>
+              <ContactNumber>9876543210</ContactNumber>
+              <VehicleType>Car</VehicleType>
+              <ValidUntil>2027-12-31</ValidUntil>  <!-- ISO-8601 date -->
+              <Reason>...</Reason>                 <!-- blacklist only -->
+              <Properties>{"any":"json"}</Properties>
+            </UpsertBarcode>
+          </soap:Body>
+        </soap:Envelope>
+    Returns a dict of the extracted fields (empty strings for missing tags)."""
+    import xml.etree.ElementTree as ET
+    raw = request.get_data(as_text=True) or ''
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError as e:
+        return None, f"XML parse error: {e}"
+    # Walk down until we hit the wrapper element (any name works)
+    body = None
+    for elem in root.iter():
+        if elem.tag.split('}')[-1] == 'Body':
+            body = elem
+            break
+    if body is None or len(body) == 0:
+        return None, "SOAP envelope has no <soap:Body> or empty body"
+    payload = body[0]
+    out = {
+        'ut_id':          _xml_child_text(payload, 'UtId'),
+        'rfid_tag':       _xml_child_text(payload, 'Barcode') or _xml_child_text(payload, 'RfidTag'),
+        'number_plate':   _xml_child_text(payload, 'NumberPlate'),
+        'owner_name':     _xml_child_text(payload, 'OwnerName'),
+        'department':     _xml_child_text(payload, 'Department'),
+        'contact_number': _xml_child_text(payload, 'ContactNumber'),
+        'vehicle_type':   _xml_child_text(payload, 'VehicleType') or 'Car',
+        'valid_until':    _xml_child_text(payload, 'ValidUntil'),
+        'reason':         _xml_child_text(payload, 'Reason'),
+        'properties':     _xml_child_text(payload, 'Properties'),
+    }
+    return out, None
+
+def _soap_check_auth(request):
+    """Bearer token in Authorization header, same as /api/cloud_push/*."""
+    expected = (os.environ.get('CLOUD_PUSH_TOKEN') or '').strip()
+    if not expected:
+        return "server has no CLOUD_PUSH_TOKEN configured"
+    got = (request.headers.get('Authorization') or '').replace('Bearer ', '').strip()
+    if got != expected:
+        return "unauthorized: Authorization header missing or wrong Bearer token"
+    return None
+
+@app.route('/api/soap/whitelist', methods=['POST'])
+def api_soap_whitelist():
+    """SOAP endpoint -- upsert a barcode into the whitelist table. UPSERT is
+    keyed on <UtId>: matching row updated, missing row created. Returns SOAP
+    envelope with <Id> and <Action> = 'created' | 'updated'."""
+    err = _soap_check_auth(request)
+    if err:
+        return _soap_fault('Client', err, status=401)
+    data, perr = _soap_parse_barcode(request)
+    if perr:
+        return _soap_fault('Client', perr, status=400)
+    ut_id = data['ut_id']
+    if not ut_id:
+        return _soap_fault('Client', 'UtId is required', status=400)
+    if not data['number_plate']:
+        return _soap_fault('Client', 'NumberPlate is required for whitelist rows', status=400)
+    if not data['owner_name']:
+        return _soap_fault('Client', 'OwnerName is required for whitelist rows', status=400)
+    # Parse ValidUntil (defaults to +1 year if missing)
+    try:
+        if data['valid_until']:
+            valid_until = datetime.fromisoformat(data['valid_until'].replace('Z', ''))
+        else:
+            valid_until = datetime.now() + timedelta(days=365)
+    except ValueError:
+        return _soap_fault('Client', 'ValidUntil must be ISO-8601 (YYYY-MM-DD)', status=400)
+    try:
+        row = Whitelist.query.filter_by(ut_id=ut_id).first()
+        action = 'updated' if row else 'created'
+        if not row:
+            row = Whitelist(ut_id=ut_id, number_plate=data['number_plate'],
+                            owner_name=data['owner_name'], valid_until=valid_until)
+            db.session.add(row)
+        else:
+            row.number_plate = data['number_plate']
+            row.owner_name   = data['owner_name']
+            row.valid_until  = valid_until
+        row.rfid_tag       = data['rfid_tag']       or row.rfid_tag
+        row.department     = data['department']     or row.department
+        row.contact_number = data['contact_number'] or row.contact_number
+        row.vehicle_type   = data['vehicle_type']   or row.vehicle_type
+        row.properties     = data['properties']     or row.properties
+        db.session.commit()
+        body = ('<UpsertBarcodeResponse xmlns="https://vayaccess.com/soap">'
+                '<Status>OK</Status>'
+                f'<Action>{action}</Action>'
+                f'<Id>{row.id}</Id>'
+                f'<UtId>{ut_id}</UtId>'
+                '</UpsertBarcodeResponse>')
+        return _soap_response(body)
+    except Exception as e:
+        db.session.rollback()
+        return _soap_fault('Server', f"DB write failed: {e}", status=500)
+
+@app.route('/api/soap/blacklist', methods=['POST'])
+def api_soap_blacklist():
+    """SOAP endpoint -- upsert a barcode into the blacklist table. UPSERT is
+    keyed on <UtId>. Requires at least one of NumberPlate or Barcode."""
+    err = _soap_check_auth(request)
+    if err:
+        return _soap_fault('Client', err, status=401)
+    data, perr = _soap_parse_barcode(request)
+    if perr:
+        return _soap_fault('Client', perr, status=400)
+    ut_id = data['ut_id']
+    if not ut_id:
+        return _soap_fault('Client', 'UtId is required', status=400)
+    if not data['number_plate'] and not data['rfid_tag']:
+        return _soap_fault('Client', 'At least one of NumberPlate / Barcode is required', status=400)
+    try:
+        row = Blacklist.query.filter_by(ut_id=ut_id).first()
+        action = 'updated' if row else 'created'
+        if not row:
+            row = Blacklist(ut_id=ut_id)
+            db.session.add(row)
+        row.number_plate = data['number_plate'] or row.number_plate
+        row.rfid_tag     = data['rfid_tag']     or row.rfid_tag
+        row.reason       = data['reason']       or row.reason or ''
+        row.added_by     = 'soap-ingest'
+        row.properties   = data['properties']   or row.properties
+        db.session.commit()
+        body = ('<UpsertBarcodeResponse xmlns="https://vayaccess.com/soap">'
+                '<Status>OK</Status>'
+                f'<Action>{action}</Action>'
+                f'<Id>{row.id}</Id>'
+                f'<UtId>{ut_id}</UtId>'
+                '</UpsertBarcodeResponse>')
+        return _soap_response(body)
+    except Exception as e:
+        db.session.rollback()
+        return _soap_fault('Server', f"DB write failed: {e}", status=500)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Cloud frame ingest — the on-site PC's cloud_frame_pusher() thread posts a
 # JPEG frame every ~500 ms. Cloud holds only the latest one in RAM (capped at
 # ~1 MB) and serves it from /video_feed below. No DB writes, no disk writes
