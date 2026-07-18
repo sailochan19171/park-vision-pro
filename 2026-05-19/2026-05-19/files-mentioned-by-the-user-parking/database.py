@@ -522,6 +522,24 @@ class UHFEntryEvent(db.Model):
         }
 
 
+class ImageBlob(db.Model):
+    """Persistent storage for JPEGs so the cloud portal keeps images across
+    Render redeploys (Render's application disk is EPHEMERAL — every redeploy
+    wipes /detections/). Every UHF capture pushed to /api/cloud_push/uhf gets
+    inserted here in addition to the on-disk write, and /image/<filename>
+    falls back to this table when the file is missing on disk.
+
+    Bytes live in Neon Postgres bytea; 30 KB per image × 10,000 captures
+    is ~300 MB — well within Neon's free tier. A background job trims rows
+    older than IMAGE_RETENTION_DAYS (default 90) so growth stays bounded."""
+    __tablename__ = 'image_blobs'
+    filename   = db.Column(db.String(200), primary_key=True)
+    data       = db.Column(db.LargeBinary, nullable=False)
+    mime       = db.Column(db.String(40),  nullable=False, default='image/jpeg')
+    size_bytes = db.Column(db.Integer,     nullable=False, default=0)
+    created_at = db.Column(db.DateTime,    default=datetime.now, index=True)
+
+
 # ── Mobile driver app (VayAccess driver mobile) ──────────────────────────────
 # Self-service mobile users (drivers/customers). Independent of the
 # admin-portal Account table — different namespace, different login surface

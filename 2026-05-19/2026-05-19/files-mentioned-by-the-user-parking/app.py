@@ -20,7 +20,7 @@ from database import (db, Whitelist, AccessLog, Tariff, ParkingTransaction,
                       Account, Role, DictionaryEntry, LCDScreen, UHFEntryEvent,
                       MenuPermission, RolePermission, migrate_schema,
                       DriverUser, DriverSession, DriverReservation,
-                      DriverNotification)
+                      DriverNotification, ImageBlob)
 from api_integration import clean_plate_number
 from sqlalchemy import or_
 import threading
@@ -2654,12 +2654,30 @@ def api_recent_detections():
 
 @app.route('/image/<path:filename>')
 def serve_detection_image(filename):
-    """Serve a saved plate-detection JPEG by filename (path-safe)."""
-    from flask import send_from_directory, abort
+    """Serve a saved plate-detection JPEG by filename (path-safe). Tries
+    the on-disk copy first (fast, works on the on-site laptop). If the file
+    is missing (Render redeployed and wiped its ephemeral disk), falls back
+    to the ImageBlob table -- the DB copy persists forever in Neon."""
+    from flask import send_from_directory, send_file, abort
+    from io import BytesIO
     safe = os.path.basename(filename)
     if not safe.lower().endswith('.jpg'):
         abort(404)
-    return send_from_directory(DETECTIONS_DIR, safe)
+    disk_path = os.path.join(DETECTIONS_DIR, safe)
+    if os.path.exists(disk_path):
+        return send_from_directory(DETECTIONS_DIR, safe)
+    # Disk miss -- try the DB. Also rehydrate the disk file so subsequent
+    # requests hit the fast path again until the next redeploy.
+    blob = ImageBlob.query.get(safe)
+    if blob and blob.data:
+        try:
+            with open(disk_path, 'wb') as f:
+                f.write(blob.data)
+        except Exception:
+            pass
+        return send_file(BytesIO(blob.data), mimetype=blob.mime or 'image/jpeg',
+                         download_name=safe, max_age=3600)
+    abort(404)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -2707,7 +2725,10 @@ def api_cloud_push_uhf():
     except ValueError:
         ts = datetime.now()
 
-    # Save images (if provided) under detections/ so /image/<filename> serves them.
+    # Save images (if provided) under detections/ AND into the ImageBlob
+    # table. On Render the detections/ folder is ephemeral (wiped on every
+    # redeploy) -- the DB copy is what makes them survive. /image/<filename>
+    # falls back to the DB row if the on-disk file is missing.
     def _save_b64_image(b64, suffix):
         if not b64:
             return None
@@ -2721,13 +2742,27 @@ def api_cloud_push_uhf():
         ts_str = ts.strftime("%Y%m%d_%H%M%S_%f")[:-3]
         name = f"cloud_{ts_str}_{safe_tag}_{suffix}.jpg"
         path = os.path.join(DETECTIONS_DIR, name)
+        # Best-effort disk write; failure is fine because the DB copy is authoritative.
         try:
             with open(path, 'wb') as f:
                 f.write(raw)
-            return name
         except Exception as e:
-            print(f"[CLOUD-INGEST] write failed for {name}: {e}")
-            return None
+            print(f"[CLOUD-INGEST] disk write failed for {name}: {e} (DB copy still saved)")
+        # Persistent DB copy. Upsert so a duplicate filename (retry) doesn't crash.
+        try:
+            existing_blob = ImageBlob.query.get(name)
+            if existing_blob:
+                existing_blob.data = raw
+                existing_blob.size_bytes = len(raw)
+                existing_blob.created_at = ts
+            else:
+                db.session.add(ImageBlob(filename=name, data=raw,
+                                         size_bytes=len(raw), created_at=ts))
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[CLOUD-INGEST] DB blob save failed for {name}: {e}")
+        return name
 
     full_name  = _save_b64_image(data.get('full_image_b64'),  'full')
     plate_name = _save_b64_image(data.get('plate_image_b64'), 'plate')
