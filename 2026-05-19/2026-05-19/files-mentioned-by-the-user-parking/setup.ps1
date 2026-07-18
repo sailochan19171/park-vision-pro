@@ -180,16 +180,34 @@ Fix: uninstall any existing Python (Settings -> Apps), reboot, re-run.
 Write-Banner "Step 1b of 5 -- Sync latest code from GitHub" 'Cyan'
 $rawBase = 'https://raw.githubusercontent.com/sailochan19171/park-vision-pro/my-branch/2026-05-19/2026-05-19/files-mentioned-by-the-user-parking'
 $syncFiles = @(
+    # Python code
     'app.py',
     'database.py',
     'api_integration.py',
     'desktop_reader.py',
     'reader_integration.py',
-    'requirements.txt'
+    'requirements.txt',
+    # Local dashboard UI (only used when opening
+    # http://<pc>:5002/ directly on the on-site LAN; cloud portal has
+    # its own copy). Ensures the on-site laptop can serve the same
+    # UHF Captures / Permission Matrix / etc. pages the cloud shows.
+    'templates/index.html',
+    'templates/login.html',
+    'templates/activate.html',
+    'templates/pass_verify.html',
+    'static/parkvision.js',
+    'static/vay-app.js',
+    'static/styles.css'
 )
 $syncedCount = 0
 foreach ($f in $syncFiles) {
     $localPath = Join-Path $PSScriptRoot $f
+    # Create parent directory if the file lives in a subfolder
+    # (templates/, static/) that doesn't exist yet on a fresh install.
+    $parentDir = Split-Path $localPath -Parent
+    if ($parentDir -and -not (Test-Path $parentDir)) {
+        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+    }
     try {
         # Download to a .new tempfile so a mid-download failure doesn't leave
         # the local file half-written. Rename atomically on success.
