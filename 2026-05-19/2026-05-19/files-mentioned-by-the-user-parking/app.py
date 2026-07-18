@@ -3400,7 +3400,12 @@ def _soap_parse_barcode(request):
     payload = body[0]
     out = {
         'ut_id':          _xml_child_text(payload, 'UtId'),
-        'rfid_tag':       _xml_child_text(payload, 'Barcode') or _xml_child_text(payload, 'RfidTag'),
+        # <Barcode>  -> 1D/2D printed barcode column
+        # <UhfTagId> (or legacy <RfidTag>) -> UHF EPC column
+        # These are two DIFFERENT fields on the same pass: a pass can have
+        # both a printed barcode AND an embedded UHF chip.
+        'barcode':        _xml_child_text(payload, 'Barcode'),
+        'uhf_tag_id':     _xml_child_text(payload, 'UhfTagId') or _xml_child_text(payload, 'RfidTag'),
         'number_plate':   _xml_child_text(payload, 'NumberPlate'),
         'owner_name':     _xml_child_text(payload, 'OwnerName'),
         'department':     _xml_child_text(payload, 'Department'),
@@ -3459,7 +3464,8 @@ def api_soap_whitelist():
             row.number_plate = data['number_plate']
             row.owner_name   = data['owner_name']
             row.valid_until  = valid_until
-        row.rfid_tag       = data['rfid_tag']       or row.rfid_tag
+        row.barcode        = data['barcode']        or row.barcode
+        row.rfid_tag       = data['uhf_tag_id']     or row.rfid_tag
         # Default department to 'External' so the UI's "Registered" page
         # (which filters WHERE department IS NOT NULL) shows every SOAP row.
         # Vendor-supplied department always wins.
@@ -3499,8 +3505,8 @@ def api_soap_blacklist():
     ut_id = data['ut_id']
     if not ut_id:
         return _soap_fault('Client', 'UtId is required', status=400)
-    if not data['number_plate'] and not data['rfid_tag']:
-        return _soap_fault('Client', 'At least one of NumberPlate / Barcode is required', status=400)
+    if not data['number_plate'] and not data['barcode'] and not data['uhf_tag_id']:
+        return _soap_fault('Client', 'At least one of NumberPlate / Barcode / UhfTagId is required', status=400)
     try:
         row = Blacklist.query.filter_by(ut_id=ut_id).first()
         action = 'updated' if row else 'created'
@@ -3508,7 +3514,8 @@ def api_soap_blacklist():
             row = Blacklist(ut_id=ut_id)
             db.session.add(row)
         row.number_plate = data['number_plate'] or row.number_plate
-        row.rfid_tag     = data['rfid_tag']     or row.rfid_tag
+        row.barcode      = data['barcode']      or row.barcode
+        row.rfid_tag     = data['uhf_tag_id']   or row.rfid_tag
         row.reason       = data['reason']       or row.reason or ''
         row.added_by     = 'soap-ingest'
         row.properties   = data['properties']   or row.properties

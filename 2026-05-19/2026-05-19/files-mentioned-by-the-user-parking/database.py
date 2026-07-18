@@ -8,7 +8,16 @@ db = SQLAlchemy()
 class Whitelist(db.Model):
     __tablename__ = 'whitelist'
     id = db.Column(db.Integer, primary_key=True)
-    rfid_tag = db.Column(db.String(100), unique=True, nullable=True)
+    # ── Physical-token fields ────────────────────────────────────────────────
+    # A single pass can carry TWO different tokens:
+    #   rfid_tag = UHF RFID chip's EPC (24-char hex, read by the UHF antenna
+    #              at the gate; long range, hands-free)
+    #   barcode  = printed 1D/2D barcode on the pass (Code-128, QR, etc.,
+    #              scanned by a handheld barcode reader; visual)
+    # Either or both can be set. Gate access matches on whichever the
+    # scanner reports.
+    rfid_tag = db.Column(db.String(100), unique=True, nullable=True, index=True)
+    barcode  = db.Column(db.String(100), unique=True, nullable=True, index=True)
     number_plate = db.Column(db.String(50), unique=True, nullable=False)
     owner_name = db.Column(db.String(100), nullable=False)
     # ── Employee-activation fields (added 2026-05-24) ─────────────────────────
@@ -50,6 +59,9 @@ class Whitelist(db.Model):
         return {
             "id": self.id,
             "rfid_tag": self.rfid_tag,
+            "barcode":  self.barcode or "",
+            "ut_id":    self.ut_id   or "",
+            "properties": self.properties or "",
             "number_plate": self.number_plate,
             "owner_name": self.owner_name,
             "department":     self.department or "",
@@ -93,10 +105,12 @@ def migrate_schema(engine):
         ("paid_at",          "TIMESTAMP"),
         ("ut_id",            "VARCHAR(80)"),    # upstream barcode-issuer's PK
         ("properties",       "TEXT"),           # free-form JSON payload
+        ("barcode",          "VARCHAR(100)"),   # 1D/2D printed barcode, separate from rfid_tag
     ]
     blacklist_new = [
         ("ut_id",      "VARCHAR(80)"),
         ("properties", "TEXT"),
+        ("barcode",    "VARCHAR(100)"),
     ]
     access_logs_new = [
         ("department",     "VARCHAR(100)"),
@@ -230,6 +244,7 @@ class Blacklist(db.Model):
     id            = db.Column(db.Integer,    primary_key=True)
     number_plate  = db.Column(db.String(50), nullable=True, index=True)
     rfid_tag      = db.Column(db.String(100), nullable=True, index=True)
+    barcode       = db.Column(db.String(100), nullable=True, index=True)  # 1D/2D printed barcode, separate from rfid_tag
     reason        = db.Column(db.String(255), nullable=False, default='')
     added_by      = db.Column(db.String(50),  nullable=True)
     # ── External-system integration fields (added 2026-07-18) ────────────────
@@ -243,6 +258,7 @@ class Blacklist(db.Model):
             "id":           self.id,
             "number_plate": self.number_plate or "",
             "rfid_tag":     self.rfid_tag     or "",
+            "barcode":      self.barcode      or "",
             "reason":       self.reason       or "",
             "added_by":     self.added_by     or "",
             "ut_id":        self.ut_id        or "",

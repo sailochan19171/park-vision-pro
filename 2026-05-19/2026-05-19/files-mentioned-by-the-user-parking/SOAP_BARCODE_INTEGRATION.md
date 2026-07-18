@@ -34,7 +34,8 @@ XML parser matches on **local names only** so custom namespaces are fine.
   <soap:Body>
     <UpsertBarcode xmlns="https://vayaccess.com/soap">
       <UtId>UT-000123</UtId>
-      <Barcode>E2801191A503006BD7574447</Barcode>
+      <Barcode>123456789012</Barcode>
+      <UhfTagId>E2801191A503006BD7574447</UhfTagId>
       <NumberPlate>TS09AB1234</NumberPlate>
       <OwnerName>John Doe</OwnerName>
       <Department>Engineering</Department>
@@ -52,15 +53,25 @@ XML parser matches on **local names only** so custom namespaces are fine.
 | Element | Required | Type / Format | Notes |
 |---|---|---|---|
 | `<UtId>` | **Yes** | string ≤ 80 chars | Upstream system's primary key. Used to upsert. Must be unique per row. |
-| `<Barcode>` (or `<RfidTag>`) | Yes for gates that use UHF | string ≤ 100 | The physical tag / barcode value scanned at the gate. |
-| `<NumberPlate>` | Yes (whitelist) | string ≤ 50 | For blacklist, either NumberPlate OR Barcode is required. |
+| `<Barcode>` | Optional | string ≤ 100 | The **printed 1D/2D barcode** on the pass (Code-128, QR, etc.). Scanned by a handheld barcode reader. **Different field** from `<UhfTagId>`. |
+| `<UhfTagId>` (or legacy `<RfidTag>`) | Optional | string ≤ 100 hex | The **UHF RFID chip's EPC** (24-char hex like `E2801191A503006BD7574447`). Read by the UHF antenna at the gate. |
+| `<NumberPlate>` | Yes (whitelist) | string ≤ 50 | For blacklist, at least one of NumberPlate / Barcode / UhfTagId is required. |
 | `<OwnerName>` | Yes (whitelist) | string ≤ 100 | Person the pass belongs to. |
-| `<Department>` | No | string ≤ 100 | |
+| `<Department>` | No | string ≤ 100 | Defaults to `External` on whitelist creates so the row appears in the admin UI. |
 | `<ContactNumber>` | No | string ≤ 20 | |
 | `<VehicleType>` | No | Car / Truck / Bike / Scooty | Defaults to `Car`. |
 | `<ValidUntil>` | No (whitelist) | ISO-8601 date `YYYY-MM-DD` | Whitelist only. Defaults to +1 year if omitted. |
 | `<Reason>` | No | string ≤ 255 | Blacklist only — reason for the ban. |
 | `<Properties>` | No | any string (JSON recommended) | Free-form. Stored verbatim in the DB. |
+
+### Barcode vs UhfTagId — the important distinction
+
+A single pass can carry TWO different tokens for two different scanner types:
+
+- **`<Barcode>`** — the visible printed code on the pass (Code-128, QR code, etc.). Scanned by a **handheld barcode scanner** or the visitor's phone camera. Short range, requires line of sight.
+- **`<UhfTagId>`** — the invisible RFID chip embedded in the plastic. Read by the **UHF antenna at the gate**. Long range (up to 10m), no line of sight required, hands-free.
+
+Send **both** if your pass has both. Send just one if it only has one physical token. Gate access matches on whichever the scanner reports.
 
 ---
 
@@ -118,7 +129,8 @@ curl -X POST https://vayaccess-cloud.onrender.com/api/soap/whitelist \
   <soap:Body>
     <UpsertBarcode>
       <UtId>UT-000123</UtId>
-      <Barcode>E2801191A503006BD7574447</Barcode>
+      <Barcode>123456789012</Barcode>
+      <UhfTagId>E2801191A503006BD7574447</UhfTagId>
       <NumberPlate>TS09AB1234</NumberPlate>
       <OwnerName>John Doe</OwnerName>
       <Department>Engineering</Department>
@@ -142,7 +154,8 @@ xml = """<?xml version="1.0"?>
   <soap:Body>
     <UpsertBarcode>
       <UtId>UT-BAN-77</UtId>
-      <Barcode>E2801191A503006BD7574447</Barcode>
+      <UhfTagId>E2801191A503006BD7574447</UhfTagId>
+      <Barcode>123456789012</Barcode>
       <Reason>Terminated employee - retain-tag policy</Reason>
       <Properties>{"terminated_on":"2026-07-10"}</Properties>
     </UpsertBarcode>
@@ -175,7 +188,8 @@ invalidation run correctly.
 |---|---|---|
 | `id` | INTEGER PRIMARY KEY | auto |
 | `ut_id` | VARCHAR(80) UNIQUE | upstream system's key |
-| `rfid_tag` | VARCHAR(100) UNIQUE | barcode / RFID value |
+| `barcode` | VARCHAR(100) UNIQUE | 1D/2D printed barcode ← from `<Barcode>` |
+| `rfid_tag` | VARCHAR(100) UNIQUE | UHF EPC (24-char hex) ← from `<UhfTagId>` |
 | `number_plate` | VARCHAR(50) NOT NULL | |
 | `owner_name` | VARCHAR(100) NOT NULL | |
 | `department` | VARCHAR(100) | |
@@ -191,8 +205,9 @@ invalidation run correctly.
 |---|---|---|
 | `id` | INTEGER PRIMARY KEY | auto |
 | `ut_id` | VARCHAR(80) UNIQUE | upstream system's key |
-| `rfid_tag` | VARCHAR(100) INDEX | |
-| `number_plate` | VARCHAR(50) INDEX | at least one of tag/plate required |
+| `barcode` | VARCHAR(100) INDEX | 1D/2D printed barcode ← from `<Barcode>` |
+| `rfid_tag` | VARCHAR(100) INDEX | UHF EPC ← from `<UhfTagId>` |
+| `number_plate` | VARCHAR(50) INDEX | at least one of plate/barcode/uhf required |
 | `reason` | VARCHAR(255) | why the ban |
 | `properties` | TEXT | JSON string |
 | `added_by` | VARCHAR(50) | set to `soap-ingest` by this endpoint |

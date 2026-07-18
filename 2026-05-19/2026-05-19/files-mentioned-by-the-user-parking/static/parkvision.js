@@ -2249,6 +2249,7 @@ async function loadRegisteredVehicles() {
       return `<tr>
         <td>${_esc(e.owner_name) || '—'}</td>
         <td style="font-family:monospace;">${plate}</td>
+        <td style="font-family:monospace; font-size:0.88em;">${_esc(e.barcode) || '—'}</td>
         <td style="font-family:monospace; font-size:0.88em;">${_esc(e.rfid_tag) || '—'}</td>
         <td>${_esc(e.vehicle_type) || '—'}</td>
         <td>${_esc(e.department) || '—'}</td>
@@ -2257,14 +2258,14 @@ async function loadRegisteredVehicles() {
         <td>${badge}</td>
         <td><button class="ghost-button" data-qr data-qr-kind="member" data-qr-id="${e.id}"
             data-qr-title="Member Pass — ${_esc(e.owner_name) || ''}"
-            data-qr-meta="<b>${_esc(e.owner_name) || '—'}</b><br>Plate: ${plate}<br>Tag: ${_esc(e.rfid_tag) || '—'}<br>Dept: ${_esc(e.department) || '—'}<br>Valid until: ${_esc(e.valid_until) || '—'}"
+            data-qr-meta="<b>${_esc(e.owner_name) || '—'}</b><br>Plate: ${plate}<br>Barcode: ${_esc(e.barcode) || '—'}<br>UHF: ${_esc(e.rfid_tag) || '—'}<br>Dept: ${_esc(e.department) || '—'}<br>Valid until: ${_esc(e.valid_until) || '—'}"
             style="padding:4px 10px; font-size:0.8em; margin-right:4px;">QR</button><button class="ghost-button" data-wa data-wa-kind="m" data-wa-id="${e.id}"
             data-wa-phone="${_esc((e.contact_number||'').replace(/\\D/g,''))}"
             data-wa-name="${_esc(e.owner_name) || ''}"
             style="padding:4px 10px; font-size:0.8em; background:#25d366; color:#fff; border-color:#1ea152;">WhatsApp</button></td>
       </tr>`;
-    }, 9);
-  } catch (e) { tb.innerHTML = _emptyRow(9, 'Failed to load.'); }
+    }, 10);
+  } catch (e) { tb.innerHTML = _emptyRow(10, 'Failed to load.'); }
 }
 
 async function loadBlacklistView() {
@@ -2278,12 +2279,13 @@ async function loadBlacklistView() {
     if ($('bl-meta')) $('bl-meta').textContent = `${rows.length} banned entr${rows.length === 1 ? 'y' : 'ies'}`;
     paginate('bl', rows, 'bl-body', b => `<tr>
       <td style="font-family:monospace;">${_esc(b.number_plate) || '—'}</td>
+      <td style="font-family:monospace; font-size:0.88em;">${_esc(b.barcode) || '—'}</td>
       <td style="font-family:monospace; font-size:0.88em;">${_esc(b.rfid_tag) || '—'}</td>
       <td>${_esc(b.reason) || '—'}</td>
       <td>${_esc(b.added_by) || '—'}</td>
       <td>${_esc(b.created_at) || '—'}</td>
-    </tr>`, 5);
-  } catch (e) { tb.innerHTML = _emptyRow(5, 'Failed to load.'); }
+    </tr>`, 6);
+  } catch (e) { tb.innerHTML = _emptyRow(6, 'Failed to load.'); }
 }
 
 // Wire loaders: load when the section is opened, on search input, and on refresh.
