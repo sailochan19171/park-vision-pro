@@ -2040,6 +2040,13 @@ def _capture_worker(tag_c, frame):
         print(f"[UHF-ANPR] failed to save full frame: {e}")
         return None
 
+    # Push to TV *now* -- the JPEG is on disk and reachable via /image/. YOLO
+    # and OCR below don't mutate the file; they just populate DB fields. Doing
+    # this before the ML pipeline shaves 1-2 s off the TV display latency on
+    # CPU-only hardware. push_to_tv is already fire-and-forget so the ML work
+    # continues immediately in this thread.
+    push_to_tv(full_name)
+
     # Run YOLO on a downscaled copy to find the primary vehicle.
     plate_text       = None
     plate_confidence = 0.0
@@ -2155,10 +2162,9 @@ def _capture_worker(tag_c, frame):
                   f"status={status} full={full_name} plate_img={plate_crop_name}")
             result = event.to_dict()
 
-        # Fire-and-forget push to any DLNA TV auto-discovered on the LAN so
-        # the gate display updates within ~1-2s of the capture. No-op if no
-        # TV was found or TV_DISPLAY_ENABLED=0.
-        push_to_tv(full_name)
+        # (TV push already fired right after the disk write above -- that
+        # runs in parallel with YOLO/OCR so the TV updates within ~1 s of
+        # the tag scan instead of waiting for the whole ML pipeline.)
 
         # Best-effort cloud push (outside the DB context manager so the local
         # commit lands first). Runs in a thread so a slow / offline cloud
