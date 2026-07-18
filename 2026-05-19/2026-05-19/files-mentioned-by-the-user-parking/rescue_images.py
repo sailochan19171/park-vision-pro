@@ -131,7 +131,7 @@ def main():
         # Gentle pacing so we don't overwhelm the cloud or trip Render's rate limits.
         time.sleep(0.15)
 
-    print(f"\n[✓] Done. Recovered: {ok}   Skipped: {skipped}   Failed: {failed}")
+    print(f"\n[OK] Done. Recovered: {ok}   Skipped: {skipped}   Failed: {failed}")
     if ok:
         print(f"[i] Open the cloud portal's UHF Captures panel -- old images should now display.")
 
