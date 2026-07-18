@@ -302,6 +302,20 @@ if (Test-Path $envFile) {
 
 # ----- LAN subnet discovery -----
 Write-Host "[..] Enumerating LAN adapters..." -ForegroundColor Gray
+
+# Collect this laptop's own IPv4 addresses so we can (a) filter them out of
+# device-scan results and (b) reject them if the operator types them into the
+# CAMERA_IP / RFID_READER_IP prompt by mistake. Anything on 127.x, 169.254.x,
+# or a Hyper-V vEthernet adapter is skipped.
+$laptopIps = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+    Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
+    Where-Object { $_.InterfaceAlias -notmatch 'Loopback|vEthernet' } |
+    Select-Object -ExpandProperty IPAddress)
+if ($laptopIps) {
+    Write-Host "     This laptop's own IPs: $($laptopIps -join ', ')" -ForegroundColor Gray
+    Write-Host "     (These will be excluded from device scans and rejected as device IPs.)" -ForegroundColor DarkGray
+}
+
 $subnets = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -match '^(192\.168|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))\.' } |
     Where-Object { $_.InterfaceAlias -notmatch 'Loopback' } |
@@ -361,14 +375,28 @@ function Find-DevicesOnLan {
     return $found
 }
 
+function Exclude-LaptopIps {
+    param([string[]]$Hits)
+    if (-not $Hits) { return @() }
+    $filtered = @()
+    foreach ($h in $Hits) {
+        $ip = ($h -split ':')[0]
+        if ($laptopIps -notcontains $ip) { $filtered += $h }
+    }
+    return $filtered
+}
+
 $foundCamera = $null
 $foundRfid   = $null
 
 if ($subnets) {
-    Write-Host "[..] Scanning $($subnets.Count * 254 * 2) addresses for RTSP cameras (~15 sec)..." -ForegroundColor Gray
-    # Force array with @() so a single-hit result doesn't get auto-unwrapped
-    # to a bare string (in which case $cams[0] would return the first char).
-    [array]$cams = @(Find-DevicesOnLan -Subnets $subnets -Ports @(8557, 554))
+    # Camera: try the widest common RTSP + XM/H264DVR port set. Scanning
+    # a few extra ports is cheap and lets the operator plug in a Reolink,
+    # Hikvision, Dahua, or XM-family camera without hand-editing anything.
+    $camPorts = @(554, 8554, 8557, 8000, 88)
+    Write-Host "[..] Scanning $($subnets.Count * 254 * $camPorts.Count) addresses for RTSP cameras (~20 sec)..." -ForegroundColor Gray
+    [array]$cams = @(Find-DevicesOnLan -Subnets $subnets -Ports $camPorts)
+    [array]$cams = @(Exclude-LaptopIps $cams)
     if ($cams.Count -gt 0) {
         $foundCamera = [string]$cams[0]
         Write-Host "     Camera found at $foundCamera" -ForegroundColor Green
@@ -376,16 +404,53 @@ if ($subnets) {
             Write-Host "     (Also saw: $($cams[1..($cams.Count-1)] -join ', '))" -ForegroundColor Gray
         }
     } else {
-        Write-Host "     No RTSP responder on 8557/554 -- will prompt." -ForegroundColor Yellow
+        Write-Host "     No RTSP responder on $($camPorts -join '/') -- will prompt." -ForegroundColor Yellow
     }
 
-    Write-Host "[..] Scanning $($subnets.Count * 254) addresses for RFID reader (TCP 200)..." -ForegroundColor Gray
-    [array]$rfids = @(Find-DevicesOnLan -Subnets $subnets -Ports @(200))
+    # RFID reader: try the historical port 200 plus common IDT-IoT / generic
+    # UHF reader ports. If nothing bites (reader might be in refused-state),
+    # fall back to ARP-based discovery.
+    $rfidPorts = @(200, 6000, 8899, 5578, 4001)
+    Write-Host "[..] Scanning $($subnets.Count * 254 * $rfidPorts.Count) addresses for RFID reader on $($rfidPorts -join '/')" -ForegroundColor Gray
+    [array]$rfids = @(Find-DevicesOnLan -Subnets $subnets -Ports $rfidPorts)
+    [array]$rfids = @(Exclude-LaptopIps $rfids)
     if ($rfids.Count -gt 0) {
-        $foundRfid = [string]$rfids[0]
+        # Prefer a port-200 hit if there is one (that's what the code speaks).
+        $portHit = $rfids | Where-Object { $_ -match ':200$' } | Select-Object -First 1
+        if ($portHit) { $foundRfid = [string]$portHit } else { $foundRfid = [string]$rfids[0] }
         Write-Host "     RFID reader found at $foundRfid" -ForegroundColor Green
     } else {
-        Write-Host "     No TCP responder on port 200 -- will prompt." -ForegroundColor Yellow
+        # Fallback: ping-sweep the RFID-side subnet and pick the first non-laptop
+        # device that answers. Not as reliable as a port hit but works when the
+        # reader's TCP port is temporarily refused after a hung session.
+        Write-Host "     No TCP responder -- trying ARP-based fallback..." -ForegroundColor Yellow
+        $arpCandidates = @()
+        foreach ($subnet in $subnets) {
+            # Quick ping-sweep to force ARP entries. Fire-and-forget with -Quiet.
+            1..254 | ForEach-Object {
+                $ip = "$subnet.$_"
+                if ($laptopIps -notcontains $ip) {
+                    Start-Job -ScriptBlock { param($t) Test-Connection -ComputerName $t -Count 1 -Quiet -ErrorAction SilentlyContinue } -ArgumentList $ip | Out-Null
+                }
+            }
+        }
+        Get-Job | Wait-Job -Timeout 8 | Out-Null
+        Get-Job | Remove-Job -Force -ErrorAction SilentlyContinue
+        $arp = Get-NetNeighbor -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+               Where-Object { $_.State -in 'Reachable','Stale' } |
+               Where-Object { $laptopIps -notcontains $_.IPAddress } |
+               Where-Object { $_.IPAddress -match '^(192\.168|10\.|172\.(1[6-9]|2[0-9]|3[0-1]))\.' }
+        if ($arp) {
+            # Pick the first device with a static-looking IP (100+ suffix), else
+            # the numerically lowest. Print all candidates so the operator can
+            # override if the wrong one gets picked.
+            $sorted = $arp | Sort-Object { [int]($_.IPAddress -split '\.')[-1] }
+            $foundRfid = "$(($sorted | Select-Object -First 1).IPAddress):200"
+            Write-Host "     ARP saw: $(($arp | ForEach-Object { $_.IPAddress }) -join ', ')" -ForegroundColor Gray
+            Write-Host "     Guessing RFID reader at $foundRfid (override at prompt if wrong)" -ForegroundColor Yellow
+        } else {
+            Write-Host "     No reachable non-laptop devices found -- will prompt for RFID IP." -ForegroundColor Yellow
+        }
     }
 }
 
@@ -400,6 +465,21 @@ function Prompt-WithDefault {
     } else {
         $v = Read-Host "  $label"
         return $v.Trim()
+    }
+}
+
+# Same as Prompt-WithDefault but rejects any answer that matches one of this
+# laptop's own IPv4 addresses (a common typo -- the operator sees "your IPs"
+# in a help message and pastes one into the camera / reader prompt). Loops
+# until the operator either presses Enter (accepting the default) or types a
+# non-laptop IP.
+function Prompt-DeviceIp {
+    param([string]$label, [string]$default)
+    while ($true) {
+        $v = Prompt-WithDefault -label $label -default $default
+        if ($laptopIps -notcontains $v) { return $v }
+        Write-Host "  [X] '$v' is THIS laptop's own IP address, not the device." -ForegroundColor Red
+        Write-Host "      Type the actual camera/reader IP, or press Enter for the default." -ForegroundColor Red
     }
 }
 
@@ -434,7 +514,7 @@ if ($foundCamera) {
 } else {
     $camDefault = '192.168.1.12'
 }
-$current['CAMERA_IP'] = Prompt-WithDefault -label "CAMERA_IP" -default $camDefault
+$current['CAMERA_IP'] = Prompt-DeviceIp -label "CAMERA_IP" -default $camDefault
 
 $camPortDefault = $null
 if ($foundCamera) {
@@ -466,7 +546,7 @@ if ($foundRfid) {
 } else {
     $rfidDefault = '192.168.0.200'
 }
-$current['RFID_READER_IP'] = Prompt-WithDefault -label "RFID_READER_IP" -default $rfidDefault
+$current['RFID_READER_IP'] = Prompt-DeviceIp -label "RFID_READER_IP" -default $rfidDefault
 
 $rfidPortDefault = $null
 if ($foundRfid) {
