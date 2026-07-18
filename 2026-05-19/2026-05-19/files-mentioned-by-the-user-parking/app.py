@@ -3467,10 +3467,12 @@ def api_soap_whitelist():
         row.contact_number = data['contact_number'] or row.contact_number
         row.vehicle_type   = data['vehicle_type']   or row.vehicle_type
         row.properties     = data['properties']     or row.properties
-        # Stamp activated_at on creation so the UI's default sort
-        # (activated_at DESC NULLS LAST) puts new SOAP rows at the TOP,
-        # not buried on the last page under old imports.
-        if action == 'created':
+        # Stamp activated_at whenever it's currently NULL so the UI's default
+        # sort (activated_at DESC NULLS LAST) puts SOAP rows at the TOP, not
+        # buried on the last page. Applies to both new inserts AND existing
+        # rows that were created before this fix -- they'll get stamped on
+        # their next SOAP update. Once set, we never overwrite it.
+        if not row.activated_at:
             row.activated_at = datetime.now()
         db.session.commit()
         body = ('<UpsertBarcodeResponse xmlns="https://vayaccess.com/soap">'
