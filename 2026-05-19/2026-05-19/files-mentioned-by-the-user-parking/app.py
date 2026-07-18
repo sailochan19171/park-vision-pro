@@ -341,19 +341,39 @@ def _watermark_geolocate_worker():
                     with _watermark_lock:
                         _GATE_ADDRESS = _addrline
 
-# Auto-geolocation is INTENTIONALLY not started. IP-based geolocation is only
-# city-accurate and each gate installation has a different exact address, so
-# the address line is set per-site via GATE_ADDRESS_LINE in .env (prompted for
-# during SETUP.bat). If GATE_ADDRESS_LINE is empty, no address is drawn --
-# the watermark shows just the timestamp. The _watermark_geolocate_worker /
-# _try_geolocate_once / _try_reverse_geocode helpers are kept in the file so
-# future features (analytics, gate mapping) can call them explicitly, but
-# they are NOT auto-invoked at startup.
+# Live-updated address string that _draw_watermark reads on every frame.
+# Fed by the background refresher below, which reads from the settings
+# table every 15 s. Setting is written by POST /api/settings/gate_address
+# so operators can update the watermark from the webportal WITHOUT
+# touching .env and WITHOUT restarting the agent.
+_GATE_ADDRESS_LIVE = _GATE_ADDRESS   # seed with the .env value
+
+def _gate_address_refresher():
+    """Background thread: pulls the current gate_address_line from the
+    settings table every 15 s so UI edits show up on the next capture.
+    Falls back to the .env value if no DB row exists."""
+    global _GATE_ADDRESS_LIVE
+    while True:
+        try:
+            with app.app_context():
+                _val = Setting.get('gate_address_line', None)
+            if _val is not None:
+                _GATE_ADDRESS_LIVE = (_val or '').strip()
+        except Exception:
+            pass
+        time.sleep(15)
+
+# Auto-geolocation is INTENTIONALLY not started. IP-based geolocation is
+# city-accurate at best; every installation is expected to type its own
+# exact address into the webportal's Watermark Address input (persisted
+# via the settings table). GATE_ADDRESS_LINE in .env is still respected
+# as the initial value.
 if _WATERMARK_ENABLED and _GATE_ADDRESS:
-    print(f"[WATERMARK] Using manual address from .env: '{_GATE_ADDRESS}'")
+    print(f"[WATERMARK] Seeded with .env address: '{_GATE_ADDRESS}' "
+          "(UI edits via /api/settings/gate_address override this)")
 elif _WATERMARK_ENABLED:
-    print("[WATERMARK] No GATE_ADDRESS_LINE in .env -- watermark will show timestamp only. "
-          "Set GATE_ADDRESS_LINE in .env (or run SETUP.bat) to add the site address.")
+    print("[WATERMARK] No GATE_ADDRESS_LINE in .env yet -- watermark will show "
+          "timestamp only until an operator types an address in the webportal.")
 
 
 # ── DLNA / UPnP AVTransport TV push ─────────────────────────────────────────
@@ -559,11 +579,13 @@ def _draw_watermark(frame):
 
     now = datetime.now()
     lines = [now.strftime("Date: %d/%m/%Y | Time: %H:%M:%S")]
-    # Only show the address if the operator explicitly typed it in .env
-    # (GATE_ADDRESS_LINE). Auto-detection was inaccurate at street-level, so
-    # every installation is expected to set its own address at SETUP.bat time.
-    if _GATE_ADDRESS:
-        lines.append(_GATE_ADDRESS)
+    # Address is read from the live cache, which is fed by a background
+    # thread that refreshes from the settings table every 15s. That way
+    # UI edits (POST /api/settings/gate_address) take effect on the very
+    # next capture without any restart.
+    _addr = _GATE_ADDRESS_LIVE or _GATE_ADDRESS
+    if _addr:
+        lines.append(_addr)
 
     # Scale text size with frame width so 640x360 and 1920x1080 both look right.
     font        = cv2.FONT_HERSHEY_SIMPLEX
@@ -2889,6 +2911,32 @@ poll();
 </body>
 </html>"""
     return Response(html, mimetype='text/html')
+
+
+# ── Gate address setting -- watermark address configured from the UI ────────
+# GET returns the currently-active address (DB value overrides .env seed).
+# POST updates it -- takes effect on the next capture without restart.
+@app.route('/api/settings/gate_address', methods=['GET'])
+@login_required
+def api_get_gate_address():
+    val = Setting.get('gate_address_line', None)
+    if val is None:
+        val = _GATE_ADDRESS_LIVE or _GATE_ADDRESS
+    return jsonify({"value": val or "", "source": "database" if Setting.get('gate_address_line', None) is not None else "env"})
+
+@app.route('/api/settings/gate_address', methods=['POST'])
+@login_required
+def api_set_gate_address():
+    global _GATE_ADDRESS_LIVE
+    data = request.get_json(silent=True) or {}
+    val = (data.get('value') or '').strip()[:80]
+    try:
+        Setting.set('gate_address_line', val)
+        _GATE_ADDRESS_LIVE = val   # apply to the next capture immediately
+        return jsonify({"ok": True, "value": val})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"DB write failed: {e}"}), 500
 
 
 # ── Saved-plate gallery endpoints (ReolinkANPR pattern) ──────────────────────
@@ -6082,6 +6130,11 @@ def _boot():
         db.create_all()
         migrate_schema(db.engine)
         seed_defaults()
+
+    # Refresher for the live gate address (poll settings table every 15 s so
+    # UI edits show up on the next watermark without an app restart).
+    threading.Thread(target=_gate_address_refresher, daemon=True,
+                     name='gate-address-refresher').start()
 
     if CLOUD_MODE:
         print("[CLOUD] Skipping rfid/camera/worker threads — admin+reports API only")

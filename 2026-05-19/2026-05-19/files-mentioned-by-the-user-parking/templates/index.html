@@ -1787,6 +1787,26 @@
 
         <!-- UHF Captures — live from /api/uhf_captures (on-site only) -->
         <section id="uhf-captures" class="view">
+          <!-- Watermark address input: shown on every UHF capture below the timestamp -->
+          <section class="panel" style="margin-bottom:14px;">
+            <div class="panel-head">
+              <div>
+                <h2 style="margin:0;">Watermark address</h2>
+                <p class="hint" style="margin:2px 0 0;">Appears on every captured image below the date/time. Change it any time — takes effect within 15 seconds.</p>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; padding:6px 0;">
+              <input type="text" id="wm-addr-input"
+                     placeholder="e.g. Reliance Hardware Depot, Kondapur, Hyderabad"
+                     maxlength="80"
+                     style="flex:1 1 320px; min-width:0;">
+              <button type="button" id="wm-addr-save" class="btn">Save</button>
+              <button type="button" id="wm-addr-clear" class="ghost-button"
+                      title="Removes the address line so the watermark shows date/time only.">Clear</button>
+            </div>
+            <p class="hint" id="wm-addr-status" style="margin:6px 0 0; min-height:1em;"></p>
+          </section>
+
           <section class="panel">
             <div class="panel-head" style="flex-wrap:wrap; gap:10px;">
               <div>

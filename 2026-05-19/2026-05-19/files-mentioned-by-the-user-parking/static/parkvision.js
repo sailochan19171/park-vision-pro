@@ -3686,6 +3686,80 @@ $('uc-cleanup-btn')?.addEventListener('click', async () => {
   }
 });
 
+// ── Watermark address input (webportal-side editor for GATE_ADDRESS_LINE) ──
+// Reads /api/settings/gate_address on view-open; POSTs the same URL on Save
+// or Clear. Backend caches the value and refreshes it every 15 s from the
+// settings table, so the next UHF capture uses the new text within seconds.
+async function loadWatermarkAddress() {
+  const input = $('wm-addr-input');
+  const status = $('wm-addr-status');
+  if (!input) return;
+  try {
+    const r = await fetch('/api/settings/gate_address', {cache: 'no-store'});
+    const d = await r.json();
+    input.value = d.value || '';
+    if (status) {
+      status.textContent = (d.value)
+        ? `Current: "${d.value}"  (source: ${d.source})`
+        : 'No address set — watermark shows date/time only.';
+    }
+  } catch (e) {
+    if (status) status.textContent = 'Could not load current address: ' + e.message;
+  }
+}
+
+async function saveWatermarkAddress(newValue) {
+  const status = $('wm-addr-status');
+  const saveBtn = $('wm-addr-save');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+  try {
+    const r = await fetch('/api/settings/gate_address', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({value: newValue}),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.statusText);
+    if (status) {
+      status.textContent = newValue
+        ? `Saved: "${d.value}"  — will appear on the next capture (within ~15 s).`
+        : 'Cleared — watermark now shows date/time only.';
+      status.style.color = '#16a34a';
+      setTimeout(() => { status.style.color = ''; loadWatermarkAddress(); }, 3000);
+    }
+  } catch (e) {
+    if (status) {
+      status.textContent = 'Save failed: ' + e.message;
+      status.style.color = '#dc2626';
+    }
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+  }
+}
+
+$('wm-addr-save')?.addEventListener('click', () => {
+  const input = $('wm-addr-input');
+  if (input) saveWatermarkAddress((input.value || '').trim());
+});
+$('wm-addr-input')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); $('wm-addr-save')?.click(); }
+});
+$('wm-addr-clear')?.addEventListener('click', () => {
+  const input = $('wm-addr-input');
+  if (input) { input.value = ''; saveWatermarkAddress(''); }
+});
+
+// Re-fetch the current value whenever the operator navigates to UHF Captures
+// so they always see the truth (in case someone else edited it on another tab).
+if (typeof _liveLoaders !== 'undefined') {
+  const _prevLoader = _liveLoaders['uhf-captures'];
+  _liveLoaders['uhf-captures'] = async () => {
+    if (_prevLoader) await _prevLoader();
+    loadWatermarkAddress();
+  };
+}
+
+
 // ── Zone-wise Gate Entry — live per-zone occupancy + recent entries ────────
 async function loadZoneLive() {
   const grid = $('zl-grid'); const meta = $('zl-meta');
