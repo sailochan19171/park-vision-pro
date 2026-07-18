@@ -226,39 +226,46 @@ def _parse_float(val):
 _GATE_LAT = _parse_float(os.environ.get('GATE_LATITUDE'))
 _GATE_LNG = _parse_float(os.environ.get('GATE_LONGITUDE'))
 
-if _GATE_LAT is None or _GATE_LNG is None:
-    # One-shot IP-geolocation lookup so images still get *some* GPS info.
-    # ipapi.co has a free tier (~1000/day, no auth); good enough for a
-    # single startup call.
-    try:
-        import urllib.request as _u
-        with _u.urlopen("https://ipapi.co/json/", timeout=4) as _resp:
-            _geo = json.loads(_resp.read().decode('utf-8'))
-        if _GATE_LAT is None:
-            _GATE_LAT = _parse_float(_geo.get('latitude'))
-        if _GATE_LNG is None:
-            _GATE_LNG = _parse_float(_geo.get('longitude'))
-        if _GATE_LOCATION_NAME == 'VayAccess Gate':
-            _city = (_geo.get('city') or '').strip()
-            _region = (_geo.get('region') or '').strip()
-            if _city:
-                _GATE_LOCATION_NAME = f"{_city}, {_region}".rstrip(", ")
-        print(f"[WATERMARK] IP-geolocated to lat={_GATE_LAT}, "
-              f"lng={_GATE_LNG}, name='{_GATE_LOCATION_NAME}'")
-    except Exception as _e:
-        print(f"[WATERMARK] IP-geolocation failed ({_e}); GPS will be omitted "
-              f"from watermarks until GATE_LATITUDE/GATE_LONGITUDE are set in .env.")
+# Auto-detection state. Live-refreshed by _watermark_geolocate_worker() so the
+# watermark stays accurate if this laptop is redeployed to a different site.
+_watermark_lock = threading.Lock()
 
-# Reverse-geocode the coordinates into a human-readable street address so the
-# watermark shows a real location, not just "City, Region". OpenStreetMap
-# Nominatim is free, no API key required. Skipped if the user already set
-# GATE_ADDRESS_LINE in .env.
-if not _GATE_ADDRESS and _GATE_LAT is not None and _GATE_LNG is not None:
+def _try_geolocate_once():
+    """Query a chain of free IP-geolocation providers. Returns
+    (lat, lng, city, region) on the first success, else None. Each provider
+    normalises to the same tuple. No API keys, no auth."""
+    import urllib.request as _u
+    _providers = [
+        ("ipapi.co",     "https://ipapi.co/json/",           'latitude', 'longitude', 'city', 'region'),
+        ("ip-api.com",   "http://ip-api.com/json/",           'lat',      'lon',       'city', 'regionName'),
+        ("ipwho.is",     "https://ipwho.is/",                 'latitude', 'longitude', 'city', 'region'),
+        ("freeipapi",    "https://freeipapi.com/api/json/",   'latitude', 'longitude', 'cityName', 'regionName'),
+    ]
+    for _name, _url, _kLat, _kLng, _kCity, _kRegion in _providers:
+        try:
+            _req = _u.Request(_url, headers={'User-Agent': 'VayAccess-Parking-Agent/1.0'})
+            with _u.urlopen(_req, timeout=4) as _resp:
+                _geo = json.loads(_resp.read().decode('utf-8'))
+            _lat = _parse_float(_geo.get(_kLat))
+            _lng = _parse_float(_geo.get(_kLng))
+            if _lat is not None and _lng is not None:
+                _city = (_geo.get(_kCity) or '').strip()
+                _region = (_geo.get(_kRegion) or '').strip()
+                print(f"[WATERMARK] Geolocated via {_name}: lat={_lat}, lng={_lng}, "
+                      f"city='{_city}', region='{_region}'")
+                return (_lat, _lng, _city, _region)
+        except Exception as _e:
+            print(f"[WATERMARK] {_name} failed ({_e}); trying next provider...")
+    return None
+
+def _try_reverse_geocode(lat, lng):
+    """Query OpenStreetMap Nominatim for a human-readable street address.
+    Returns a compact 'road, suburb, city, state' string, or None on failure."""
+    import urllib.request as _u
     try:
-        import urllib.request as _u
         _req = _u.Request(
             f"https://nominatim.openstreetmap.org/reverse"
-            f"?lat={_GATE_LAT}&lon={_GATE_LNG}&format=json&zoom=17&addressdetails=1",
+            f"?lat={lat}&lon={lng}&format=json&zoom=17&addressdetails=1",
             headers={'User-Agent': 'VayAccess-Parking-Agent/1.0'})
         with _u.urlopen(_req, timeout=5) as _resp:
             _nom = json.loads(_resp.read().decode('utf-8'))
@@ -275,13 +282,70 @@ if not _GATE_ADDRESS and _GATE_LAT is not None and _GATE_LNG is not None:
             if _p and _p not in _seen:
                 _uniq.append(_p)
                 _seen.add(_p)
-        _GATE_ADDRESS = ', '.join(_uniq)[:80]
-        if not _GATE_ADDRESS:
-            _GATE_ADDRESS = (_nom.get('display_name') or '')[:80]
-        print(f"[WATERMARK] Reverse-geocoded address: '{_GATE_ADDRESS}'")
+        _addrline = ', '.join(_uniq)[:80]
+        if not _addrline:
+            _addrline = (_nom.get('display_name') or '')[:80]
+        print(f"[WATERMARK] Reverse-geocoded address: '{_addrline}'")
+        return _addrline
     except Exception as _e:
-        print(f"[WATERMARK] Reverse-geocode failed ({_e}); watermark will "
-              f"show gate name instead of full address.")
+        print(f"[WATERMARK] Reverse-geocode failed ({_e}).")
+        return None
+
+def _watermark_geolocate_worker():
+    """Background thread: tries every provider until one works, then refreshes
+    every 30 min so the watermark stays right if the laptop is redeployed.
+    Only touches lat/lng/address that weren't hardcoded in .env."""
+    global _GATE_LAT, _GATE_LNG, _GATE_LOCATION_NAME, _GATE_ADDRESS
+    _envLatSet = _parse_float(os.environ.get('GATE_LATITUDE')) is not None
+    _envLngSet = _parse_float(os.environ.get('GATE_LONGITUDE')) is not None
+    _envAddrSet = bool((os.environ.get('GATE_ADDRESS_LINE') or '').strip())
+    _envNameSet = bool((os.environ.get('GATE_LOCATION_NAME') or '').strip() and
+                       (os.environ.get('GATE_LOCATION_NAME') or '').strip() != 'VayAccess Gate')
+    # First attempt: retry with short backoff until success.
+    _attempt = 0
+    while True:
+        _result = _try_geolocate_once()
+        if _result is not None:
+            _lat, _lng, _city, _region = _result
+            with _watermark_lock:
+                if not _envLatSet: _GATE_LAT = _lat
+                if not _envLngSet: _GATE_LNG = _lng
+                if not _envNameSet and _city:
+                    _GATE_LOCATION_NAME = f"{_city}, {_region}".rstrip(", ")
+            if not _envAddrSet:
+                _addrline = _try_reverse_geocode(_lat, _lng)
+                if _addrline:
+                    with _watermark_lock:
+                        _GATE_ADDRESS = _addrline
+            break
+        _attempt += 1
+        _sleep = min(300, 15 * _attempt)   # 15s, 30s, 45s, ... capped at 5 min
+        print(f"[WATERMARK] All providers failed. Retrying in {_sleep}s (attempt {_attempt})")
+        time.sleep(_sleep)
+    # Refresh loop: re-geocode every 30 min so a laptop that moves sites
+    # picks up its new location automatically.
+    while True:
+        time.sleep(1800)
+        _result = _try_geolocate_once()
+        if _result is not None:
+            _lat, _lng, _city, _region = _result
+            with _watermark_lock:
+                if not _envLatSet: _GATE_LAT = _lat
+                if not _envLngSet: _GATE_LNG = _lng
+                if not _envNameSet and _city:
+                    _GATE_LOCATION_NAME = f"{_city}, {_region}".rstrip(", ")
+            if not _envAddrSet:
+                _addrline = _try_reverse_geocode(_lat, _lng)
+                if _addrline:
+                    with _watermark_lock:
+                        _GATE_ADDRESS = _addrline
+
+# Kick off the background geolocation. Non-daemon threads keep Python alive on
+# shutdown so we mark this daemon. `time` and `threading` are already imported.
+if _WATERMARK_ENABLED:
+    threading.Thread(target=_watermark_geolocate_worker, daemon=True,
+                     name='watermark-geolocate').start()
+    print("[WATERMARK] Background geolocation worker started (live, refreshes every 30 min).")
 
 
 def _draw_watermark(frame):
