@@ -3460,10 +3460,18 @@ def api_soap_whitelist():
             row.owner_name   = data['owner_name']
             row.valid_until  = valid_until
         row.rfid_tag       = data['rfid_tag']       or row.rfid_tag
-        row.department     = data['department']     or row.department
+        # Default department to 'External' so the UI's "Registered" page
+        # (which filters WHERE department IS NOT NULL) shows every SOAP row.
+        # Vendor-supplied department always wins.
+        row.department     = data['department']     or row.department or 'External'
         row.contact_number = data['contact_number'] or row.contact_number
         row.vehicle_type   = data['vehicle_type']   or row.vehicle_type
         row.properties     = data['properties']     or row.properties
+        # Stamp activated_at on creation so the UI's default sort
+        # (activated_at DESC NULLS LAST) puts new SOAP rows at the TOP,
+        # not buried on the last page under old imports.
+        if action == 'created':
+            row.activated_at = datetime.now()
         db.session.commit()
         body = ('<UpsertBarcodeResponse xmlns="https://vayaccess.com/soap">'
                 '<Status>OK</Status>'
