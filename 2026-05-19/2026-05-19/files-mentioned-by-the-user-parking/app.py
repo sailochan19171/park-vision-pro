@@ -2567,6 +2567,137 @@ def resume_feed():
     freeze_feed = False
     return jsonify({"status": "success"})
 
+# ── Public kiosk display for a phone / tablet / TV browser ───────────────────
+# Opens as a full-screen page that shows the LATEST UHF capture image with
+# owner name, tag, status, and timestamp overlaid. Polls the companion JSON
+# endpoint every 2 s and swaps the image the moment a new capture lands.
+# INTENTIONALLY not @login_required -- kiosk devices can't type passwords.
+# For LAN-only exposure the router's firewall is the boundary; if you ever
+# port-forward this app to the public internet, put it behind a reverse proxy
+# with basic-auth or a query token.
+@app.route('/api/uhf_display_latest')
+def api_uhf_display_latest():
+    row = (UHFEntryEvent.query
+           .order_by(UHFEntryEvent.timestamp.desc())
+           .first())
+    if not row:
+        return jsonify({"empty": True})
+    return jsonify({
+        "empty":      False,
+        "id":         row.id,
+        "timestamp":  row.timestamp.strftime("%d/%m/%Y %H:%M:%S") if row.timestamp else "",
+        "rfid_tag":   row.rfid_tag or "",
+        "plate":      row.plate or "",
+        "owner_name": row.owner_name or "",
+        "status":     row.status or "",
+        "full_image": row.full_image or "",
+    })
+
+
+@app.route('/uhf_display')
+def uhf_display_page():
+    """Serve the kiosk HTML. Point any phone / tablet / TV browser at this URL
+    (e.g. http://<on-site-laptop-ip>:5002/uhf_display) and it will show the
+    latest UHF capture full-screen, updating within 2 s of every new scan."""
+    from flask import Response
+    html = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>VayAccess UHF Live Display</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; background: #000;
+    color: #fff; font-family: -apple-system, Segoe UI, sans-serif; overflow: hidden; }
+#stage { position: fixed; inset: 0; display: flex; align-items: center;
+    justify-content: center; }
+#stage img { max-width: 100vw; max-height: 100vh; object-fit: contain; display: block; }
+.empty { font-size: 24px; opacity: 0.7; text-align: center; padding: 40px; }
+.header { position: fixed; top: 0; left: 0; right: 0; padding: 14px 22px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; z-index: 10; }
+.header .who { min-width: 0; }
+.header .owner { font-size: 22px; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.header .tag { font-family: monospace; font-size: 13px; opacity: 0.85; margin-top: 2px; }
+.header .plate { font-family: monospace; font-size: 16px; font-weight: 600;
+    letter-spacing: 1px; margin-top: 4px; }
+.status { padding: 6px 16px; border-radius: 16px; font-size: 15px;
+    font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.status.granted  { background: #16a34a; color: #fff; }
+.status.denied   { background: #dc2626; color: #fff; }
+.status.scanning { background: #475569; color: #fff; }
+.footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 22px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    font-family: monospace; font-size: 18px; text-align: center; z-index: 10; }
+.pulse { position: fixed; top: 12px; right: 16px; width: 10px; height: 10px;
+    border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px #22c55e;
+    z-index: 20; opacity: 0.6; }
+.pulse.stale { background: #eab308; box-shadow: 0 0 8px #eab308; }
+.pulse.dead  { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+</style>
+</head>
+<body>
+<div class="pulse" id="pulse" title="live"></div>
+<div id="stage"><div class="empty">Waiting for the first UHF capture…</div></div>
+<script>
+let lastId = null;
+let missed = 0;
+const $ = (id) => document.getElementById(id);
+
+async function poll() {
+  try {
+    const r = await fetch('/api/uhf_display_latest', {cache: 'no-store'});
+    const d = await r.json();
+    missed = 0;
+    $('pulse').className = 'pulse';
+    if (d.empty) {
+      $('stage').innerHTML = '<div class="empty">No captures yet.</div>';
+    } else if (d.id !== lastId) {
+      lastId = d.id;
+      const stRaw = (d.status || '').toLowerCase();
+      const stCls = stRaw.includes('grant') ? 'granted'
+                  : stRaw.includes('den')   ? 'denied'
+                  : 'scanning';
+      const imgUrl = d.full_image
+        ? '/image/' + encodeURIComponent(d.full_image) + '?v=' + d.id
+        : '';
+      $('stage').innerHTML = imgUrl
+        ? '<img src="' + imgUrl + '" alt="Latest capture">'
+        : '<div class="empty">(image not available)</div>';
+      const owner = d.owner_name || '(unknown owner)';
+      const plateLine = d.plate ? '<div class="plate">' + d.plate + '</div>' : '';
+      document.querySelectorAll('.header,.footer').forEach(e => e.remove());
+      const header = document.createElement('div');
+      header.className = 'header';
+      header.innerHTML =
+        '<div class="who">' +
+          '<div class="owner">' + owner + '</div>' +
+          '<div class="tag">EPC ' + d.rfid_tag + '</div>' +
+          plateLine +
+        '</div>' +
+        '<div class="status ' + stCls + '">' + (d.status || 'PROCESSING') + '</div>';
+      document.body.appendChild(header);
+      const footer = document.createElement('div');
+      footer.className = 'footer';
+      footer.textContent = d.timestamp;
+      document.body.appendChild(footer);
+    }
+  } catch (e) {
+    missed += 1;
+    $('pulse').className = missed >= 4 ? 'pulse dead' : 'pulse stale';
+  }
+  setTimeout(poll, 2000);
+}
+poll();
+</script>
+</body>
+</html>"""
+    return Response(html, mimetype='text/html')
+
+
 # ── Saved-plate gallery endpoints (ReolinkANPR pattern) ──────────────────────
 @app.route('/api/uhf_captures')
 @login_required
