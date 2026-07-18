@@ -28,6 +28,7 @@ import time
 import queue
 import json
 import re
+import socket
 
 from datetime import datetime, timedelta
 
@@ -353,6 +354,193 @@ if _WATERMARK_ENABLED and _GATE_ADDRESS:
 elif _WATERMARK_ENABLED:
     print("[WATERMARK] No GATE_ADDRESS_LINE in .env -- watermark will show timestamp only. "
           "Set GATE_ADDRESS_LINE in .env (or run SETUP.bat) to add the site address.")
+
+
+# ── DLNA / UPnP AVTransport TV push ─────────────────────────────────────────
+# Every UHF capture is pushed to any DLNA MediaRenderer TV on the LAN (Sony,
+# LG, TCL, Samsung, Xiaomi and most Android TVs advertise this by default).
+# Auto-discovered via SSDP at startup; also honours TV_AVTRANSPORT_URL in
+# .env for manual override (useful if SSDP is blocked). Set TV_DISPLAY_ENABLED=0
+# to disable entirely. Runs off-thread so a slow TV never blocks the gate.
+_TV_ENABLED = (os.environ.get('TV_DISPLAY_ENABLED', '1').strip() != '0')
+_TV_MANUAL_URL = (os.environ.get('TV_AVTRANSPORT_URL') or '').strip()
+_TV_TARGETS = []      # list of {control_url, image_base, friendly_name, tv_ip}
+_TV_LOCK = threading.Lock()
+
+def _source_ip_toward(target_ip):
+    """Which of THIS laptop's IPs would the kernel use to send a packet to
+    target_ip? Used to build the /image/<name> URL the TV can fetch back."""
+    try:
+        _s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        _s.settimeout(1.0)
+        _s.connect((target_ip, 1))
+        _ip = _s.getsockname()[0]
+        _s.close()
+        return _ip
+    except Exception:
+        return None
+
+def _parse_tv_description(desc_url, tv_ip):
+    """Fetch a TV's UPnP description.xml and, if it exposes AVTransport,
+    add it to _TV_TARGETS. Called once per unique SSDP LOCATION header."""
+    import urllib.request, xml.etree.ElementTree as _ET
+    from urllib.parse import urljoin, urlparse
+    try:
+        with urllib.request.urlopen(desc_url, timeout=4) as _r:
+            _xml = _r.read()
+        _root = _ET.fromstring(_xml)
+        _friendly = ''
+        _ctrl_rel = None
+        for _elem in _root.iter():
+            _tag = _elem.tag.split('}')[-1]
+            if _tag == 'friendlyName' and not _friendly:
+                _friendly = (_elem.text or '').strip()
+            if _tag == 'service':
+                _st = None; _cu = None
+                for _child in _elem:
+                    _ct = _child.tag.split('}')[-1]
+                    if _ct == 'serviceType': _st = _child.text
+                    elif _ct == 'controlURL': _cu = _child.text
+                if _st and 'AVTransport' in _st and _cu:
+                    _ctrl_rel = _cu
+        if not _ctrl_rel:
+            return
+        # Resolve controlURL against the description URL's base.
+        if _ctrl_rel.startswith('http'):
+            _ctrl_url = _ctrl_rel
+        elif _ctrl_rel.startswith('/'):
+            _p = urlparse(desc_url)
+            _ctrl_url = f"{_p.scheme}://{_p.netloc}{_ctrl_rel}"
+        else:
+            _ctrl_url = urljoin(desc_url, _ctrl_rel)
+        _src_ip = _source_ip_toward(tv_ip)
+        if not _src_ip:
+            print(f"[TV-DISCOVERY] cannot determine local source IP for TV {tv_ip}")
+            return
+        # Use the same port the Flask app listens on. Falls back to 5002.
+        _port = int(os.environ.get('FLASK_PORT', '5002') or 5002)
+        _target = {
+            'control_url':   _ctrl_url,
+            'image_base':    f'http://{_src_ip}:{_port}',
+            'friendly_name': _friendly or tv_ip,
+            'tv_ip':         tv_ip,
+        }
+        with _TV_LOCK:
+            for _t in _TV_TARGETS:
+                if _t['control_url'] == _ctrl_url:
+                    return   # already added
+            _TV_TARGETS.append(_target)
+        print(f"[TV-DISCOVERY] Found MediaRenderer '{_friendly}' at {tv_ip} "
+              f"-- will push captures to {_ctrl_url}")
+    except Exception as _e:
+        pass   # silent -- one bad device shouldn't stop the scan
+
+def _discover_dlna_tvs():
+    """One-shot SSDP M-SEARCH for AVTransport MediaRenderers. Runs in a
+    background thread at startup; also re-runs every 5 min so a TV that was
+    off at boot gets picked up when it comes online."""
+    import socket as _sk
+    while True:
+        try:
+            _sock = _sk.socket(_sk.AF_INET, _sk.SOCK_DGRAM)
+            _sock.setsockopt(_sk.IPPROTO_IP, _sk.IP_MULTICAST_TTL, 2)
+            _sock.settimeout(4)
+            _msg = ('M-SEARCH * HTTP/1.1\r\n'
+                    'HOST: 239.255.255.250:1900\r\n'
+                    'MAN: "ssdp:discover"\r\n'
+                    'MX: 3\r\n'
+                    'ST: urn:schemas-upnp-org:service:AVTransport:1\r\n\r\n')
+            _sock.sendto(_msg.encode('ascii'), ('239.255.255.250', 1900))
+            _seen = set()
+            _deadline = time.time() + 4
+            while time.time() < _deadline:
+                try:
+                    _data, _addr = _sock.recvfrom(4096)
+                    _text = _data.decode('ascii', errors='replace')
+                    _loc = None
+                    for _line in _text.split('\r\n'):
+                        if _line.lower().startswith('location:'):
+                            _loc = _line.split(':', 1)[1].strip()
+                            break
+                    if _loc and _loc not in _seen:
+                        _seen.add(_loc)
+                        _parse_tv_description(_loc, _addr[0])
+                except _sk.timeout:
+                    break
+                except Exception:
+                    continue
+            _sock.close()
+        except Exception as _e:
+            print(f"[TV-DISCOVERY] scan error: {_e}")
+        # Re-scan every 5 minutes so a TV powered on after boot gets picked up.
+        time.sleep(300)
+
+def _tv_push_sync(image_filename):
+    """Blocking version -- send SetAVTransportURI + Play SOAP to every known TV."""
+    import urllib.request
+    with _TV_LOCK:
+        _targets = list(_TV_TARGETS)
+    for _tv in _targets:
+        _img_url = f"{_tv['image_base']}/image/{image_filename}"
+        _set_body = (
+            '<?xml version="1.0"?>'
+            '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" '
+            's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+            '<s:Body>'
+            '<u:SetAVTransportURI xmlns:u="urn:schemas-upnp-org:service:AVTransport:1">'
+            '<InstanceID>0</InstanceID>'
+            f'<CurrentURI>{_img_url}</CurrentURI>'
+            '<CurrentURIMetaData></CurrentURIMetaData>'
+            '</u:SetAVTransportURI>'
+            '</s:Body></s:Envelope>')
+        _play_body = (
+            '<?xml version="1.0"?>'
+            '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" '
+            's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
+            '<s:Body>'
+            '<u:Play xmlns:u="urn:schemas-upnp-org:service:AVTransport:1">'
+            '<InstanceID>0</InstanceID><Speed>1</Speed>'
+            '</u:Play>'
+            '</s:Body></s:Envelope>')
+        try:
+            for _action, _body in (('SetAVTransportURI', _set_body), ('Play', _play_body)):
+                _req = urllib.request.Request(
+                    _tv['control_url'], data=_body.encode('utf-8'), method='POST',
+                    headers={'Content-Type': 'text/xml; charset="utf-8"',
+                             'SOAPAction': f'"urn:schemas-upnp-org:service:AVTransport:1#{_action}"'})
+                with urllib.request.urlopen(_req, timeout=5) as _r:
+                    _r.read()
+            print(f"[TV-PUSH] {_tv['friendly_name']}: {image_filename}")
+        except Exception as _e:
+            print(f"[TV-PUSH] {_tv['friendly_name']} failed: {_e}")
+
+def push_to_tv(image_filename):
+    """Fire-and-forget: push the given image filename to every discovered TV.
+    Never blocks the caller. No-op if TV push is disabled or no TVs found."""
+    if not _TV_ENABLED or not image_filename:
+        return
+    with _TV_LOCK:
+        _has_targets = bool(_TV_TARGETS)
+    if not _has_targets:
+        return
+    threading.Thread(target=_tv_push_sync, args=(image_filename,),
+                     daemon=True, name='tv-push').start()
+
+if _TV_ENABLED:
+    # Seed with manual URL if the operator set one in .env.
+    if _TV_MANUAL_URL:
+        _src = _source_ip_toward('8.8.8.8') or '127.0.0.1'   # coarse fallback
+        _port = int(os.environ.get('FLASK_PORT', '5002') or 5002)
+        _TV_TARGETS.append({
+            'control_url':   _TV_MANUAL_URL,
+            'image_base':    f'http://{_src}:{_port}',
+            'friendly_name': 'TV (manual)',
+            'tv_ip':         '',
+        })
+        print(f"[TV-DISCOVERY] Manual TV_AVTRANSPORT_URL loaded: {_TV_MANUAL_URL}")
+    threading.Thread(target=_discover_dlna_tvs, daemon=True, name='tv-discovery').start()
+else:
+    print("[TV-DISPLAY] TV_DISPLAY_ENABLED=0 in .env -- automatic TV push disabled.")
 
 
 def _draw_watermark(frame):
@@ -1944,6 +2132,11 @@ def _capture_worker(tag_c, frame):
             print(f"[UHF-ANPR] tag={tag_c} plate={plate_text} owner={owner_name} "
                   f"status={status} full={full_name} plate_img={plate_crop_name}")
             result = event.to_dict()
+
+        # Fire-and-forget push to any DLNA TV auto-discovered on the LAN so
+        # the gate display updates within ~1-2s of the capture. No-op if no
+        # TV was found or TV_DISPLAY_ENABLED=0.
+        push_to_tv(full_name)
 
         # Best-effort cloud push (outside the DB context manager so the local
         # commit lands first). Runs in a thread so a slow / offline cloud
