@@ -186,6 +186,7 @@ $syncFiles = @(
     'api_integration.py',
     'desktop_reader.py',
     'reader_integration.py',
+    'rescue_images.py',
     'requirements.txt',
     # Local dashboard UI (only used when opening
     # http://<pc>:5002/ directly on the on-site LAN; cloud portal has

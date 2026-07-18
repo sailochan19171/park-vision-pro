@@ -2849,6 +2849,100 @@ def api_cloud_push_uhf():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Rescue endpoint — one-shot recovery of images that were captured BEFORE the
+# ImageBlob persistence fix landed. Render's ephemeral disk wiped the JPEG
+# files but the DB rows survived. The on-site laptop still has its own local
+# copies as uhf_<ts>_<tag>_full.jpg files; a companion script (rescue_images.py)
+# walks that folder and POSTs each file here. This endpoint matches by RFID
+# tag + timestamp window and inserts the bytes into the ImageBlob table
+# under the row's existing cloud filename so /image/<name> serves them.
+# ─────────────────────────────────────────────────────────────────────────────
+@app.route('/api/rescue_image', methods=['POST'])
+def api_rescue_image():
+    import base64
+    expected = (os.environ.get('CLOUD_PUSH_TOKEN') or '').strip()
+    if not expected:
+        return jsonify({"error": "server has no CLOUD_PUSH_TOKEN configured"}), 500
+    if request.headers.get('Authorization', '').replace('Bearer ', '') != expected:
+        return jsonify({"error": "unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    tag = (data.get('rfid_tag') or '').strip()
+    capture_iso = (data.get('capture_ts_iso') or '').strip()
+    image_b64 = data.get('image_b64') or ''
+    kind = (data.get('kind') or 'full').strip().lower()
+    if not tag or not capture_iso or not image_b64 or kind not in ('full', 'plate'):
+        return jsonify({"error": "missing rfid_tag / capture_ts_iso / image_b64 / kind"}), 400
+
+    try:
+        capture_ts = datetime.fromisoformat(capture_iso.replace('Z', '+00:00'))
+        if capture_ts.tzinfo is not None:
+            capture_ts = capture_ts.replace(tzinfo=None)
+    except ValueError:
+        return jsonify({"error": "capture_ts_iso must be ISO-8601"}), 400
+    try:
+        raw = base64.b64decode(image_b64)
+    except Exception:
+        return jsonify({"error": "image_b64 is not valid base64"}), 400
+    if len(raw) > 8 * 1024 * 1024:
+        return jsonify({"error": "image exceeds 8 MB"}), 400
+
+    # Find the closest UHFEntryEvent row within a 5-min window.
+    window_start = capture_ts - timedelta(minutes=5)
+    window_end   = capture_ts + timedelta(minutes=5)
+    row = (UHFEntryEvent.query
+           .filter(UHFEntryEvent.rfid_tag == tag,
+                   UHFEntryEvent.timestamp >= window_start,
+                   UHFEntryEvent.timestamp <= window_end)
+           .order_by(db.func.abs(db.func.extract('epoch',
+                                                 UHFEntryEvent.timestamp - capture_ts)))
+           .first())
+    if not row:
+        # Fall back to the newest row for this tag if nothing matched by time.
+        row = (UHFEntryEvent.query
+               .filter(UHFEntryEvent.rfid_tag == tag)
+               .order_by(UHFEntryEvent.timestamp.desc())
+               .first())
+    if not row:
+        return jsonify({"ok": False, "error": f"no UHFEntryEvent row for tag {tag}"}), 404
+
+    # Pick the filename to store the blob under. Prefer the row's existing
+    # cloud_* filename (that's what /image/<name> looks up); if the row has
+    # none, generate one that matches the naming convention.
+    existing_name = row.full_image if kind == 'full' else row.plate_image
+    if not existing_name:
+        safe_tag = ''.join(c for c in tag if c.isalnum())[:24] or 'TAG'
+        ts_str = capture_ts.strftime("%Y%m%d_%H%M%S_%f")[:-3]
+        existing_name = f"cloud_{ts_str}_{safe_tag}_{kind}.jpg"
+
+    try:
+        blob = ImageBlob.query.get(existing_name)
+        if blob:
+            blob.data = raw
+            blob.size_bytes = len(raw)
+        else:
+            db.session.add(ImageBlob(filename=existing_name, data=raw,
+                                     size_bytes=len(raw), created_at=capture_ts))
+        # Point the row at the blob filename if it wasn't already.
+        if kind == 'full' and row.full_image != existing_name:
+            row.full_image = existing_name
+        elif kind == 'plate' and row.plate_image != existing_name:
+            row.plate_image = existing_name
+        db.session.commit()
+        # Also drop it on disk as a fast-path cache.
+        try:
+            with open(os.path.join(DETECTIONS_DIR, existing_name), 'wb') as f:
+                f.write(raw)
+        except Exception:
+            pass
+        return jsonify({"ok": True, "matched_id": row.id,
+                        "filename": existing_name, "bytes": len(raw)}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"DB write failed: {e}"}), 500
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Cloud frame ingest — the on-site PC's cloud_frame_pusher() thread posts a
 # JPEG frame every ~500 ms. Cloud holds only the latest one in RAM (capped at
 # ~1 MB) and serves it from /video_feed below. No DB writes, no disk writes
