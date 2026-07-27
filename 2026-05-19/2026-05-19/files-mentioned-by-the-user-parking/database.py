@@ -1,9 +1,27 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
+
+# Every timestamp stored in the DB is naive UTC (both because Neon Postgres
+# defaults to UTC and because Render's runtime is UTC). Operators are in
+# India, so every to_dict() must render timestamps as IST (UTC+5:30) or
+# they show up 5:30 hours behind on the webportal.
+_IST_OFFSET = timedelta(hours=5, minutes=30)
+
+def to_ist(dt, fmt="%Y-%m-%d %H:%M:%S"):
+    """Convert a naive-UTC datetime from the DB into an IST-formatted string.
+    Returns '' for None. On-site laptops (whose local time IS already IST)
+    have naive local timestamps -- for those, the +5:30 shift double-counts,
+    so USE_UTC_STORAGE=0 in .env disables the conversion. Cloud stays on."""
+    import os
+    if dt is None:
+        return ''
+    if os.environ.get('USE_UTC_STORAGE', '1').strip() == '0':
+        return dt.strftime(fmt)
+    return (dt + _IST_OFFSET).strftime(fmt)
 
 class Whitelist(db.Model):
     __tablename__ = 'whitelist'
@@ -68,15 +86,15 @@ class Whitelist(db.Model):
             "contact_number": self.contact_number or "",
             "vehicle_type": self.vehicle_type or "Car",
             "vehicle_category": self.vehicle_category,
-            "activated_at":   self.activated_at.strftime("%Y-%m-%d %H:%M:%S") if self.activated_at else None,
+            "activated_at":   to_ist(self.activated_at, "%Y-%m-%d %H:%M:%S") or None,
             "activation_months": self.activation_months,
             "payment_method": self.payment_method or "",
             "upi_id":         self.upi_id         or "",
             "transaction_id": self.transaction_id or "",
             "payment_amount": self.payment_amount or 0,
-            "paid_at":        self.paid_at.strftime("%Y-%m-%d %H:%M:%S") if self.paid_at else None,
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else "N/A",
-            "valid_until": self.valid_until.strftime("%Y-%m-%d"),
+            "paid_at":        to_ist(self.paid_at, "%Y-%m-%d %H:%M:%S") or None,
+            "created_at": to_ist(self.created_at, "%Y-%m-%d %H:%M:%S") or "N/A",
+            "valid_until": to_ist(self.valid_until, "%Y-%m-%d"),
             "status": "Active" if self.is_valid() else "Expired"
         }
 
@@ -263,7 +281,7 @@ class Blacklist(db.Model):
             "added_by":     self.added_by     or "",
             "ut_id":        self.ut_id        or "",
             "properties":   self.properties   or "",
-            "created_at":   self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else "",
+            "created_at":   to_ist(self.created_at, "%Y-%m-%d %H:%M:%S") or "",
         }
 
 
@@ -300,8 +318,8 @@ class Visitor(db.Model):
             "purpose":       self.purpose or "",
             "contact":       self.contact or "",
             "host_employee": self.host_employee or "",
-            "start_at":      self.start_at.strftime("%Y-%m-%d %H:%M") if self.start_at else "",
-            "end_at":        self.end_at.strftime("%Y-%m-%d %H:%M")   if self.end_at   else "",
+            "start_at":      to_ist(self.start_at, "%Y-%m-%d %H:%M") or "",
+            "end_at":        to_ist(self.end_at, "%Y-%m-%d %H:%M") or "",
             "status":        status,
         }
 
@@ -348,7 +366,7 @@ class AccessLog(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S") if self.timestamp else "N/A",
+            "timestamp": to_ist(self.timestamp, "%Y-%m-%d %H:%M:%S") or "N/A",
             "number_plate": self.number_plate or "N/A",
             "rfid_tag": self.rfid_tag or "N/A",
             "owner_name": self.owner_name or "N/A",
@@ -376,7 +394,7 @@ class Region(db.Model):
             "name":        self.name,
             "description": self.description or "",
             "yard_count":  Yard.query.filter(Yard.region == self.name).count(),
-            "created_at":  self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at":  to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -406,7 +424,7 @@ class Yard(db.Model):
             "available": max(0, cap - occ),
             "location":  self.location or "",
             "region":    self.region or "",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at": to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -445,7 +463,7 @@ class Account(db.Model):
             # has_password flag lets the UI show whether the account can log in
             # without ever exposing the hash itself.
             "has_password": bool(self.password_hash),
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at": to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -462,7 +480,7 @@ class Role(db.Model):
             "name":        self.name,
             "description": self.description or "",
             "account_count": Account.query.filter(Account.role == self.name).count(),
-            "created_at":  self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at":  to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -480,7 +498,7 @@ class DictionaryEntry(db.Model):
             "category": self.category,
             "key":      self.dict_key,
             "value":    self.dict_value or "",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at": to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -499,7 +517,7 @@ class MenuPermission(db.Model):
             "menu_key":   self.menu_key,
             "allowed":    bool(self.allowed),
             "status":     "Allowed" if self.allowed else "Blocked",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at": to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -520,7 +538,7 @@ class RolePermission(db.Model):
             "action":      self.action,
             "allowed":     bool(self.allowed),
             "status":      "Allowed" if self.allowed else "Blocked",
-            "created_at":  self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at":  to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -546,7 +564,7 @@ class UHFEntryEvent(db.Model):
     def to_dict(self):
         return {
             "id":           self.id,
-            "timestamp":    self.timestamp.strftime("%Y-%m-%d %H:%M:%S") if self.timestamp else "",
+            "timestamp":    to_ist(self.timestamp, "%Y-%m-%d %H:%M:%S") or "",
             "rfid_tag":     self.rfid_tag,
             "plate":        self.plate or "",
             "vehicle_type": self.vehicle_type or "",
@@ -611,7 +629,7 @@ class DriverUser(db.Model):
             "primary_plate": self.primary_plate or "",
             "primary_type":  self.primary_type  or "Car",
             "fastag_id":     self.fastag_id     or "",
-            "created_at":    self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at":    to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -652,13 +670,13 @@ class DriverReservation(db.Model):
             "vehicle_plate":  self.vehicle_plate,
             "vehicle_type":   self.vehicle_type,
             "slot_label":     self.slot_label or "",
-            "start_at":       self.start_at.strftime("%Y-%m-%d %H:%M") if self.start_at else "",
-            "end_at":         self.end_at.strftime("%Y-%m-%d %H:%M")   if self.end_at   else "",
+            "start_at":       to_ist(self.start_at, "%Y-%m-%d %H:%M") or "",
+            "end_at":         to_ist(self.end_at, "%Y-%m-%d %H:%M") or "",
             "status":         self.status,
             "amount":         self.amount or 0,
             "payment_method": self.payment_method or "",
             "transaction_id": self.transaction_id or "",
-            "created_at":     self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at":     to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -679,7 +697,7 @@ class DriverNotification(db.Model):
             "body":       self.body or "",
             "kind":       self.kind or "system",
             "read":       self.read_at is not None,
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at": to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
 
@@ -700,6 +718,6 @@ class LCDScreen(db.Model):
             "message":    self.message or "",
             "is_active":  bool(self.is_active),
             "status":     "Active" if self.is_active else "Inactive",
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M") if self.created_at else "",
+            "created_at": to_ist(self.created_at, "%Y-%m-%d %H:%M") or "",
         }
 
