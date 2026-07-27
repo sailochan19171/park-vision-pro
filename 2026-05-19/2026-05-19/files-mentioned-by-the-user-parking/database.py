@@ -61,7 +61,7 @@ class Whitelist(db.Model):
     # extra key/value data the upstream system wants to store.
     ut_id      = db.Column(db.String(80),  nullable=True, index=True, unique=True)
     properties = db.Column(db.Text,        nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     valid_until = db.Column(db.DateTime, nullable=False)
 
     @property
@@ -71,7 +71,7 @@ class Whitelist(db.Model):
         return 'Four-Wheeler'
 
     def is_valid(self):
-        return datetime.now() <= self.valid_until
+        return datetime.utcnow() <= self.valid_until
 
     def to_dict(self):
         return {
@@ -181,7 +181,7 @@ class Tariff(db.Model):
     rate          = db.Column(db.Integer,     nullable=False, default=40)
     daily_cap     = db.Column(db.Integer,     nullable=False, default=240)
     lost_ticket   = db.Column(db.Integer,     nullable=False, default=300)
-    created_at    = db.Column(db.DateTime,    default=datetime.now)
+    created_at    = db.Column(db.DateTime,    default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -203,7 +203,7 @@ class ParkingTransaction(db.Model):
     owner_name     = db.Column(db.String(100), nullable=True)
     is_vip         = db.Column(db.Boolean,    nullable=False, default=False)
     is_staff       = db.Column(db.Boolean,    nullable=False, default=False)
-    entry_at       = db.Column(db.DateTime,   nullable=False, default=datetime.now, index=True)
+    entry_at       = db.Column(db.DateTime,   nullable=False, default=datetime.utcnow, index=True)
     exit_at        = db.Column(db.DateTime,   nullable=True,  index=True)
     payment_method = db.Column(db.String(20), nullable=True)
     total_amount   = db.Column(db.Integer,    nullable=True)
@@ -269,7 +269,7 @@ class Blacklist(db.Model):
     # Same semantics as Whitelist.ut_id / .properties. See /api/soap/blacklist.
     ut_id         = db.Column(db.String(80),  nullable=True, index=True, unique=True)
     properties    = db.Column(db.Text,        nullable=True)
-    created_at    = db.Column(db.DateTime,    default=datetime.now)
+    created_at    = db.Column(db.DateTime,    default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -297,16 +297,16 @@ class Visitor(db.Model):
     purpose       = db.Column(db.String(200), nullable=True)
     contact       = db.Column(db.String(50),  nullable=True)
     host_employee = db.Column(db.String(100), nullable=True)
-    start_at      = db.Column(db.DateTime,    nullable=False, default=datetime.now)
+    start_at      = db.Column(db.DateTime,    nullable=False, default=datetime.utcnow)
     end_at        = db.Column(db.DateTime,    nullable=False)
-    created_at    = db.Column(db.DateTime,    default=datetime.now)
+    created_at    = db.Column(db.DateTime,    default=datetime.utcnow)
 
     def is_valid(self):
-        now = datetime.now()
+        now = datetime.utcnow()
         return self.start_at <= now <= self.end_at
 
     def to_dict(self):
-        now = datetime.now()
+        now = datetime.utcnow()
         status = ("Active"   if self.is_valid()
                   else "Future" if now < self.start_at
                   else "Expired")
@@ -328,7 +328,7 @@ class AuditEvent(db.Model):
     """Unified audit trail for entry/exit/system events."""
     __tablename__ = 'audit_events'
     id        = db.Column(db.Integer,   primary_key=True)
-    timestamp = db.Column(db.DateTime,  default=datetime.now, index=True)
+    timestamp = db.Column(db.DateTime,  default=datetime.utcnow, index=True)
     message   = db.Column(db.String(255), nullable=False)
     area      = db.Column(db.String(40),  nullable=False, default='System')
 
@@ -351,7 +351,7 @@ class AuditEvent(db.Model):
 class AccessLog(db.Model):
     __tablename__ = 'access_logs'
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.now)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     number_plate = db.Column(db.String(50), nullable=True)
     rfid_tag = db.Column(db.String(100), nullable=True)
     owner_name = db.Column(db.String(100), nullable=True)
@@ -386,7 +386,7 @@ class Region(db.Model):
     id          = db.Column(db.Integer, primary_key=True)
     name        = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(300), nullable=True)
-    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -405,7 +405,7 @@ class Yard(db.Model):
     capacity   = db.Column(db.Integer, default=0)
     location   = db.Column(db.String(200), nullable=True)
     region     = db.Column(db.String(120), nullable=True)   # matches Region.name
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def occupied(self):
         # Live occupancy = vehicles currently parked in this yard (zone match).
@@ -441,7 +441,7 @@ class Account(db.Model):
     # an initial password still load. PBKDF2/scrypt via werkzeug.security
     # (ships with Flask — no extra dependency). Never store raw passwords.
     password_hash = db.Column(db.String(255), nullable=True)
-    created_at    = db.Column(db.DateTime, default=datetime.now)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, raw):
         """Hash and store a new password. Pass empty/None to leave unchanged."""
@@ -472,7 +472,7 @@ class Role(db.Model):
     id          = db.Column(db.Integer, primary_key=True)
     name        = db.Column(db.String(80), nullable=False)
     description = db.Column(db.String(255), nullable=True)
-    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -490,7 +490,7 @@ class DictionaryEntry(db.Model):
     category   = db.Column(db.String(80),  nullable=False)   # e.g. "Vehicle Category"
     dict_key   = db.Column(db.String(120), nullable=False)
     dict_value = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -508,7 +508,7 @@ class MenuPermission(db.Model):
     role_name  = db.Column(db.String(80),  nullable=False)
     menu_key   = db.Column(db.String(80),  nullable=False)   # matches sidebar data-view
     allowed    = db.Column(db.Boolean,     default=True)
-    created_at = db.Column(db.DateTime,    default=datetime.now)
+    created_at = db.Column(db.DateTime,    default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -528,7 +528,7 @@ class RolePermission(db.Model):
     section_key = db.Column(db.String(80), nullable=False)
     action      = db.Column(db.String(20), nullable=False)   # read / write / delete
     allowed     = db.Column(db.Boolean,    default=True)
-    created_at  = db.Column(db.DateTime,   default=datetime.now)
+    created_at  = db.Column(db.DateTime,   default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -550,7 +550,7 @@ class UHFEntryEvent(db.Model):
     speculative detections."""
     __tablename__ = 'uhf_entry_events'
     id           = db.Column(db.Integer,  primary_key=True)
-    timestamp    = db.Column(db.DateTime, default=datetime.now, index=True)
+    timestamp    = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     rfid_tag     = db.Column(db.String(100), nullable=False, index=True)
     plate        = db.Column(db.String(50),  nullable=True)
     vehicle_type = db.Column(db.String(50),  nullable=True)
@@ -592,7 +592,7 @@ class ImageBlob(db.Model):
     data       = db.Column(db.LargeBinary, nullable=False)
     mime       = db.Column(db.String(40),  nullable=False, default='image/jpeg')
     size_bytes = db.Column(db.Integer,     nullable=False, default=0)
-    created_at = db.Column(db.DateTime,    default=datetime.now, index=True)
+    created_at = db.Column(db.DateTime,    default=datetime.utcnow, index=True)
 
 
 # ── Mobile driver app (VayAccess driver mobile) ──────────────────────────────
@@ -611,7 +611,7 @@ class DriverUser(db.Model):
     primary_plate = db.Column(db.String(50),  nullable=True,  index=True)
     primary_type  = db.Column(db.String(20),  nullable=True, default='Car')
     fastag_id     = db.Column(db.String(40),  nullable=True)
-    created_at    = db.Column(db.DateTime,    default=datetime.now)
+    created_at    = db.Column(db.DateTime,    default=datetime.utcnow)
 
     def set_password(self, raw):
         if raw:
@@ -641,8 +641,8 @@ class DriverSession(db.Model):
     __tablename__ = 'driver_sessions'
     token       = db.Column(db.String(64),  primary_key=True)
     driver_id   = db.Column(db.Integer,     db.ForeignKey('driver_users.id'), nullable=False, index=True)
-    created_at  = db.Column(db.DateTime,    default=datetime.now)
-    last_seen   = db.Column(db.DateTime,    default=datetime.now)
+    created_at  = db.Column(db.DateTime,    default=datetime.utcnow)
+    last_seen   = db.Column(db.DateTime,    default=datetime.utcnow)
 
 
 class DriverReservation(db.Model):
@@ -661,7 +661,7 @@ class DriverReservation(db.Model):
     payment_method  = db.Column(db.String(40),  nullable=True)   # UPI/FASTag/Card/Wallet
     upi_id          = db.Column(db.String(120), nullable=True)
     transaction_id  = db.Column(db.String(40),  nullable=True)
-    created_at      = db.Column(db.DateTime,    default=datetime.now)
+    created_at      = db.Column(db.DateTime,    default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -688,7 +688,7 @@ class DriverNotification(db.Model):
     body       = db.Column(db.String(800), nullable=True)
     kind       = db.Column(db.String(40),  nullable=True)   # reservation / payment / alert / system
     read_at    = db.Column(db.DateTime,    nullable=True)
-    created_at = db.Column(db.DateTime,    default=datetime.now, index=True)
+    created_at = db.Column(db.DateTime,    default=datetime.utcnow, index=True)
 
     def to_dict(self):
         return {
@@ -708,7 +708,7 @@ class LCDScreen(db.Model):
     location    = db.Column(db.String(200), nullable=True)
     message     = db.Column(db.String(500), nullable=True)
     is_active   = db.Column(db.Boolean, default=True)
-    created_at  = db.Column(db.DateTime, default=datetime.now)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {
